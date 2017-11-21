@@ -36,6 +36,7 @@ Of course it would be possible to stack double bi-quad antennas on the AntTracke
 v0.14 2017-05-22 Serial input version
 v0.15 2017-05-30 Mod word length for 32bit MPUs like STM32
 v0.20 2017-10-20 Fix gps timeout check
+*/
 
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>

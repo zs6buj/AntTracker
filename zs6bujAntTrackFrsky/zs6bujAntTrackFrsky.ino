@@ -9,8 +9,7 @@
      
 
 This application reads serial telemetry sent from a flight controller or GPS. The module calculates where an airbourne craft is relative to the home position. From this it calculates the azimuth and elevation
-of the craft, and then positions 180 degree azimuth and elevation PWM controlled servos to point a 5GHz double bi-quad antenna 
-for telemetry and video.
+of the craft, and then positions 180 degree azimuth and elevation PWM controlled servos to point a small high-gain antenna for telemetry and video.
 
 The code is written from scratch, but I've taken ideas from Jalves' OpenDIY-AT and others. Information and ideas on other protocols was obtained frpm
 GhettoProxy by Guillaume S.

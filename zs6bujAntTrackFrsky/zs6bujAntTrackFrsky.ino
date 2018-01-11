@@ -171,7 +171,7 @@ void setup()
  Serial.println("Starting up......");
 
   
- TestServos();   // Uncomment this code to observe how well your servos reach 0 deg and 180 deg
+// TestServos();   // Uncomment this code to observe how well your servos reach 0 deg and 180 deg
                  // Fine tune MaxPWM and MinPWM in Servos module
   
 }

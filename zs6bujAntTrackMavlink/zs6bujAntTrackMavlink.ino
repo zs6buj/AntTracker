@@ -84,7 +84,7 @@ float fvy = 0;
 float fvz = 0;
 float fhdg = 0;
 
-int MinDisplacement = 7;  // Distance from home before tracking starts
+int MinDisplacement = 4;  // Distance from home before tracking starts
 
 //AzEl declarations
 
@@ -130,6 +130,8 @@ void setup()
   
  Serial.println("Starting up......");
  
+ // TestServos();   // Uncomment this code to observe how well your servos reach 0 deg and 180 deg
+                 // Fine tune MaxPWM and MinPWM in Servos module
 }
 //***************************************************
 //***************************************************

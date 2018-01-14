@@ -120,6 +120,8 @@ void setup()
   elServo.attach(elPWM_Pin);
   PositionServos(90, 0, 90);   // Intialise servos to az=90, el=0, homeHdg = 90;
   
+ // TestServos();   // Uncomment this code to observe how well your servos reach 0 deg and 180 deg
+   
   // Connecting to PixRacer
   Serial.print("Connecting to ");
   Serial.println(ssid);

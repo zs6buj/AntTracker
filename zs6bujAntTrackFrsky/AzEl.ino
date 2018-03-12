@@ -27,7 +27,7 @@ long GetAzEl(float lat1, float lon1, float alt1, float lat2, float lon2, float a
     Serial.print(" alt2 = ");
     Serial.print(alt2,0); 
     Serial.println();
-    */
+      */
     
   lon1=lon1/180*PI;  // Degrees to radians
   lat1=lat1/180*PI;
@@ -49,14 +49,11 @@ long GetAzEl(float lat1, float lon1, float alt1, float lat2, float lon2, float a
 
   // Calculate elevation
   long altR;  // Relative Alt
-//  if(msl) 
-    altR = alt2-alt1;
-//  else
-//    altR = alt2;  
+  altR = alt2-alt1;
   Elevation=atan(altR/d);
   Elevation=Elevation*360/(2*PI);     // Radians to degrees
   if (Distance >= MinDisplacement) {  // Otherwise calculations are unreliable
-    /*
+   
     Serial.print("  Azimuth= "); Serial.print(Azimuth); 
     Serial.print("  Elevation= "); Serial.print(Elevation);
     Serial.print("  Distance= "); Serial.print(Distance);
@@ -64,7 +61,7 @@ long GetAzEl(float lat1, float lon1, float alt1, float lat2, float lon2, float a
     elapsed /=1000;
     Serial.print("  Elapsed= "); Serial.print(elapsed, 3);
     Serial.println();
-    */
+
   }
   return Azimuth, Elevation, Distance ;
 }

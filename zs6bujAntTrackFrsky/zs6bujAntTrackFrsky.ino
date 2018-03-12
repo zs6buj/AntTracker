@@ -95,7 +95,7 @@ float fLat = 0;
 float fLon = 0;
 float tLon = 0;
 float fAlt = 0;
-float fRelAlt =0;
+
 float fvx = 0;
 float fvy = 0;
 float fvz = 0;
@@ -108,12 +108,16 @@ uint32_t fr_heading;
 uint32_t fr_altitude;
 uint32_t fr_home;
 uint16_t fr_home_dist;
+float fHomeDist;
 short fr_pwr;
 uint32_t fr_gps;
 int fr_numsats;
-short fr_hdop;
-boolean neg;
-boolean msl;
+uint8_t fr_gpsStatus;
+uint8_t fr_hdop;
+uint8_t fr_vdop;
+uint8_t neg;
+uint8_t gpsAlt;
+
 
  int lonDDMM;
  int latDDMM;
@@ -197,7 +201,9 @@ void loop()  {
     packetBuffer[2]=chr;
     boolean goodPacket=ParseData();
     if (goodPacket) ProcessData();
-   // DisplayTheBuffer(10); 
+    
+ //   DisplayTheBuffer(10); 
+  
     chr=NextChar();   //  Should be the next Start-Stop  
     }
   //  else DisplayTheBuffer(2); 
@@ -418,68 +424,88 @@ void ProcessData() {
                     fAlt = fr_altitude / 100;
                     cur.alt = fAlt;
                     if (!(fAlt==0)) altGood=true; 
-                    msl = true;               // Tell the algorithms altitude is msl
                     break;  
                  // *****************************************************************    
                  //   Mavlink Passthrough Protocol below     
-                  case 0x5002:                         // GPS Status & Alt msl (not used)
+                  case 0x5002:
+                  
+                  // GPS Status &  gpsAlt
                     Passthrough=true;
-                    uint8_t altmsl;
-                    uint8_t vdil;
+
                     fr_gps = Unpack_uint32(5);
-                    fr_numsats = (fr_gps & 0xf);
-                    fr_hdop = (fr_gps & 0x30) >> 4;
-                    vdil = (fr_gps & 0x3f800) >> 15;
-                    neg = fr_home >> 31;
-                    altmsl = (fr_gps & 0x7F000000) >> 24;
-                    if (neg) altmsl = 0 - altmsl;
+                    fr_numsats = bit32Extract(fr_gps, 0, 4);
+                    fr_gpsStatus = bit32Extract(fr_gps, 4, 2) + bit32Extract(fr_gps, 14, 2);
+                    fr_hdop = bit32Extract(fr_gps, 7, 7) * (10^bit32Extract(fr_gps, 6, 1));
+                    gpsAlt = bit32Extract(fr_gps, 24, 7) * (10^bit32Extract(fr_gps, 22, 2));
+                    fAlt = (float)(gpsAlt) / 10;
+                    neg = bit32Extract(fr_gps, 31, 1);
+                    if (neg==1) fAlt = 0 - fAlt;
+                    
                     hdopGood=(fr_hdop>=3) && (fr_numsats>10);
-                    /*
+             /*
                     Serial.print(" Num sats=");
                     Serial.print(fr_numsats);
+                    Serial.print(" gpsStatus=");
+                    Serial.print(fr_gpsStatus);                
                     Serial.print(" HDOP=");
-                    Serial.println(fr_hdop);
-                    // Serial.print(" vdil=");
-                    //Serial.print(vdil);                  
-                    // Serial.print(" AltMSL=");
-                    // Serial.println(altmsl);
-                   */
+                    Serial.print(fr_hdop);
+                    Serial.print(" fr_vdop=");
+                    Serial.print(fr_vdop);                     
+                    Serial.print(" gpsAlt=");
+                    Serial.print(fAlt, 1);
+                    Serial.print(" neg=");
+                    Serial.println(neg);   
+*/
                     break;
                   case 0x5004:                         // Home
                     fr_home = Unpack_uint32(5);
-                    fr_home_dist = (fr_home & 0xFFF)>>2;
-                    fr_pwr = (fr_home & 0x3000)>>12;     // 10 ^ pwr
-                    fRelAlt = (fr_home & 0xFFC000) >> 14; 
-                    neg = (fr_home & 0x1000000) >> 24;
-                    fRelAlt /=  10;
-                    if (neg) fRelAlt = 0 - fRelAlt;
-                    cur.alt = fRelAlt;
+                    fr_home_dist = bit32Extract(fr_home, 2, 10) * (10^bit32Extract(fr_home, 0, 2));
+                    fHomeDist = (float)fr_home_dist * 0.1;  // Not used here 
+                    fAlt = bit32Extract(fr_home, 14, 10) * (10^bit32Extract(fr_home, 12, 2)) * 0.01; // meters
+                    if (bit32Extract(fr_home,24,1) == 1) 
+                      fAlt = fAlt * -1;
+                    cur.alt = fAlt;
                     altGood=true; 
-                    msl = false;                  // Tell the algorithms altitude is relative to home
                      /*
                     Serial.print(" Dist to home=");
-                    Serial.print(fr_home_dist);
-                    Serial.print(" pwr=");
-                    Serial.print(fr_pwr);                 
+                    Serial.print(fHomeDist, 1);             
                     Serial.print(" Rel Alt=");
-                    Serial.println(fRelAlt,1);
-                    */
-                    break;                        
+                    Serial.println(fAlt,1);
+                   */
+                    break;
+                      
                   case 0x5005:                      
                   // Vert and Horiz Velocity and Yaw angle (Heading)
                     fr_velyaw = Unpack_uint32(5);      
-                    fr_velyaw = fr_velyaw & 0xFFF0000;  // Mask out top 4 bits, keep 12b, drop bottom 16b
-                    fr_velyaw =  fr_velyaw >> 16;       // Drop bottom 16 bits, keep 12b  
+                    fr_velyaw = fr_home_dist = bit32Extract(fr_velyaw, 16, 11);
                     fhdg = fr_velyaw/10; 
                     hdgGood=true;
-                    /*
-                    Serial.print(" Heading=");
-                    Serial.println(fhdg,2);
-                    */
-                    break;                   
+                  
+             //       Serial.print(" Heading=");
+             //       Serial.println(fhdg,2);
+                  
+                    break;   
+               
                    
       }
 }
+
+//***************************************************
+  uint32_t bit32Extract(uint32_t dword,uint8_t displ, uint8_t lth) {
+  uint32_t r = (dword & createMask(displ,(displ+lth-1))) >> displ;
+//  Serial.print(" Result=");
+ // Serial.println(r);
+  return r;
+}
+uint32_t createMask(uint8_t lo, uint8_t hi) {
+  uint32_t r = 0;
+  for (unsigned i=lo; i<=hi; i++)
+       r |= 1 << i;
+//  Serial.print(" Mask 0x=");
+//  Serial.println(r, HEX);      
+  return r;
+}
+
 //***************************************************
 void TestServos() {
 PositionServos(90, 0, 90); 
@@ -572,13 +598,8 @@ if (cur.alt<(home.alt-300) || cur.alt>(home.alt+1000)) {
   return false; 
   exit;  
   }
-  if (fRelAlt<-300 || fRelAlt>1000) {
-  Serial.print(" Bad RelAlt = ");
-  Serial.print(fRelAlt);
-  Serial.println("  Packet ignored");    
-  return false; 
-  exit;  
-  }
+
+
   if (fhdg<0 || fhdg>360) {
   Serial.print(" Bad hdg = ");
   Serial.print(fhdg);

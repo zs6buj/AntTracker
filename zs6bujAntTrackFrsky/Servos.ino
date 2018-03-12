@@ -12,14 +12,14 @@ void  PositionServos(float Az, float El, float hmHdg) {
   
 //  int MaxPWM = 2250;
 //  int MinPWM = 750;
-  /*
+/*
   Serial.print("Az = " );
   Serial.print(Az);
   Serial.print("\t El = ");
   Serial.print(El);
   Serial.print("\t hmHdg = " );
   Serial.println(hmHdg);
-  */
+*/
   int pntAz = pointAz(Az, hmHdg);  // Remap Azimuth into a 180 degree window with home-heading centre, negative behind us
   
   if (pntAz<0) {        // Pointing direction is negative, so it needs to point behind us,

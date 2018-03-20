@@ -461,7 +461,7 @@ void ProcessData() {
                     fr_home = Unpack_uint32(5);
                     fr_home_dist = bit32Extract(fr_home, 2, 10) * (10^bit32Extract(fr_home, 0, 2));
                     fHomeDist = (float)fr_home_dist * 0.1;  // Not used here 
-                    fAlt = bit32Extract(fr_home, 14, 10) * (10^bit32Extract(fr_home, 12, 2)) * 0.01; // meters
+                    fAlt = bit32Extract(fr_home, 14, 10) * (10^bit32Extract(fr_home, 12, 2)) * 0.01; // metres
                     if (bit32Extract(fr_home,24,1) == 1) 
                       fAlt = fAlt * -1;
                     cur.alt = fAlt;

@@ -1,10 +1,8 @@
 /*
  * 
- * Modified for 360 degree servo by macfly1202 March 2018
+ * Modified for 360 de
  * 
- * 
- * 
- * */
+ */
 
 void  PositionServos(float Az, float El, float hmHdg) {
   

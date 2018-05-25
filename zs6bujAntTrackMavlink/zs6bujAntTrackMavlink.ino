@@ -312,7 +312,7 @@ void UnpackGpsPosition (int lth){
     cur.lon = fLon;
     cur.alt = fAlt;
    
-
+/*
     Serial.print("Time stamp = ");
     Serial.print(TimeString(TimeStamp));
     Serial.print(" Lat = ");
@@ -332,7 +332,7 @@ void UnpackGpsPosition (int lth){
     Serial.print(" hdg = ");
     Serial.println(fhdg,0); 
     Serial.println();
-
+*/
 }
 //***************************************************
 boolean PacketGood() {

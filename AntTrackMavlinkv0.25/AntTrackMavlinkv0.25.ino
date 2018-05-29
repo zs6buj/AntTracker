@@ -13,14 +13,15 @@ calculates the azimuth and elevation of the craft, and then positions azimuth an
 elevation PWM controlled servos to point a direction high-gain antenna for telemetry, 
 RC or/and and video.
 
-I your servo pair is of the 180 degree type, be sure to comment out this line like 
+If your servo pair is of the 180 degree type, be sure to comment out this line like 
 this:    //#define Az_Servo_360 
 
 Note that the elevation (180 degree) servo flips over to cover the field-of-view behind 
 you when the craft enters that space.
 
-I your servo pair comprises a 360 degree azimuth servo and 90 degree elevation servo, be 
+If your servo pair comprises a 360 degree azimuth servo and 90 degree elevation servo, be 
 sure to un-comment out this line like this:    #define Az_Servo_360 
+360 degree code contributed by macfly1202
 
 The code is written from scratch, but I've taken ideas from Jalves' OpenDIY-AT and others. 
 Information and ideas on other protocols was obtained from GhettoProxy by Guillaume S.
@@ -33,7 +34,7 @@ recommended for perfomance reasons and lack of second (debugging) serial port.
 To use the AntTRacker, position it with the antenna facing the centre of the field in front 
 of you. Position the craft a few metres further, also facing the same heading for take-off. 
 Tracking (movement of the antenna) will occur only when the craft is more than minDist = 4 
-metres from home because accuracy increses sharply thereafter.
+metres from home because accuracy increases sharply thereafter.
 
 When your flight system includes a compass/magnetometer:
 
@@ -77,7 +78,7 @@ v0.15 2017-05-30 Mod word length for 32bit MPUs like STM32
 v0.20 2017-10-20 Fix gps timeout check
 v0.21 2018-05-25 Enable debugging with #define, 360 azimuth servos with #define (as per macfly)
 v0.22 2018-05-26 Include #define option for no_compass working
-v0.23 2018-05-28 Switch to the GCS_Mavlink library. Include blueTooth support with #defines 
+v0.23 2018-05-28 Switch to the GCS_Mavlink library.  
 v0.24 2018-05-29 Limit close-to-home elevation error due to poor vertical GPS accuracy
 v0.25 2018-05-29 Include #define Setup_BT option for HC-06 BlueTooth slave setup on input 
                  telemetry line 

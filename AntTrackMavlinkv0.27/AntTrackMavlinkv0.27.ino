@@ -5,7 +5,7 @@
 
     Eric Stockenstrom - June 2017
 
-    v0.26  
+    v0.27  
 
 This application reads serial telemetry sent from a flight controller or GPS. The module 
 calculates where an airbourne craft is relative to the home position. From this it 
@@ -82,7 +82,8 @@ v0.23 2018-05-28 Switch to the GCS_Mavlink library.
 v0.24 2018-05-29 Limit close-to-home elevation error due to poor vertical GPS accuracy
 v0.25 2018-05-29 Include #define Setup_BT option for HC-06 BlueTooth slave setup on input 
                  telemetry line 
-v0.26 2018-05-30 Fix new bug in Servo. uint8_t now changed to unit16_t. Oops.                 
+v0.26 2018-05-30 Fix new bug in Servo. uint8_t now changed to init16_t. Oops. 
+v0.27 2018-05-30 Fixed nasty typo in No_Compass home calc!  lo1 - home.lon; should be  lo1 = home.lon;               
 
  */
  
@@ -93,7 +94,7 @@ v0.26 2018-05-30 Fix new bug in Servo. uint8_t now changed to unit16_t. Oops.
 
 //#define Az_Servo_360      // Means the azimuth servo can point in a 360 deg circle, elevation servo 90 deg
                             // Default (comment out #define above) is 180 deg azimuth and 180 deg elevation 
-//#define No_Compass        // Use the GPS to determine initial heading of craft and therefore tracker
+//#define No_Compass        // Use the GPS to determine initial heading of craft, and therefore the Tracker
 //#define Setup_BT          // Sets up a previously unused BT-06 BT slave module
 
 //#define Debug_All
@@ -127,10 +128,10 @@ uint32_t hb_millis = 0;
 uint16_t  hb_count = 0;
 
 //  variables for servos
-uint16_t azPWM = 0;
-uint16_t elPWM = 0;
-uint16_t LastGoodpntAz = 90;
-uint16_t LastGoodEl = 0;
+int16_t azPWM = 0;
+int16_t elPWM = 0;
+int16_t LastGoodpntAz = 90;
+int16_t LastGoodEl = 0;
 
 uint8_t minDist = 4;  // dist from home before tracking starts
 
@@ -250,8 +251,8 @@ void loop()  {
   
     MavLink_Receive();                      // Get Mavlink Data
 
-    if (mavGood && (millis() - hb_millis >= 5000)){
-      mavGood = false;   // If no heartbeat for 5 seconds then link timeout 
+    if (mavGood && (millis() - hb_millis >= 8000)){
+      mavGood = false;   // If no heartbeat for 8 seconds then link timed out 
       gpsGood = false;
       #ifdef Debug_All 
       Debug.println("No heartbeat for 5 seconds"); 
@@ -274,7 +275,7 @@ void loop()  {
       homeInitialised = true;
       // Calculate heading as vector from home to where craft is now
       float a, la1, lo1, la2, lo2;
-      lo1 - home.lon;
+      lo1 = home.lon;
       la1 = home.lat;
       lo2 = cur.lon;
       la2 = cur.lat;
@@ -288,8 +289,10 @@ void loop()  {
       home.hdg=a*180/PI;   // Radians to degrees
       if (home.hdg<0) home.hdg=360+home.hdg;
 
-      home.alt = cur.alt;  
-       
+      home.lat = cur.lat;
+      home.lon = cur.lon;
+      home.alt = cur.alt;
+
       DisplayHome();
       
     }  
@@ -361,9 +364,9 @@ void MavLink_Receive() {
             Debug.print(" hb_count=");
             Debug.print(hb_count);
             Debug.println("");
-          #endif
-            if(hb_count >= 3) {        // If  3 heartbeats from MavLink then we are connected
-              mavGood=true;
+            #endif
+            if((hb_count >= 3) || (homeInitialised)) {  // If 3 heartbeats or 1 hb && previously connected, we are connected
+              mavGood=true;                       
               #ifdef Debug_Status
               Debug.println("mavGood=true");  
               #endif
@@ -409,7 +412,7 @@ void MavLink_Receive() {
  
         case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:     // #33
           if ((!mavGood) || (ap_fixtype < 4)) break;  
-          // We have a 3D+ Lock
+          // We have a 3D Plus Lock - change to 3 if you find 3D plus too strict
           
           ap_lat = mavlink_msg_global_position_int_get_lat(&msg);             // Latitude, expressed as degrees * 1E7
           ap_lon = mavlink_msg_global_position_int_get_lon(&msg);             // Pitch angle (rad, -pi..+pi)
@@ -499,11 +502,11 @@ void ServiceTheStatusLed() {
     if (homeInitialised) 
       ledState = HIGH;
     else 
-      BlinkLed(300);
+      BlinkLed(100);
     }
   else 
      if (mavGood) 
-       BlinkLed(1200);
+       BlinkLed(1300);
      else
        ledState = LOW;
        

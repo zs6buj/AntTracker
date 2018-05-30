@@ -1,4 +1,4 @@
-long GetAzEl(float lat1, float lon1, float alt1, float lat2, float lon2, float alt2){
+void GetAzEl(float lat1, float lon1, float alt1, float lat2, float lon2, float alt2){
 /*
  * 
  *  Aviation Formulary V1.33, by Ed Williams
@@ -64,7 +64,7 @@ long GetAzEl(float lat1, float lon1, float alt1, float lat2, float lon2, float a
   }
   #endif
   
-  return hc_vector.az, hc_vector.el, hc_vector.dist ;
+  return;
 }
 //********************************************************
 //  Limit close-to-home elevation error due to poor vertical GPS accuracy 

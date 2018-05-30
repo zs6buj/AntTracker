@@ -7,23 +7,23 @@ void  PositionServos(float Az, float El, float hmHdg) {
   // Uncomment TestServos() in setup() code to observe how well your servos reach 0 deg and 180 deg
 
 #ifdef Az_Servo_360
-  uint16_t llAz = 0;     // Set the limits of the servos here
-  uint16_t ulAz = 360;    
-  uint16_t llEl = 0;
-  uint16_t ulEl = 90;
-  uint16_t MinAzPWM = 650;
-  uint16_t MaxAzPWM = 2400;
-  uint16_t MinElPWM = 1125;
-  uint16_t MaxElPWM = 1875;
+  int16_t llAz = 0;     // Set the limits of the servos here
+  int16_t ulAz = 360;    
+  int16_t llEl = 0;
+  int16_t ulEl = 90;
+  int16_t MinAzPWM = 650;
+  int16_t MaxAzPWM = 2400;
+  int16_t MinElPWM = 1125;
+  int16_t MaxElPWM = 1875;
 #else
-  uint16_t llAz = 0;     
-  uint16_t ulAz = 180;    
-  uint16_t llEl = 0;
-  uint16_t ulEl = 180;
-  uint16_t MaxAzPWM = 2300;
-  uint16_t MinAzPWM = 700;
-  uint16_t MaxElPWM = 2300;
-  uint16_t MinElPWM = 700;
+  int16_t llAz = 0;     
+  int16_t ulAz = 180;    
+  int16_t llEl = 0;
+  int16_t ulEl = 180;
+  int16_t MaxAzPWM = 2300;
+  int16_t MinAzPWM = 700;
+  int16_t MaxElPWM = 2300;
+  int16_t MinElPWM = 700;
 #endif
   #if defined Debug_All || defined Debug_Servos
   Debug.print("Az = " );
@@ -33,13 +33,15 @@ void  PositionServos(float Az, float El, float hmHdg) {
   Debug.print("\t hmHdg = " );
   Debug.println(hmHdg);
 #endif
-  uint16_t pntAz = pointAz(Az, hmHdg);  // Remap Azimuth into a 180 degree window with home-heading centre, negative behind us
-  
-  if (pntAz<0) {        // Pointing direction is negative, so it needs to point behind us,
-    pntAz = 0-pntAz;    // so flip the frame of reference over and mirror it (neg to pos)
-    El = 180-El;        // and make the el servo reach over and behind
-  }
+  int16_t pntAz = pointAz(Az, hmHdg);  // Remap Azimuth into a 180 degree window with home-heading centre, negative behind us
 
+  #ifndef Az_Servo_360            // Note if NOT. Do this for 180, not for 360 azimuth servo
+  if (pntAz<0) {        // Pointing direction is negative, so it needs to point behind us,
+    pntAz = 0 - pntAz;    // so flip the frame of reference over and mirror it (neg to pos)
+    El = 180 - El;        // and make the el servo reach over and behind
+  }
+  #endif 
+   
   // If the craft moves out of this restricted field of reference, servos should wait at the most recent in-field position
   // This code is not neccessary with two 180 degree servos covering an entire hemisphere
 
@@ -73,15 +75,15 @@ void  PositionServos(float Az, float El, float hmHdg) {
   
 }
  //*************************************************** 
-  uint8_t pointAz(uint16_t Azin, uint16_t rhmHdg)  {
+  int16_t pointAz(int16_t Azin, int16_t rhmHdg)  {
   // Remap the craft's absolute Az from the home position to the 180 degree azimuth aperture facing us, and behind us
   // 0 degrees on the left and 180 on the right, same but mirrored and negative behind us 180 on the right 0 on the left.
   // Home (antenna) heading is at the centre (90 deg) of the 180 degree forward azimuth aperture
   // pointAz is the heading to the craft from the home position, and thus where to point the antenna, 
   //  RELATIVE to our frame of reference.
   
-  uint16_t diff;
-  uint16_t pntAz= Azin;
+  int16_t diff;
+  int16_t pntAz= Azin;
 
   #if defined Debug_All || defined Debug_Servos
 //  Debug.print("pointAz = ");

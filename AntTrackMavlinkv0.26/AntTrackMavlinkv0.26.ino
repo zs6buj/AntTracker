@@ -5,7 +5,7 @@
 
     Eric Stockenstrom - June 2017
 
-    v0.25  
+    v0.26  
 
 This application reads serial telemetry sent from a flight controller or GPS. The module 
 calculates where an airbourne craft is relative to the home position. From this it 
@@ -82,6 +82,7 @@ v0.23 2018-05-28 Switch to the GCS_Mavlink library.
 v0.24 2018-05-29 Limit close-to-home elevation error due to poor vertical GPS accuracy
 v0.25 2018-05-29 Include #define Setup_BT option for HC-06 BlueTooth slave setup on input 
                  telemetry line 
+v0.26 2018-05-30 Fix new bug in Servo. uint8_t now changed to unit16_t. Oops.                 
 
  */
  
@@ -100,8 +101,8 @@ v0.25 2018-05-29 Include #define Setup_BT option for HC-06 BlueTooth slave setup
 //#define Mav_Debug_Heartbeat      
 //#define Mav_Debug_GPS_Raw
 //#define Mav_Debug_GPS_Int 
-#define Debug_AzEl
-#define Debug_Servos 
+//#define Debug_AzEl
+//#define Debug_Servos 
 //#define Debug_LEDs                            
 
 uint8_t azPWM_Pin =  7;    // A7 azimuth servo
@@ -123,13 +124,13 @@ bool  homeInitialised = false;
 bool  new_GPS_data = false;
 
 uint32_t hb_millis = 0;
-uint8_t  hb_count = 0;
+uint16_t  hb_count = 0;
 
 //  variables for servos
-uint8_t azPWM = 0;
-uint8_t elPWM = 0;
-uint8_t LastGoodpntAz = 90;
-uint8_t LastGoodEl = 0;
+uint16_t azPWM = 0;
+uint16_t elPWM = 0;
+uint16_t LastGoodpntAz = 90;
+uint16_t LastGoodEl = 0;
 
 uint8_t minDist = 4;  // dist from home before tracking starts
 
@@ -240,7 +241,7 @@ void setup()
   PositionServos(90, 0, 90);   // Intialise servos to az=90, el=0, home.hdg = 90;
   
  
- // TestServos();   // Uncomment this code to observe how well your servos reach their specified limits
+  //TestServos();   // Uncomment this code to observe how well your servos reach their specified limits
                     // Fine tune MaxPWM and MinPWM in Servos module
 }
 //***************************************************

@@ -82,7 +82,6 @@ void  PositionServos(float Az, float El, float hmHdg) {
   // pointAz is the heading to the craft from the home position, and thus where to point the antenna, 
   //  RELATIVE to our frame of reference.
   
-  int16_t diff;
   int16_t pntAz= Azin;
 
   #if defined Debug_All || defined Debug_Servos

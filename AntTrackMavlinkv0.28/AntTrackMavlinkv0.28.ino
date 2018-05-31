@@ -5,7 +5,7 @@
 
     Eric Stockenstrom - June 2017
 
-    v0.27  
+    v0.28  
 
 This application reads serial telemetry sent from a flight controller or GPS. The module 
 calculates where an airbourne craft is relative to the home position. From this it 
@@ -83,7 +83,8 @@ v0.24 2018-05-29 Limit close-to-home elevation error due to poor vertical GPS ac
 v0.25 2018-05-29 Include #define Setup_BT option for HC-06 BlueTooth slave setup on input 
                  telemetry line 
 v0.26 2018-05-30 Fix new bug in Servo. uint8_t now changed to init16_t. Oops. 
-v0.27 2018-05-30 Fixed nasty typo in No_Compass home calc!  lo1 - home.lon; should be  lo1 = home.lon;               
+v0.27 2018-05-30 Fixed nasty typo in No_Compass home calc!  lo1 - home.lon; should be  lo1 = home.lon;  
+v0.28 2018-05-31 Relax GPS lock requirement from 3D Plus (fixtype=4) to 3D (fixtype=3)         
 
  */
  
@@ -103,7 +104,7 @@ v0.27 2018-05-30 Fixed nasty typo in No_Compass home calc!  lo1 - home.lon; shou
 //#define Mav_Debug_GPS_Raw
 //#define Mav_Debug_GPS_Int 
 //#define Debug_AzEl
-//#define Debug_Servos 
+#define Debug_Servos 
 //#define Debug_LEDs                            
 
 uint8_t azPWM_Pin =  7;    // A7 azimuth servo
@@ -411,8 +412,8 @@ void MavLink_Receive() {
           break;
  
         case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:     // #33
-          if ((!mavGood) || (ap_fixtype < 4)) break;  
-          // We have a 3D Plus Lock - change to 3 if you find 3D plus too strict
+          if ((!mavGood) || (ap_fixtype < 3)) break;  
+          // We have a 3D Lock - change to 4 if you want 3D plus
           
           ap_lat = mavlink_msg_global_position_int_get_lat(&msg);             // Latitude, expressed as degrees * 1E7
           ap_lon = mavlink_msg_global_position_int_get_lon(&msg);             // Pitch angle (rad, -pi..+pi)

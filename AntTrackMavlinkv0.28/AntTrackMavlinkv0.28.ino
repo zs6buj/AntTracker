@@ -104,7 +104,7 @@ v0.28 2018-05-31 Relax GPS lock requirement from 3D Plus (fixtype=4) to 3D (fixt
 //#define Mav_Debug_GPS_Raw
 //#define Mav_Debug_GPS_Int 
 //#define Debug_AzEl
-#define Debug_Servos 
+//#define Debug_Servos 
 //#define Debug_LEDs                            
 
 uint8_t azPWM_Pin =  7;    // A7 azimuth servo

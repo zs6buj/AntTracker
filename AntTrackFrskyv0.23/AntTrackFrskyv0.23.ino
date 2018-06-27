@@ -8,20 +8,78 @@
      Eric Stockenstrom - First code June 2017
      
 
-This application reads serial telemetry sent from a flight controller or GPS. The module calculates where an airbourne craft is relative to the home position. From this it calculates the azimuth and elevation
-of the craft, and then positions 180 degree azimuth and elevation PWM controlled servos to point a small high-gain antenna for telemetry and video.
+This application reads serial telemetry sent from a flight controller or GPS. The module 
+calculates where an airbourne craft is relative to the home position. From this it 
+calculates the azimuth and elevation of the craft, and then positions azimuth and 
+elevation PWM controlled servos to point a direction high-gain antenna for telemetry, 
+RC or/and and video.
 
-The code is written from scratch, but I've taken ideas from Jalves' OpenDIY-AT and others. Information and ideas on other protocols was obtained frpm
-GhettoProxy by Guillaume S.
+If your servo pair is of the 180 degree type, be sure to comment out this line like 
+this:    //#define Az_Servo_360 
 
-The target board is an STM32F103 "Blue Pill", chosen for its relative power, small size and second (multi) serial port(s) for debugging.
+Note that the elevation (180 degree) servo flips over to cover the field-of-view behind 
+you when the craft enters that space.
 
-To use the module, position the AntTRacker with the antenna facing the direction of your planned take off. Position the craft a few metres 
-further, also facing the same heading for take-off. The flight computer will determine the magnetic heading, from which all subsequent angles 
-are calculated.
+If your servo pair comprises a 360 degree azimuth servo and 90 degree elevation servo, be 
+sure to un-comment out this line like this:    #define Az_Servo_360 
+360 degree code contributed by macfly1202
 
+The code is written from scratch, but I've taken ideas from Jalves' OpenDIY-AT and others. 
+Information and ideas on other protocols was obtained from GhettoProxy by Guillaume S.
+
+The target board is an STM32F103 "Blue Pill", chosen for its relative power, small size 
+and second (multi) serial port(s) for debugging. The arduino Teensy 3.x is also suitable,
+but much more expensive. The arduino mini pro or similar can be made to work but is not 
+recommended for perfomance reasons and lack of second (debugging) serial port.
+
+To use the AntTRacker, position it with the antenna facing the centre of the field in front 
+of you. Position the craft a few metres further, also facing the same heading for take-off. 
+Tracking (movement of the antenna) will occur only when the craft is more than minDist = 4 
+metres from home because accuracy increases sharply thereafter.
+
+When your flight system includes a compass/magnetometer:
+
+0 Be sure to comment out this line like this :  //#define No_Compass  
+1 Power up the craft.
+2 Power up the ground ground system.
+3 Power up the AntTracker.
+4 When AntTracker successfully connects to the ground system, the LED on the front flashes slowly.
+5 When AntTracker receives its first good GPS location record, the LED flashes fast.
+6 Make sure the front of your craft is pointing in the direction of the AntTracker antenna at rest.
+  The compass heading of the craft now determines the relative heading of the AntTracker antenna.
+7 Push the home button to register the home position and heading.  The LED goes solidly on.
+8 Enjoy your flight! The Tracker will track your craft anywhere in the hemisphere around you.
+
+When your flight system does NOT include a compass/magnetometer:
+
+0 Be sure to un-comment this line like this :  #define No_Compass  
+1 Power up the craft.
+2 Power up the ground system.
+3 Power up the AntTracker.
+4 When AntTracker successfully connects to the ground system, the LED on the front flashes slowly.
+5 When AntTracker receives its first 3D fix GPS location record, the LED flashes fast.
+6 Pick up your craft and walk forward several metres (4 to 8) in the direction of the AntTracker antenna at rest.
+  This deternines the relative heading for the AntTracker antenna.
+7 Return and push the home button to register the home position and heading. The LED goes solidly on.
+8 Enjoy your flight! The Tracker will track your craft anywhere in the hemisphere around you.
+
+The small double bi-quad antenna has excellent gain, and works well with a vertically polarised stick on the craft. Other reception sticks 
+can be added for diversity, and some improvement in link resilience has been observed despite the lower gain of the other links. 
+Of course it would be possible to stack double bi-quad antennas on the AntTracker, but more robust mechanicals will be called for.
 NOTE: In Mavlink Passthrough mode only, relative altitude is GPS (not barometer) derived, so altitude is inaccurate until at least 10 satelites are visible. 
       More is better.
+
+  Connections to STM32F103C are:
+
+    1) To Frsky S.Port Converter   NOT ESSENTIAL    -->TX2 Pin A2   Serial1 
+    2) From Frsky S.Port Converter                  <--RX2 Pin A3   Serial1  
+    3) SetHomePin                                          Pin A5
+    4) StatusLed                                           Pin A6
+    5) Azimuth Servo                                       Pin A7
+    6) Elevation Servo                                     Pin A8 
+    7) Vcc 3.3V !
+    8) GND
+
 
 1 Power up the craft.
 2 Power up the ground Raspi board.
@@ -42,9 +100,19 @@ v0.19 2017-10-17 Include support for Frsky D hub protocol direct from Pixhawk/AP
 v0.20 2017-10-20 Fix gps timeout check
 v0.21 2017-11-04 Add Frsky Mavlink Passthrough
 v0.22 2017-11-10 Tidy up after flight test
+v0.23 2018-06-26 Include support for 360 deg servos, craft with no GPS, limit close-to-home altitude error
  */
 
 #include <Servo.h>
+
+//#define Az_Servo_360      // Means the azimuth servo can point in a 360 deg circle, elevation servo 90 deg
+                            // Default (comment out #define above) is 180 deg azimuth and 180 deg elevation 
+//#define No_Compass        // Use the GPS to determine initial heading of craft, and therefore the Tracker
+
+//#define Debug_All
+//#define Debug_AzEl
+//#define Debug_Servos 
+//#define Debug_LEDs    
 
 boolean FT = true;
 int iLth=0;
@@ -59,42 +127,40 @@ boolean crc_bad;
 // BT Serial1 telemetry pins - RX = A3    TX = A2
 // Serial for printout       - RX = A10   TX = A9
 
-int azPWM_Pin =  7;    // A7 Azimuth
-int elPWM_Pin =  8;    // A8 Elevation
+uint16_t azPWM_Pin =  7;    // A7 Azimuth
+uint16_t elPWM_Pin =  8;    // A8 Elevation
 
-int SetHomePin = 5;    // A5
+uint16_t SetHomePin = 5;    // A5
 
-int StatusLed = 6;  // A6 - Off=No good GPS yet, Flashing=Good GPS but Home not set yet, Solid = Ready to Track
-int BoardLed = PC13;
-int ledState = LOW; 
-unsigned long ledMillis = 0;
+uint16_t StatusLed = 6;  // A6 - Off=No good GPS yet, Flashing=Good GPS but Home not set yet, Solid = Ready to Track
+uint16_t BoardLed = PC13;
+uint16_t ledState = LOW; 
+uint32_t ledMillis = 0;
+uint32_t startup_millis = 0;
 
 //*************
 
-boolean homeInitialised = false;
-boolean serGood = false;
-boolean lonGood = false;
-boolean latGood = false;
-boolean altGood = false;
-boolean hdgGood = false;
-boolean gpsGood = false;
-boolean gpsGoodMsg = false;
-boolean hdopGood = false;
-boolean Passthrough = false;
+bool homeInitialised = false;
+bool serGood = false;
+bool lonGood = false;
+bool latGood = false;
+bool altGood = false;
+bool hdgGood = false;
+bool gpsGood = false;
+bool gpsGoodMsg = false;
+bool hdopGood = false;
+bool Passthrough = false;
 
 //int gpsNumSats = 0;
-unsigned long gpsMillis = 0;
+uint32_t gpsMillis = 0;
 
 //  variables for servos
-int azPWM = 0;
-int elPWM = 0;
-int LastGoodpntAz = 90;
-int LastGoodEl = 0;
+uint16_t azPWM = 0;
+uint16_t elPWM = 0;
+uint16_t LastGoodpntAz = 90;
+uint16_t LastGoodEl = 0;
 
-float fLat = 0;
-float fLon = 0;
 float tLon = 0;
-float fAlt = 0;
 
 float fvx = 0;
 float fvy = 0;
@@ -119,37 +185,42 @@ uint8_t neg;
 uint8_t gpsAlt;
 
 
- int lonDDMM;
- int latDDMM;
- int DD;
- int MM;
- int mmmm;
- float MMmmmm;
- char NS;   // No kidding!
- char EW;
+uint16_t lonDDMM;
+uint16_t latDDMM;
+uint16_t DD;
+uint16_t MM;
+uint16_t mmmm;
+float MMmmmm;
+char NS;   // No kidding!
+char EW;
 
-int MinDisplacement = 4;  // Distance from home before tracking starts
-
-//AzEl declarations
-
-float Azimuth= 90;                     
-float Elevation= 0;                     
-long Distance = 0;
+uint8_t minDist = 4;  // dist from home before tracking starts
 
 // 3D Location vectors
 struct Location {
   float lat; //long
   float lon;
   float alt;
+  float hdg;
 };
 
 struct Location home         = {
-  0,0,0};   // home location
+  0,0,0,0};   // home location
 
 float homeHdg;
 
 struct Location cur      = {
-  0,0,0};   // current location
+  0,0,0,0};   // current location
+
+struct Vector {
+  float az;                     
+  float el;                     
+  long  dist;
+};
+
+// Vector for home-to-current location
+struct Vector hc_vector  = {
+  90, 0, 0};
 
 // Servo instances
 Servo azServo;            // Azimuth
@@ -158,11 +229,17 @@ Servo elServo;            // Elevation
 //***************************************************
 void setup()
 {
+#define Frsky               Serial1         // From S.Port conveter
 
-  Serial1.begin(57600);        // Telemetry input
-  Serial.begin(115200);       // Print Output
-  
-  delay(2000);
+#if defined Debug_All || defined Debug_AzEl  || defined Debug_LEDs || defined Debug_Servos
+    #define Debug               Serial         // USB 
+    Debug.begin(115200);                       // Debug monitor output
+    delay(2000);
+    Debug.println("Starting up......");
+  #endif
+
+  Frsky.begin(57600);        // Telemetry input
+
   pinMode(SetHomePin, INPUT_PULLUP); 
   pinMode(StatusLed , OUTPUT ); 
   pinMode(BoardLed, OUTPUT);     // Board LED mimics status led
@@ -171,9 +248,6 @@ void setup()
   azServo.attach(azPWM_Pin);
   elServo.attach(elPWM_Pin);
   PositionServos(90, 0, 90);   // Intialise servos to az=90, el=0, homeHdg = 90;
-
- Serial.println("Starting up......");
-
   
 // TestServos();   // Uncomment this code to observe how well your servos reach 0 deg and 180 deg
                  // Fine tune MaxPWM and MinPWM in Servos module
@@ -202,12 +276,15 @@ void loop()  {
     boolean goodPacket=ParseData();
     if (goodPacket) ProcessData();
     
+    #if defined Debug_All  
  //   DisplayTheBuffer(10); 
-  
+    #endif
     chr=NextChar();   //  Should be the next Start-Stop  
     }
+      #if defined Debug_All  
   //  else DisplayTheBuffer(2); 
- 
+      #endif
+      
   if (!(chr==0x7E)) FT=true;  //  If next char is not start-stop then the frame sync has been lost. Resync.
 
 //  ++++++++++++++++++++
@@ -221,42 +298,74 @@ void loop()  {
       gpsMillis = millis();                 // Time of last good GPS packet
       if (!gpsGoodMsg) {
         gpsGoodMsg = true;
+        #if defined Debug_All 
         if (!homeInitialised)
-          Serial.println("GPS lock good! Push set-home button anytime to start tracking.");
+            Debug.println("GPS lock good! Push set-home button anytime to start tracking.");
         else
-          Serial.println("GPS lock good again!");
+            Debug.println("GPS lock good again!");
+        #endif  
       }
       
-//    if (homeInitialised && PacketGood()) {   // Resonability check not necessary because we have crc
       if (homeInitialised) {    
         GetAzEl(home.lat, home.lon, home.alt, cur.lat, cur.lon, cur.alt);
-        if (Distance >= MinDisplacement) PositionServos(Azimuth, Elevation, homeHdg);
+        if (hc_vector.dist >= minDist) PositionServos(hc_vector.az, hc_vector.el, home.hdg);
       }
   
-    short SetHomeState = digitalRead(SetHomePin);
-    if (SetHomeState==0 && !homeInitialised && gpsGood){   // Pin 5 is internally pulled up - normally high
- //   if (!homeInitialised && gpsGood){                    // Auto set home on first good GPS packet
-      home.lat = fLat;
-      home.lon = fLon;
-      home.alt = fAlt;
-      homeHdg = fhdg;
+  uint8_t SetHomeState = digitalRead(SetHomePin);
+  
+  #ifdef No_Compass  // If no compass use home determined when 3D+ lock established, homGood = 1
+    if ((SetHomeState == 0) && (gpsGood) && (!homeInitialised)){   
       homeInitialised = true;
-      Serial.print("Home location set to Lat = ");
-      Serial.print(fLat,7);
-      Serial.print(" Lon = ");
-      Serial.print(fLon,7);
-      Serial.print(" Alt = ");
-      Serial.print(fAlt,0); 
-      Serial.print(" Hdg = ");
-      Serial.print(fhdg,0); 
-      Serial.println();
-      }
+      // Calculate heading as vector from home to where craft is now
+      float a, la1, lo1, la2, lo2;
+      lo1 = home.lon;
+      la1 = home.lat;
+      lo2 = cur.lon;
+      la2 = cur.lat;
+      
+      lo1=lo1/180*PI;  // Degrees to radians
+      la1=la1/180*PI;
+      lo2=lo2/180*PI;
+      la2=la2/180*PI;
+
+      a=atan2(sin(lo2-lo1)*cos(la2), cos(la1)*sin(la2)-sin(la1)*cos(la2)*cos(lo2-lo1));
+      home.hdg=a*180/PI;   // Radians to degrees
+      if (home.hdg<0) home.hdg=360+home.hdg;
+
+      home.lat = cur.lat;
+      home.lon = cur.lon;
+      home.alt = cur.alt;
+
+      DisplayHome();
+      
+    }  
+  #else    // if have compass, use FC heading
+  if (SetHomeState == 0 && gpsGood && !homeInitialised){     // pin 5 is pulled up - normally high
+    homeInitialised = true;
+    home.lat = cur.lat;
+    home.lon = cur.lon;
+    home.alt = cur.alt;
+    home.hdg = cur.hdg;
+   
+    DisplayHome();
+    
+    }
+  #endif 
 
     delay(10);
     }
 }  
 //***************************************************
 //***************************************************
+void DisplayHome() {
+    #if defined Debug_All || defined Debug_AzEl
+ //   Debug.print("******************************************");
+    Debug.print("Home location set to Lat = "); Debug.print(home.lat,7);
+    Debug.print(" Lon = "); Debug.print(home.lon,7);
+    Debug.print(" Alt = "); Debug.print(home.alt,0); 
+    Debug.print(" home.hdg = "); Debug.println(home.hdg,0); 
+    #endif 
+}
 void Add_Crc (uint8_t byte) {
   crc += byte;       //0-1FF
   crc += crc >> 8;   //0-100
@@ -275,7 +384,7 @@ byte x;
   }
   // Data is available
   serGood = true;                     // We have a good serial connection!
-  x = Serial1.read();
+  x =Frsky.read();
 
   return x;
 }
@@ -294,11 +403,11 @@ boolean ParseData() {
 
   if (chr==(0xFF-crc)){
     crc_bad = false; 
- //  Serial.println("CRC Good");
+ //  Debug.println("CRC Good");
   }
   else {
     crc_bad=true;
-//   Serial.println("CRC Bad");
+//   Debug.println("CRC Bad");
   }
   return !crc_bad;
 } 
@@ -311,11 +420,10 @@ void ProcessData() {
                    // *****************************************************************
                 //   Old D Style Hub Protocol below 
                   case 0x01:                         // GPS Alt BP
-                    fAlt = Unpack_uint16(5);
-                    if (!(fAlt==0)) altGood=true; 
-                     cur.alt = fAlt;
-                    //Serial.print(" GPS Altitude=");
-                    //Serial.println(fAlt,0);
+                    cur.alt = Unpack_uint16(5);
+                    if (!(cur.alt==0)) altGood=true; 
+                    //Debug.print(" GPS Altitude=");
+                    //Debug.println(cur.alt,0);
                     break;
                   case 0x12:                        // Lon BP
                     lonDDMM = Unpack_uint32(5);
@@ -326,8 +434,8 @@ void ProcessData() {
                   case 0x14:        
                     fhdg = Unpack_uint16(5);      // Course / Heading BP
                     if (!(fhdg==0)) hdgGood=true;
-           //         Serial.print(" Heading=");
-           //         Serial.println(fhdg,0);
+           //         Debug.print(" Heading=");
+           //         Debug.println(fhdg,0);
                     break;               
                   case 0x1A:                      // Lon AP
                     mmmm = Unpack_uint32(5);
@@ -337,25 +445,23 @@ void ProcessData() {
                     tLon = DD + (MMmmmm/60);
                     if (EW==0x57)  tLon = 0-tLon; //  "W", as opposed to "E"
                     // Store tLon and wait for lat to make matched pair    
-                     if (!(fLon==0)) lonGood=true;
+                     if (!(cur.lon==0)) lonGood=true;
                     break;
                   case 0x1B:                      // Lat AP
                     mmmm = Unpack_uint32(5);
                     DD = latDDMM/100;
                     MM = latDDMM -(DD*100);
                     MMmmmm = MM + (mmmm/1E4);
-                    fLat = DD + (MMmmmm/60);     
-                    if (NS==0x53) fLat = 0-fLat;  //  "S", as opposed to "N" 
-                    fLon = tLon;  // Complete the pair 
-                    if (!(fLat==0) && !(fLon==0)) latGood=true;
-                    cur.lat = fLat;
-                    cur.lon = fLon;
+                    cur.lat = DD + (MMmmmm/60);     
+                    if (NS==0x53) cur.lat = 0-cur.lat;  //  "S", as opposed to "N" 
+                    cur.lon = tLon;  // Complete the pair 
+                    if (!(cur.lat=0) && !(cur.lon==0)) latGood=true;
                     /*
                     ShowElapsed();
-                    Serial.print(" latitude=");
-                    Serial.print(fLat,7);
-                    Serial.print(" longitude=");
-                    Serial.println(fLon,7);
+                    Debug.print(" latitude=");
+                    Debug.print(fLat,7);
+                    Debug.print(" longitude=");
+                    Debug.println(fLon,7);
                     */
                     break;
                   case 0x22:                      // Lon E/W
@@ -368,62 +474,65 @@ void ProcessData() {
                 //   New S.Port Protocol below    
                  case 0x800:                      // Latitude and Longitude
                    fr_latlong= Unpack_uint32(5);
+                   #if defined Debug_All     
+                     Debug.print(" latlong=");
+                     Debug.println(fr_latlong);
+                   #endif   
                    ms2bits = fr_latlong >> 30;
                    fr_latlong = fr_latlong & 0x3fffffff; // remove ms2bits
-                   /*
-                   Serial.print(" ms2bits=");
-                   Serial.println(ms2bits);
-                   */
+                   #if defined Debug_All     
+                     Debug.print(" ms2bits=");
+                     Debug.println(ms2bits);
+                   #endif   
                 switch(ms2bits) {
                      case 0:   // Latitude Positive
-                       fLat = fr_latlong / 6E5;     // Only ever update lon and lat in pairs. Lon always comes first                   
-                         /*
-                       Serial.print(" latitude=");
-                       Serial.println(fLat,7);
-                       */
-                       fLon = tLon; 
-                       // Update lon from temp lon below
-                       cur.lat = fLat;
-                       cur.lon = fLon;
-                       if (!(fLat==0) && !(fLon==0)) latGood=true;
+                       cur.lat = fr_latlong / 6E5;     // Only ever update lon and lat in pairs. Lon always comes first                   
+                       cur.lon = tLon;                 // Update lon from temp lon below      
+                       #if defined Debug_All                    
+                         Debug.print(" latitude=");
+                         Debug.println(cur.lat,7);
+                       #endif
+                       if (!(cur.lat==0) && !(cur.lon=0)) latGood=true;
                        break;
                      case 1:   // Latitude Negative       
-                       fLat = 0-(fr_latlong / 6E5);  
-                       /*         
-                       Serial.print(" latitude=");
-                       Serial.println(fLat,7);  
-                       */              
-                       fLon = tLon;
-                       cur.lat = fLat;
-                       cur.lon = fLon;
-                       if (!(fLat==0) && !(fLon==0)) latGood=true;
+                       cur.lat = 0-(fr_latlong / 6E5);  
+                       #if defined Debug_All              
+                         Debug.print(" latitude=");
+                         Debug.println(cur.lat,7);  
+                       #endif   
+                       cur.lon = tLon;
+
+                       if (!(cur.lat==0) && !(cur.lon==0)) latGood=true;
                        break;
                      case 2:   // Longitude Positive
-                       tLon = fr_latlong / 6E5;                 
-         //              Serial.print(" longitude=");
-         //              Serial.println(fLon,7);                     
-                         if (!(fLon==0)) lonGood=true;
+                       tLon = fr_latlong / 6E5;   
+                       #if defined Debug_All                       
+                         Debug.print(" longitude=");
+                         Debug.println(cur.lon,7); 
+                       #endif                       
+                         if (!(cur.lon==0)) lonGood=true;
                        break;
                      case 3:   // Longitude Negative
-                       tLon = 0-(fr_latlong / 6E5);                 
-       //                Serial.print(" longitude=");
-       //                Serial.println(fLon,7);                  
+                       tLon = 0-(fr_latlong / 6E5);  
+                       #if defined Debug_All                        
+                         Debug.print(" longitude=");
+                         Debug.println(tLon,7); 
+                       #endif                   
                        lonGood=true;
                        break;
-                     //
-                    break;
+       
+                   // break;
                    }
                    break;
                   case 0x840:              // Heading
                     fr_heading= Unpack_uint32(5);
-                    fhdg = fr_heading / 100;
+                    cur.hdg = fr_heading / 100;
                     if (!(fhdg==0)) hdgGood=true;
                     break;
                   case 0x100:              // Altitude
                     fr_altitude= Unpack_uint32(5);
-                    fAlt = fr_altitude / 100;
-                    cur.alt = fAlt;
-                    if (!(fAlt==0)) altGood=true; 
+                    cur.alt  = fr_altitude / 100;
+                    if (!(cur.alt ==0)) altGood=true; 
                     break;  
                  // *****************************************************************    
                  //   Mavlink Passthrough Protocol below     
@@ -437,40 +546,39 @@ void ProcessData() {
                     fr_gpsStatus = bit32Extract(fr_gps, 4, 2) + bit32Extract(fr_gps, 14, 2);
                     fr_hdop = bit32Extract(fr_gps, 7, 7) * (10^bit32Extract(fr_gps, 6, 1));
                     gpsAlt = bit32Extract(fr_gps, 24, 7) * (10^bit32Extract(fr_gps, 22, 2));
-                    fAlt = (float)(gpsAlt) / 10;
+                    cur.alt  = (float)(gpsAlt) / 10;
                     neg = bit32Extract(fr_gps, 31, 1);
-                    if (neg==1) fAlt = 0 - fAlt;
+                    if (neg==1) cur.alt = 0 - cur.alt;
                     
                     hdopGood=(fr_hdop>=3) && (fr_numsats>10);
              /*
-                    Serial.print(" Num sats=");
-                    Serial.print(fr_numsats);
-                    Serial.print(" gpsStatus=");
-                    Serial.print(fr_gpsStatus);                
-                    Serial.print(" HDOP=");
-                    Serial.print(fr_hdop);
-                    Serial.print(" fr_vdop=");
-                    Serial.print(fr_vdop);                     
-                    Serial.print(" gpsAlt=");
-                    Serial.print(fAlt, 1);
-                    Serial.print(" neg=");
-                    Serial.println(neg);   
+                    Debug.print(" Num sats=");
+                    Debug.print(fr_numsats);
+                    Debug.print(" gpsStatus=");
+                    Debug.print(fr_gpsStatus);                
+                    Debug.print(" HDOP=");
+                    Debug.print(fr_hdop);
+                    Debug.print(" fr_vdop=");
+                    Debug.print(fr_vdop);                     
+                    Debug.print(" gpsAlt=");
+                    Debug.print(fAlt, 1);
+                    Debug.print(" neg=");
+                    Debug.println(neg);   
 */
                     break;
                   case 0x5004:                         // Home
                     fr_home = Unpack_uint32(5);
                     fr_home_dist = bit32Extract(fr_home, 2, 10) * (10^bit32Extract(fr_home, 0, 2));
                     fHomeDist = (float)fr_home_dist * 0.1;  // Not used here 
-                    fAlt = bit32Extract(fr_home, 14, 10) * (10^bit32Extract(fr_home, 12, 2)) * 0.01; // metres
+                    cur.alt = bit32Extract(fr_home, 14, 10) * (10^bit32Extract(fr_home, 12, 2)) * 0.01; // metres
                     if (bit32Extract(fr_home,24,1) == 1) 
-                      fAlt = fAlt * -1;
-                    cur.alt = fAlt;
+                      cur.alt = cur.alt * -1;
                     altGood=true; 
                      /*
-                    Serial.print(" Dist to home=");
-                    Serial.print(fHomeDist, 1);             
-                    Serial.print(" Rel Alt=");
-                    Serial.println(fAlt,1);
+                    Debug.print(" Dist to home=");
+                    Debug.print(fHomeDist, 1);             
+                    Debug.print(" Rel Alt=");
+                    Debug.println(cur.alt,1);
                    */
                     break;
                       
@@ -478,11 +586,12 @@ void ProcessData() {
                   // Vert and Horiz Velocity and Yaw angle (Heading)
                     fr_velyaw = Unpack_uint32(5);      
                     fr_velyaw = fr_home_dist = bit32Extract(fr_velyaw, 16, 11);
-                    fhdg = fr_velyaw/10; 
+                    cur.hdg = fr_velyaw/10;
+      
                     hdgGood=true;
                   
-             //       Serial.print(" Heading=");
-             //       Serial.println(fhdg,2);
+             //       Debug.print(" Heading=");
+             //       Debug.println(cur.hdg,2);
                   
                     break;   
                
@@ -493,16 +602,16 @@ void ProcessData() {
 //***************************************************
   uint32_t bit32Extract(uint32_t dword,uint8_t displ, uint8_t lth) {
   uint32_t r = (dword & createMask(displ,(displ+lth-1))) >> displ;
-//  Serial.print(" Result=");
- // Serial.println(r);
+//  Debug.print(" Result=");
+ // Debug.println(r);
   return r;
 }
 uint32_t createMask(uint8_t lo, uint8_t hi) {
   uint32_t r = 0;
   for (unsigned i=lo; i<=hi; i++)
        r |= 1 << i;
-//  Serial.print(" Mask 0x=");
-//  Serial.println(r, HEX);      
+//  Debug.print(" Mask 0x=");
+//  Debug.println(r, HEX);      
   return r;
 }
 
@@ -526,8 +635,10 @@ PositionServos(90, 0, 90);
 void CheckForTimeouts() {
   unsigned long cMillis = millis();
     if ((gpsGood==1) && (cMillis - gpsMillis >= 5000)){
-      gpsGood = 0;   // If no GPS packet for 5 seconds then GPS timeout  
-      Serial.println("No GPS telemetry for 5 seconds"); 
+      gpsGood = 0;   // If no GPS packet for 5 seconds then GPS timeout 
+      #if defined Debug_All  
+        Debug.println("No GPS telemetry for 5 seconds"); 
+      #endif  
     }
    ServiceTheStatusLed();
 }
@@ -535,12 +646,12 @@ void CheckForTimeouts() {
 
 void ServiceTheStatusLed() {
 /*
-    Serial.print("gpsGood = ");
-    Serial.print(gpsGood);
-    Serial.print("   serGood = ");
-    Serial.print(serGood);
-    Serial.print("   homeInitialised = ");
-    Serial.println(homeInitialised);
+    Debug.print("gpsGood = ");
+    Debug.print(gpsGood);
+    Debug.print("   serGood = ");
+    Debug.print(serGood);
+    Debug.print("   homeInitialised = ");
+    Debug.println(homeInitialised);
  */
   if (gpsGood) {
     if (homeInitialised) 
@@ -569,46 +680,7 @@ void BlinkLed(int rate) {
       }
 }
 
-//***************************************************
-boolean PacketGood() {
-// Allow 1 degree of lat and lon away from home, i.e. 60 nautical miles radius at the equator
-// Allow 1km up and 300m down from home altitude
-if (!homeInitialised) {  //  You can't use the home co-ordinates for a reasonability test if you don't have them yet
-  return true;
-  exit;
-  }
-if (cur.lat<(home.lat-1.0) || cur.lat>(home.lat+1.0)) {  // Also works for negative lat
-  Serial.print(" Bad lat = ");
-  Serial.print(cur.lat,7);
-  Serial.println("  Packet ignored");   
-  return false; 
-  exit; 
-  }
-  if (cur.lon<(home.lon-1.0) || cur.lon>(home.lon+1.0)) { // Also works for negative lon
-  Serial.print(" Bad lon = ");
-  Serial.print(cur.lon,7);
-  Serial.println("  Packet ignored");  
-  return false; 
-  exit;  
-  }
-if (cur.alt<(home.alt-300) || cur.alt>(home.alt+1000)) {
-  Serial.print(" Bad alt = ");
-  Serial.print(cur.alt);
-  Serial.println("  Packet ignored");    
-  return false; 
-  exit;  
-  }
 
-
-  if (fhdg<0 || fhdg>360) {
-  Serial.print(" Bad hdg = ");
-  Serial.print(fhdg);
-  Serial.println("  Packet ignored");    
-  return false; 
-  exit;  
-  }
-return true;
-}
 //***************************************************
 
 uint32_t Unpack_uint32 (int posn){
@@ -688,24 +760,27 @@ uint8_t Unpack_uint8 (int posn){
    return myvar;
 }
 //***************************************************
+#if defined Debug_All 
 void DisplayTheBuffer (int lth){
   for ( int i = 0; i < lth; i++ ) {
     byte b = packetBuffer[i];
-    if (b<=0xf) Serial.print("0");
-    Serial.print(b,HEX);
-    Serial.print(" ");
+    if (b<=0xf) Debug.print("0");
+    Debug.print(b,HEX);
+    Debug.print(" ");
   }
-  Serial.println();
-
+  Debug.println();
 }
+#endif
 //***************************************************
+#if defined Debug_All 
 void DisplayField (int pos, int lth){
   for ( int i = pos; i < pos+lth; i++ ) {
-    Serial.print(packetBuffer[i],HEX);
-    Serial.print(" ");
+    Debug.print(packetBuffer[i],HEX);
+    Debug.print(" ");
   }
-  Serial.print("// ");
+  Debug.print("// ");
 }
+#endif
 //***************************************************
 String TimeString (unsigned long epoch){
  int hh = (epoch  % 86400L) / 3600;   // remove the days (86400 secs per day) and div the remainer to get hrs
@@ -731,12 +806,14 @@ uint8_t Unpack8 (int posn){
     return myvar;
 }
 //***************************************************
+#if defined Debug_All  
 void ShowElapsed() {
-  Serial.print(" Seconds=");
+  Debug.print(" Seconds=");
   unsigned long millnow=millis();
   float fSecs = millnow / 1000;
-  Serial.print(fSecs,1);
-  Serial.print(" ");
+  Debug.print(fSecs,1);
+  Debug.print(" ");
 }
+#endif
 //***************************************************
  

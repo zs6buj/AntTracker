@@ -99,7 +99,7 @@ v0.28 2018-05-31 Relax GPS lock requirement from 3D Plus (fixtype=4) to 3D (fixt
 //#define Setup_BT          // Sets up a previously unused BT-06 BT slave module
 
 //#define Debug_All
-#define Debug_Status
+//#define Debug_Status
 //#define Mav_Debug_Heartbeat      
 //#define Mav_Debug_GPS_Raw
 //#define Mav_Debug_GPS_Int 
@@ -156,13 +156,13 @@ struct Vector {
   long  dist;
 };
 
-// Vector for home to current location
+// Vector for home-to-current location
 struct Vector hc_vector  = {
   90, 0, 0};
   
 // Servo class declarations
-Servo azServo;            // hc_vector.az
-Servo elServo;            // hc_vector.el
+Servo azServo;            // Azimuth
+Servo elServo;            // Elevation
 
 // ******************************************
 // Mavlink Messages

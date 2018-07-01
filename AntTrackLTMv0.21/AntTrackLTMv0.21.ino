@@ -8,26 +8,60 @@
      Eric Stockenstrom - August 2017
      
 
-This application reads serial telemetry sent from a flight controller or GPS. The module calculates where an airbourne craft is relative to the home position. From this it calculates the azimuth and elevation
-of the craft, and then positions 180 degree azimuth and elevation PWM controlled servos to point a 5GHz double bi-quad antenna 
-for telemetry and video.
+This application reads serial telemetry sent from a flight controller or GPS. The module 
+calculates where an airbourne craft is relative to the home position. From this it 
+calculates the azimuth and elevation of the craft, and then positions azimuth and 
+elevation PWM controlled servos to point a direction high-gain antenna for telemetry, 
+RC or/and and video.
 
-The code is written from scratch, but I've taken ideas from Jalves' OpenDIY-AT and others. Information and ideas on other protocols was obtained frpm
-GhettoProxy by Guillaume S.
+If your servo pair is of the 180 degree type, be sure to comment out this line like 
+this:    //#define Az_Servo_360 
 
-The target board is an STM32F103 "Blue Pill", chosen for its relative power, small size and second (multi) serial port(s) for debugging.
+Note that the elevation (180 degree) servo flips over to cover the field-of-view behind 
+you when the craft enters that space.
 
-To use the module, position the AntTRacker with the antenna facing the direction of your planned take off. Position the craft a few metres 
-further, also facing the same heading for take-off. The flight computer will determine the magnetic heading, from which all subsequent angles 
-are calculated.
+If your servo pair comprises a 360 degree azimuth servo and 90 degree elevation servo, be 
+sure to un-comment out this line like this:    #define Az_Servo_360 
+360 degree code contributed by macfly1202
 
+The code is written from scratch, but I've taken ideas from Jalves' OpenDIY-AT and others. 
+Information and ideas on other protocols was obtained from GhettoProxy by Guillaume S.
+
+The target board is an STM32F103 "Blue Pill", chosen for its relative power, small size 
+and second (multi) serial port(s) for debugging. The arduino Teensy 3.x is also suitable,
+but much more expensive. The arduino mini pro or similar can be made to work but is not 
+recommended for perfomance reasons and lack of second (debugging) serial port.
+
+To use the AntTRacker, position it with the antenna facing the centre of the field in front 
+of you. Position the craft a few metres further, also facing the same heading for take-off. 
+Tracking (movement of the antenna) will occur only when the craft is more than minDist = 4 
+metres from home because accuracy increases sharply thereafter.
+
+When your flight system includes a compass/magnetometer:
+
+0 Be sure to comment out this line like this :  //#define No_Compass  
 1 Power up the craft.
-2 Power up the ground Raspi board.
+2 Power up the ground ground system.
 3 Power up the AntTracker.
-4 When AntTracker successfully connects to the ground raspi, the LED on the front flashes slowly.
+4 When AntTracker successfully connects to the ground system, the LED on the front flashes slowly.
 5 When AntTracker receives its first good GPS location record, the LED flashes fast.
-6 Push the home button to register the home position and heading. The LED goes solidly on.
-7 Enjoy your flight! The Tracker will track your craft anywhere in the hemisphere around you (but not closer than 3 metres).
+6 Make sure the front of your craft is pointing in the direction of the AntTracker antenna at rest.
+  The compass heading of the craft now determines the relative heading of the AntTracker antenna.
+7 Push the home button to register the home position and heading.  The LED goes solidly on.
+8 Enjoy your flight! The Tracker will track your craft anywhere in the hemisphere around you.
+
+When your flight system does NOT include a compass/magnetometer:
+
+0 Be sure to un-comment this line like this :  #define No_Compass  
+1 Power up the craft.
+2 Power up the ground system.
+3 Power up the AntTracker.
+4 When AntTracker successfully connects to the ground system, the LED on the front flashes slowly.
+5 When AntTracker receives its first 3D fix GPS location record, the LED flashes fast.
+6 Pick up your craft and walk forward several metres (4 to 8) in the direction of the AntTracker antenna at rest.
+  This deternines the relative heading for the AntTracker antenna.
+7 Return and push the home button to register the home position and heading. The LED goes solidly on.
+8 Enjoy your flight! The Tracker will track your craft anywhere in the hemisphere around you.
 
 The small double bi-quad antenna has excellent gain, and works well with a vertically polarised stick on the craft. Other reception sticks 
 can be added for diversity, and some improvement in link resilience has been observed despite the lower gain of the other links. 

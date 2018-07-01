@@ -1,4 +1,4 @@
-  
+
 /*
 
     ZS6BUJ's Antenna Tracker
@@ -101,6 +101,7 @@ v0.20 2017-10-20 Fix gps timeout check
 v0.21 2017-11-04 Add Frsky Mavlink Passthrough
 v0.22 2017-11-10 Tidy up after flight test
 v0.23 2018-06-26 Include support for 360 deg servos, craft with no GPS, limit close-to-home altitude error
+v0.24 2018-07-01 Streamline use of Location structure  
  */
 
 #include <Servo.h>
@@ -204,10 +205,10 @@ struct Location {
   float hdg;
 };
 
-struct Location home         = {
+struct Location hom         = {
   0,0,0,0};   // home location
 
-float homeHdg;
+//float homeHdg;
 
 struct Location cur      = {
   0,0,0,0};   // current location
@@ -307,8 +308,8 @@ void loop()  {
       }
       
       if (homeInitialised) {    
-        GetAzEl(home.lat, home.lon, home.alt, cur.lat, cur.lon, cur.alt);
-        if (hc_vector.dist >= minDist) PositionServos(hc_vector.az, hc_vector.el, home.hdg);
+        GetAzEl(hom, cur);
+        if (hc_vector.dist >= minDist) PositionServos(hc_vector.az, hc_vector.el, hom.hdg);
       }
   
   uint8_t SetHomeState = digitalRead(SetHomePin);
@@ -318,8 +319,8 @@ void loop()  {
       homeInitialised = true;
       // Calculate heading as vector from home to where craft is now
       float a, la1, lo1, la2, lo2;
-      lo1 = home.lon;
-      la1 = home.lat;
+      lo1 = hom.lon;
+      la1 = hom.lat;
       lo2 = cur.lon;
       la2 = cur.lat;
       
@@ -329,12 +330,12 @@ void loop()  {
       la2=la2/180*PI;
 
       a=atan2(sin(lo2-lo1)*cos(la2), cos(la1)*sin(la2)-sin(la1)*cos(la2)*cos(lo2-lo1));
-      home.hdg=a*180/PI;   // Radians to degrees
-      if (home.hdg<0) home.hdg=360+home.hdg;
+      hom.hdg=a*180/PI;   // Radians to degrees
+      if (hom.hdg<0) hom.hdg=360+hom.hdg;
 
-      home.lat = cur.lat;
-      home.lon = cur.lon;
-      home.alt = cur.alt;
+      hom.lat = cur.lat;
+      hom.lon = cur.lon;
+      hom.alt = cur.alt;
 
       DisplayHome();
       
@@ -342,10 +343,10 @@ void loop()  {
   #else    // if have compass, use FC heading
   if (SetHomeState == 0 && gpsGood && !homeInitialised){     // pin 5 is pulled up - normally high
     homeInitialised = true;
-    home.lat = cur.lat;
-    home.lon = cur.lon;
-    home.alt = cur.alt;
-    home.hdg = cur.hdg;
+    hom.lat = cur.lat;
+    hom.lon = cur.lon;
+    hom.alt = cur.alt;
+    hom.hdg = cur.hdg;
    
     DisplayHome();
     
@@ -360,10 +361,10 @@ void loop()  {
 void DisplayHome() {
     #if defined Debug_All || defined Debug_AzEl
  //   Debug.print("******************************************");
-    Debug.print("Home location set to Lat = "); Debug.print(home.lat,7);
-    Debug.print(" Lon = "); Debug.print(home.lon,7);
-    Debug.print(" Alt = "); Debug.print(home.alt,0); 
-    Debug.print(" home.hdg = "); Debug.println(home.hdg,0); 
+    Debug.print("Home location set to Lat = "); Debug.print(hom.lat,7);
+    Debug.print(" Lon = "); Debug.print(hom.lon,7);
+    Debug.print(" Alt = "); Debug.print(hom.alt,0); 
+    Debug.print(" hom.hdg = "); Debug.println(hom.hdg,0); 
     #endif 
 }
 void Add_Crc (uint8_t byte) {

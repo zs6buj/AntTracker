@@ -83,8 +83,9 @@ v0.24 2018-05-29 Limit close-to-home elevation error due to poor vertical GPS ac
 v0.25 2018-05-29 Include #define Setup_BT option for HC-06 BlueTooth slave setup on input 
                  telemetry line 
 v0.26 2018-05-30 Fix new bug in Servo. uint8_t now changed to init16_t. Oops. 
-v0.27 2018-05-30 Fixed nasty typo in No_Compass home calc!  lo1 - home.lon; should be  lo1 = home.lon;  
-v0.28 2018-05-31 Relax GPS lock requirement from 3D Plus (fixtype=4) to 3D (fixtype=3)         
+v0.27 2018-05-30 Fixed nasty typo in No_Compass home calc!  lo1 - hom.lon; should be  lo1 = hom.lon;  
+v0.28 2018-05-31 Relax GPS lock requirement from 3D Plus (fixtype=4) to 3D (fixtype=3)
+v0.29 2018-07-01 Streamline use of Location structure         
 
  */
  
@@ -98,7 +99,7 @@ v0.28 2018-05-31 Relax GPS lock requirement from 3D Plus (fixtype=4) to 3D (fixt
 //#define No_Compass        // Use the GPS to determine initial heading of craft, and therefore the Tracker
 //#define Setup_BT          // Sets up a previously unused BT-06 BT slave module
 
-//#define Debug_All
+#define Debug_All
 //#define Debug_Status
 //#define Mav_Debug_Heartbeat      
 //#define Mav_Debug_GPS_Raw
@@ -134,6 +135,7 @@ int16_t elPWM = 0;
 int16_t LastGoodpntAz = 90;
 int16_t LastGoodEl = 0;
 
+bool ft = true;
 uint8_t minDist = 4;  // dist from home before tracking starts
 
 // 3D Location vectors
@@ -144,16 +146,16 @@ struct Location {
   float hdg;
 };
 
-struct Location home     = {
+struct Location hom     = {
   0,0,0,0};   // home location
 
 struct Location cur      = {
   0,0,0,0};   // current location
   
 struct Vector {
-  float az;                     
-  float el;                     
-  long  dist;
+  float    az;                     
+  float    el;                     
+  int32_t  dist;
 };
 
 // Vector for home-to-current location
@@ -240,7 +242,7 @@ void setup()
 
   azServo.attach(azPWM_Pin);
   elServo.attach(elPWM_Pin);
-  PositionServos(90, 0, 90);   // Intialise servos to az=90, el=0, home.hdg = 90;
+  PositionServos(90, 0, 90);   // Intialise servos to az=90, el=0, hom.hdg = 90;
   
  
   //TestServos();   // Uncomment this code to observe how well your servos reach their specified limits
@@ -262,9 +264,19 @@ void loop()  {
     
     ServiceTheStatusLed();
 
+    #ifndef No_Compass 
+    if (gpsGood==1 && ft) {
+      ft=false;
+      if (homeInitialised ==0)
+        Serial.println("GPS lock good! Push set-home button anytime to start tracking.");
+      else
+        Serial.println("GPS lock good again!");
+    }
+    #endif
+
     if (mavGood && homeInitialised && new_GPS_data) {  //  every time there is new GPS data from mavlink
-      GetAzEl(home.lat, home.lon, home.alt, cur.lat, cur.lon, cur.alt);
-      if (hc_vector.dist >= minDist) PositionServos(hc_vector.az, hc_vector.el, home.hdg);
+      GetAzEl(hom, cur);
+      if (hc_vector.dist >= minDist) PositionServos(hc_vector.az, hc_vector.el, hom.hdg);
       new_GPS_data = false;
     }
  
@@ -276,8 +288,8 @@ void loop()  {
       homeInitialised = true;
       // Calculate heading as vector from home to where craft is now
       float a, la1, lo1, la2, lo2;
-      lo1 = home.lon;
-      la1 = home.lat;
+      lo1 = hom.lon;
+      la1 = hom.lat;
       lo2 = cur.lon;
       la2 = cur.lat;
       
@@ -287,12 +299,12 @@ void loop()  {
       la2=la2/180*PI;
 
       a=atan2(sin(lo2-lo1)*cos(la2), cos(la1)*sin(la2)-sin(la1)*cos(la2)*cos(lo2-lo1));
-      home.hdg=a*180/PI;   // Radians to degrees
-      if (home.hdg<0) home.hdg=360+home.hdg;
+      hom.hdg=a*180/PI;   // Radians to degrees
+      if (hom.hdg<0) hom.hdg=360+hom.hdg;
 
-      home.lat = cur.lat;
-      home.lon = cur.lon;
-      home.alt = cur.alt;
+      hom.lat = cur.lat;
+      hom.lon = cur.lon;
+      hom.alt = cur.alt;
 
       DisplayHome();
       
@@ -300,10 +312,10 @@ void loop()  {
   #else    // if have compass, use FC heading
   if (SetHomeState == 0 && gpsGood && !homeInitialised){     // pin 5 is pulled up - normally high
     homeInitialised = true;
-    home.lat = cur.lat;
-    home.lon = cur.lon;
-    home.alt = cur.alt;
-    home.hdg = cur.hdg;
+    hom.lat = cur.lat;
+    hom.lon = cur.lon;
+    hom.alt = cur.alt;
+    hom.hdg = cur.hdg;
    
     DisplayHome();
     
@@ -316,10 +328,10 @@ void loop()  {
 void DisplayHome() {
     #if defined Debug_All || defined Debug_AzEl
  //   Debug.print("******************************************");
-    Debug.print("Home location set to Lat = "); Debug.print(home.lat,7);
-    Debug.print(" Lon = "); Debug.print(home.lon,7);
-    Debug.print(" Alt = "); Debug.print(home.alt,0); 
-    Debug.print(" home.hdg = "); Debug.println(home.hdg,0); 
+    Debug.print("Home location set to Lat = "); Debug.print(hom.lat,7);
+    Debug.print(" Lon = "); Debug.print(hom.lon,7);
+    Debug.print(" Alt = "); Debug.print(hom.alt,0); 
+    Debug.print(" hom.hdg = "); Debug.println(hom.hdg,0); 
     #endif 
 }
 //***************************************************
@@ -437,17 +449,17 @@ void MavLink_Receive() {
             #ifdef Debug_Status
               Debug.println("homGood=true");  
             #endif
-            home.lat = (float)ap_lat / 1E7;
-            home.lon = (float)ap_lon / 1E7;
-            home.alt = (float)ap_amsl24 / 1E3;
-            home.hdg = (float)ap_hdg / 100;
+            hom.lat = (float)ap_lat / 1E7;
+            hom.lon = (float)ap_lon / 1E7;
+            hom.alt = (float)ap_amsl24 / 1E3;
+            hom.hdg = (float)ap_hdg / 100;
 
             #if defined Debug_All || defined Mav_Debug_GPS_Int 
               Debug.print("******************************************Mavlink in #33 GPS Int: Home established: ");       
-              Debug.print("home.lat=");  Debug.print(home.lat, 7);
-              Debug.print(" home.lon="); Debug.print(home.lon, 7 );        
-              Debug.print(" home.alt="); Debug.print(home.alt, 1);
-              Debug.print(" home.hdg="); Debug.println(home.hdg);                   
+              Debug.print("hom.lat=");  Debug.print(hom.lat, 7);
+              Debug.print(" hom.lon="); Debug.print(hom.lon, 7 );        
+              Debug.print(" hom.alt="); Debug.print(hom.alt, 1);
+              Debug.print(" hom.hdg="); Debug.println(hom.hdg);                   
             #endif 
           } 
 

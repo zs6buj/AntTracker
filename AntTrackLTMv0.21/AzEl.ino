@@ -1,4 +1,4 @@
-void GetAzEl(float lat1, float lon1, float alt1, float lat2, float lon2, float alt2){
+void GetAzEl(const struct Location &hom, const struct Location &cur){
 /*
  * 
  *  Aviation Formulary V1.33, by Ed Williams
@@ -12,21 +12,21 @@ void GetAzEl(float lat1, float lon1, float alt1, float lat2, float lon2, float a
  *          2*pi)
  */
   
-  float a, tc1, R, c, d, dLat, dLon;
+  float a, c, d, dLat, dLon;
   
   #if defined Debug_All || defined Debug_AzEl
-    Debug.print("lat1 = "); Debug.print(lat1,7);
-    Debug.print(" lon1 = "); Debug.print(lon1,7);
-    Debug.print(" alt1 = "); Debug.print(alt1,0);
-    Debug.print(" lat2 = "); Debug.print(lat2,7); 
-    Debug.print(" lon2 = "); Debug.print(lon2,7); 
-    Debug.print(" alt2 = "); Debug.println(alt2,0); 
+    Debug.print("hom.lat = "); Debug.print(hom.lat,7);
+    Debug.print(" hom.lon = "); Debug.print(hom.lon,7);
+    Debug.print(" hom.alt = "); Debug.print(hom.alt,0);
+    Debug.print(" cur.lat = "); Debug.print(cur.lat,7); 
+    Debug.print(" cur.lon = "); Debug.print(cur.lon,7); 
+    Debug.print(" cur.alt = "); Debug.println(cur.alt,0); 
  #endif
   
-  lon1=lon1/180*PI;  // Degrees to radians
-  lat1=lat1/180*PI;
-  lon2=lon2/180*PI;
-  lat2=lat2/180*PI;
+  float lon1 = hom.lon / 180 * PI;  // Degrees to radians
+  float lat1 = hom.lat / 180 * PI;
+  float lon2 = cur.lon / 180 * PI;
+  float lat2 = cur.lat / 180 * PI;
 
   //Calculate azimuth
   a=atan2(sin(lon2-lon1)*cos(lat2), cos(lat1)*sin(lat2)-sin(lat1)*cos(lat2)*cos(lon2-lon1));
@@ -42,7 +42,7 @@ void GetAzEl(float lat1, float lon1, float alt1, float lat2, float lon2, float a
   hc_vector.dist = d;
 
   // Calculate elevation
-  int16_t altR = alt2-alt1;  // Relative alt
+  int16_t altR = cur.alt - hom.alt;  // Relative alt
 
   altR = altR * LimitCloseToHomeError(d, altR);
   

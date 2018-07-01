@@ -3,7 +3,7 @@
 
     ZS6BUJ's Antenna Tracker
 
-     Version 0.20 - Input LTM Protcol only - serial 2400 bps
+     Input LTM Protcol only - serial 2400 bps
 
      Eric Stockenstrom - August 2017
      

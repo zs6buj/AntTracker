@@ -26,13 +26,12 @@ void  PositionServos(float Az, float El, float hmHdg) {
   int16_t MinElPWM = 700;
 #endif
   #if defined Debug_All || defined Debug_Servos
-    Debug.print("Servo Module: " );
-    Debug.print("Az = " );
-    Debug.print(Az);
-    Debug.print("\t El = ");
-    Debug.print(El);
-    Debug.print("\t hmHdg = " );
-    Debug.println(hmHdg);
+  Debug.print("Az = " );
+  Debug.print(Az);
+  Debug.print("\t El = ");
+  Debug.print(El);
+  Debug.print("\t hmHdg = " );
+  Debug.println(hmHdg);
 #endif
   int16_t pntAz = pointAz(Az, hmHdg);  // Remap Azimuth into a 180 degree window with home-heading centre, negative behind us
 
@@ -58,7 +57,6 @@ void  PositionServos(float Az, float El, float hmHdg) {
   elServo.writeMicroseconds(elPWM);
   
   #if defined Debug_All || defined Debug_Servos
-  Debug.print("Servo Module: " ); 
   Debug.print("pntAz = " );
   Debug.print(pntAz);
   Debug.print(" El = ");

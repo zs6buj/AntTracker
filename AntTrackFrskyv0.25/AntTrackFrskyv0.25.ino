@@ -102,6 +102,7 @@ v0.21 2017-11-04 Add Frsky Mavlink Passthrough
 v0.22 2017-11-10 Tidy up after flight test
 v0.23 2018-06-26 Include support for 360 deg servos, craft with no GPS, limit close-to-home altitude error
 v0.24 2018-07-01 Streamline use of Location structure  
+v0.25 2018-07-10 Improve debugging with #define Debug_SPort and #define Debug_Telemetry
  */
 
 #include <Servo.h>

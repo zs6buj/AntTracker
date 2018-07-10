@@ -111,6 +111,8 @@ v0.24 2018-07-01 Streamline use of Location structure
 //#define No_Compass        // Use the GPS to determine initial heading of craft, and therefore the Tracker
 
 //#define Debug_All
+//#define Debug_SPort
+//#define Debug_Telemetry
 //#define Debug_AzEl
 //#define Debug_Servos 
 //#define Debug_LEDs    
@@ -232,7 +234,7 @@ void setup()
 {
 #define Frsky               Serial1         // From S.Port conveter
 
-#if defined Debug_All || defined Debug_AzEl  || defined Debug_LEDs || defined Debug_Servos
+#if defined Debug_All || defined Debug_SPort || defined Debug_Telemetry || defined Debug_AzEl || defined Debug_LEDs || defined Debug_Servos
     #define Debug               Serial         // USB 
     Debug.begin(115200);                       // Debug monitor output
     delay(2000);
@@ -276,15 +278,17 @@ void loop()  {
     packetBuffer[2]=chr;
     boolean goodPacket=ParseData();
     if (goodPacket) ProcessData();
-    
-    #if defined Debug_All  
- //   DisplayTheBuffer(10); 
-    #endif
+    #if defined Debug_All || defined Debug_SPort
+      DisplayTheBuffer(10);
+    #endif 
     chr=NextChar();   //  Should be the next Start-Stop  
     }
-      #if defined Debug_All  
-  //  else DisplayTheBuffer(2); 
-      #endif
+  else {
+    #if defined Debug_All || defined Debug_SPort
+      DisplayTheBuffer(2);
+    #endif  
+    }
+
       
   if (!(chr==0x7E)) FT=true;  //  If next char is not start-stop then the frame sync has been lost. Resync.
 
@@ -299,7 +303,7 @@ void loop()  {
       gpsMillis = millis();                 // Time of last good GPS packet
       if (!gpsGoodMsg) {
         gpsGoodMsg = true;
-        #if defined Debug_All 
+        #if defined Debug_All || defined Debug_Telemetry
         if (!homeInitialised)
             Debug.println("GPS lock good! Push set-home button anytime to start tracking.");
         else
@@ -354,12 +358,12 @@ void loop()  {
   #endif 
 
     delay(10);
-    }
+  }
 }  
 //***************************************************
 //***************************************************
 void DisplayHome() {
-    #if defined Debug_All || defined Debug_AzEl
+    #if defined Debug_All || defined Debug_Telemetry || defined Debug_AzEl
  //   Debug.print("******************************************");
     Debug.print("Home location set to Lat = "); Debug.print(hom.lat,7);
     Debug.print(" Lon = "); Debug.print(hom.lon,7);
@@ -489,7 +493,7 @@ void ProcessData() {
                      case 0:   // Latitude Positive
                        cur.lat = fr_latlong / 6E5;     // Only ever update lon and lat in pairs. Lon always comes first                   
                        cur.lon = tLon;                 // Update lon from temp lon below      
-                       #if defined Debug_All                    
+                       #if defined Debug_All || defined Debug_Telemetry                 
                          Debug.print(" latitude=");
                          Debug.println(cur.lat,7);
                        #endif
@@ -497,7 +501,7 @@ void ProcessData() {
                        break;
                      case 1:   // Latitude Negative       
                        cur.lat = 0-(fr_latlong / 6E5);  
-                       #if defined Debug_All              
+                       #if defined Debug_All || defined Debug_Telemetry            
                          Debug.print(" latitude=");
                          Debug.println(cur.lat,7);  
                        #endif   
@@ -552,20 +556,21 @@ void ProcessData() {
                     if (neg==1) cur.alt = 0 - cur.alt;
                     
                     hdopGood=(fr_hdop>=3) && (fr_numsats>10);
-             /*
-                    Debug.print(" Num sats=");
-                    Debug.print(fr_numsats);
-                    Debug.print(" gpsStatus=");
-                    Debug.print(fr_gpsStatus);                
-                    Debug.print(" HDOP=");
-                    Debug.print(fr_hdop);
-                    Debug.print(" fr_vdop=");
-                    Debug.print(fr_vdop);                     
-                    Debug.print(" gpsAlt=");
-                    Debug.print(fAlt, 1);
-                    Debug.print(" neg=");
-                    Debug.println(neg);   
-*/
+                    #if defined Debug_All || defined Debug_Telemetry 
+                      Debug.print(" Num sats=");
+                      Debug.print(fr_numsats);
+                      Debug.print(" gpsStatus=");
+                      Debug.print(fr_gpsStatus);                
+                      Debug.print(" HDOP=");
+                      Debug.print(fr_hdop);
+                      Debug.print(" fr_vdop=");
+                      Debug.print(fr_vdop);                     
+                      Debug.print(" gpsAlt=");
+                      Debug.print(cur.alt, 1);
+                      Debug.print(" neg=");
+                      Debug.println(neg);   
+                    #endif
+
                     break;
                   case 0x5004:                         // Home
                     fr_home = Unpack_uint32(5);
@@ -575,12 +580,12 @@ void ProcessData() {
                     if (bit32Extract(fr_home,24,1) == 1) 
                       cur.alt = cur.alt * -1;
                     altGood=true; 
-                     /*
-                    Debug.print(" Dist to home=");
-                    Debug.print(fHomeDist, 1);             
-                    Debug.print(" Rel Alt=");
-                    Debug.println(cur.alt,1);
-                   */
+                    #if defined Debug_All || defined Debug_Telemetry 
+                      Debug.print(" Dist to home=");
+                      Debug.print(fHomeDist, 1);             
+                      Debug.print(" Rel Alt=");
+                      Debug.println(cur.alt,1);
+                    #endif
                     break;
                       
                   case 0x5005:                      
@@ -590,10 +595,10 @@ void ProcessData() {
                     cur.hdg = fr_velyaw/10;
       
                     hdgGood=true;
-                  
-             //       Debug.print(" Heading=");
-             //       Debug.println(cur.hdg,2);
-                  
+                    #if defined Debug_All || defined Debug_Telemetry 
+                      Debug.print(" Heading=");
+                      Debug.println(cur.hdg,2);
+                    #endif
                     break;   
                
                    
@@ -761,7 +766,7 @@ uint8_t Unpack_uint8 (int posn){
    return myvar;
 }
 //***************************************************
-#if defined Debug_All 
+#if defined Debug_All || defined Debug_SPort
 void DisplayTheBuffer (int lth){
   for ( int i = 0; i < lth; i++ ) {
     byte b = packetBuffer[i];
@@ -773,7 +778,7 @@ void DisplayTheBuffer (int lth){
 }
 #endif
 //***************************************************
-#if defined Debug_All 
+#if defined Debug_All || defined Debug_SPort
 void DisplayField (int pos, int lth){
   for ( int i = pos; i < pos+lth; i++ ) {
     Debug.print(packetBuffer[i],HEX);

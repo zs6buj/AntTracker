@@ -452,7 +452,7 @@ void ProcessData() {
                     tLon = DD + (MMmmmm/60);
                     if (EW==0x57)  tLon = 0-tLon; //  "W", as opposed to "E"
                     // Store tLon and wait for lat to make matched pair    
-                     if (!(cur.lon==0)) lonGood=true;
+                     if (!(cur.lon==0.000000)) lonGood=true;
                     break;
                   case 0x1B:                      // Lat AP
                     mmmm = Unpack_uint32(5);
@@ -462,7 +462,7 @@ void ProcessData() {
                     cur.lat = DD + (MMmmmm/60);     
                     if (NS==0x53) cur.lat = 0-cur.lat;  //  "S", as opposed to "N" 
                     cur.lon = tLon;  // Complete the pair 
-                    if (!(cur.lat=0) && !(cur.lon==0)) latGood=true;
+                    if (!(cur.lat=0.000000) && !(cur.lon==0.000000)) latGood=true;
                     /*
                     ShowElapsed();
                     Debug.print(" latitude=");
@@ -499,7 +499,7 @@ void ProcessData() {
                          Debug.print(" latitude=");
                          Debug.println(cur.lat,7);
                        #endif
-                       if (!(cur.lat==0.00) && !(cur.lon=0)) latGood=true;
+                       if (!(cur.lat==0.000000) && !(cur.lon=0.000000)) latGood=true;
                        break;
                      case 1:   // Latitude Negative       
                        cur.lat = 0-(fr_latlong / 6E5);  
@@ -509,7 +509,7 @@ void ProcessData() {
                        #endif   
                        cur.lon = tLon;
 
-                       if (!(cur.lat==0.00) && !(cur.lon==0)) latGood=true;
+                       if (!(cur.lat==0.000000) && !(cur.lon==0.000000)) latGood=true;
                        break;
                      case 2:   // Longitude Positive
                        tLon = fr_latlong / 6E5;   
@@ -517,7 +517,7 @@ void ProcessData() {
                          Debug.print(" longitude=");
                          Debug.println(cur.lon,7); 
                        #endif                       
-                         if (!(cur.lon==0.00)) lonGood=true;
+                         if (!(cur.lon==0.000000)) lonGood=true;
                        break;
                      case 3:   // Longitude Negative
                        tLon = 0-(fr_latlong / 6E5);  

@@ -104,6 +104,7 @@ v0.23 2018-06-26 Include support for 360 deg servos, craft with no GPS, limit cl
 v0.24 2018-07-01 Streamline use of Location structure  
 v0.25 2018-07-10 Improve debugging with #define Debug_SPort and #define Debug_Telemetry
 v0.26 2018-07-14 Force lon and lat not zero to real compare, not integer.
+v0.27 2018-07-15 Support for iNav flavour of FrSky telemetry. Use 0x820 for altitude, rather than 0x100
  */
 
 #include <Servo.h>
@@ -112,7 +113,8 @@ v0.26 2018-07-14 Force lon and lat not zero to real compare, not integer.
                             // Default (comment out #define above) is 180 deg azimuth and 180 deg elevation 
 //#define No_Compass        // Use the GPS to determine initial heading of craft, and therefore the Tracker
 
-//#define Debug_All
+#define Debug_All
+//#define DebugStatusFlags
 //#define Debug_SPort
 //#define Debug_Telemetry
 //#define Debug_AzEl
@@ -296,6 +298,10 @@ void loop()  {
 
 //  ++++++++++++++++++++
 
+    #if defined Debug_All || defined DebugStatusFlags
+      DisplayStatusFlags();
+    #endif
+
     if (Passthrough)
       gpsGood = hdopGood & lonGood & latGood & altGood & hdgGood ;
      else
@@ -428,21 +434,33 @@ void ProcessData() {
                 //   Old D Style Hub Protocol below 
                   case 0x01:                         // GPS Alt BP
                     cur.alt = Unpack_uint16(5);
-                    if (!(cur.alt==0)) altGood=true; 
-                    //Debug.print(" GPS Altitude=");
-                    //Debug.println(cur.alt,0);
+                    if (!(cur.alt==0.0000)) altGood=true; 
+                    #if defined Debug_All || defined Debug_Telemetry              
+                      Debug.print(" GPS Altitude 0x01=");
+                      Debug.println(cur.hdg,0);
+                    #endif
                     break;
                   case 0x12:                        // Lon BP
                     lonDDMM = Unpack_uint32(5);
+                    #if defined Debug_All || defined Debug_Telemetry              
+                      Debug.print(" lonDDMM 0x12=");
+                      Debug.println(lonDDMM);
+                    #endif             
                     break;
                   case 0x13:                       // Lat BP
                     latDDMM = Unpack_uint32(5);
+                    #if defined Debug_All || defined Debug_Telemetry              
+                      Debug.print(" latDDMM 0x13=");
+                      Debug.println(latDDMM);
+                    #endif           
                     break;
                   case 0x14:        
-                    fhdg = Unpack_uint16(5);      // Course / Heading BP
-                    if (!(fhdg==0)) hdgGood=true;
-           //         Debug.print(" Heading=");
-           //         Debug.println(fhdg,0);
+                    cur.hdg = Unpack_uint16(5);      // Course / Heading BP
+                    if (!(cur.hdg==0.000)) hdgGood=true;
+                    #if defined Debug_All || defined Debug_Telemetry              
+                      Debug.print(" Heading 0x14=");
+                      Debug.println(cur.hdg,0);
+                    #endif
                     break;               
                   case 0x1A:                      // Lon AP
                     mmmm = Unpack_uint32(5);
@@ -453,6 +471,11 @@ void ProcessData() {
                     if (EW==0x57)  tLon = 0-tLon; //  "W", as opposed to "E"
                     // Store tLon and wait for lat to make matched pair    
                      lonGood=true;
+                    #if defined Debug_All || defined Debug_Telemetry              
+                      Debug.print(" Lon After Point 0x1A=");
+                      Debug.println(tLon,0);
+                    #endif
+                     
                     break;
                   case 0x1B:                      // Lat AP
                     mmmm = Unpack_uint32(5);
@@ -463,25 +486,39 @@ void ProcessData() {
                     if (NS==0x53) cur.lat = 0-cur.lat;  //  "S", as opposed to "N" 
                     cur.lon = tLon;  // Complete the pair 
                     latGood=true;
-                    /*
-                    ShowElapsed();
-                    Debug.print(" latitude=");
-                    Debug.print(fLat,7);
-                    Debug.print(" longitude=");
-                    Debug.println(fLon,7);
-                    */
+                    #if defined Debug_All || defined Debug_Telemetry              
+                      Debug.print(" Lat After Point 0x1B=");
+                      Debug.println(cur.lat,0);
+                    #endif
                     break;
                   case 0x22:                      // Lon E/W
                     EW = Unpack_uint8(5);
+                    #if defined Debug_All || defined Debug_Telemetry              
+                      Debug.print(" Lon E/W 0x22=");
+                      Debug.println(EW);
+                    #endif
                     break;
                   case 0x23:                      // Lat N/S
                     NS = Unpack_uint8(5);  
+                    #if defined Debug_All || defined Debug_Telemetry              
+                      Debug.print(" Lon Lat N/S 0x23=");
+                      Debug.println(NS);
+                    #endif
                     break;
+
+                    
                 // *****************************************************************
                 //   New S.Port Protocol below    
+                
+                  case 0x100:              // Altitude
+                    fr_altitude= Unpack_uint32(5);
+                    cur.alt  = fr_altitude / 100;
+                    if (!(cur.alt ==0)) altGood=true; 
+                    break;  
+
                  case 0x800:                      // Latitude and Longitude
                    fr_latlong= Unpack_uint32(5);
-                   #if defined Debug_All     
+                   #if defined Debug_All || defined Debug_Telemetry  
                      Debug.print(" latlong=");
                      Debug.println(fr_latlong);
                    #endif   
@@ -496,7 +533,7 @@ void ProcessData() {
                        cur.lat = fr_latlong / 6E5;     // Only ever update lon and lat in pairs. Lon always comes first                   
                        cur.lon = tLon;                 // Update lon from temp lon below      
                        #if defined Debug_All || defined Debug_Telemetry                 
-                         Debug.print(" latitude=");
+                         Debug.print(" 0x800 latitude=");
                          Debug.println(cur.lat,7);
                        #endif
                        latGood=true;
@@ -504,7 +541,7 @@ void ProcessData() {
                      case 1:   // Latitude Negative       
                        cur.lat = 0-(fr_latlong / 6E5);  
                        #if defined Debug_All || defined Debug_Telemetry            
-                         Debug.print(" latitude=");
+                         Debug.print(" 0x800 latitude=");
                          Debug.println(cur.lat,7);  
                        #endif   
                        cur.lon = tLon;
@@ -512,9 +549,9 @@ void ProcessData() {
                        if (!(cur.lat==0.000000) && !(cur.lon==0.000000)) latGood=true;
                        break;
                      case 2:   // Longitude Positive
-                       tLon = fr_latlong / 6E5;   
-                       #if defined Debug_All                       
-                         Debug.print(" longitude=");
+                       tLon = fr_latlong / 6E5;                       
+                       #if defined Debug_All || defined Debug_Telemetry    
+                         Debug.print(" 0x800 longitude=");
                          Debug.println(cur.lon,7); 
                        #endif                       
                        lonGood=true;
@@ -522,25 +559,33 @@ void ProcessData() {
                      case 3:   // Longitude Negative
                        tLon = 0-(fr_latlong / 6E5);  
                        #if defined Debug_All                        
-                         Debug.print(" longitude=");
+                         Debug.print(" 0x800 longitude=");
                          Debug.println(tLon,7); 
                        #endif                   
                        lonGood=true;
                        break;
-       
-                   // break;
-                   }
-                   break;
+                    }
+                    break;
+                  case 0x820:              // Altitude
+                    fr_altitude= Unpack_uint32(5);
+                    cur.alt  = fr_altitude / 100;
+                    if (!(cur.alt ==0.0000)) altGood=true; 
+                    #if defined Debug_All || defined Debug_Telemetry    
+                       Debug.print(" 0x820 altitude=");
+                       Debug.println(cur.alt,1); 
+                     #endif    
+                    
+                    break;          
                   case 0x840:              // Heading
                     fr_heading= Unpack_uint32(5);
                     cur.hdg = fr_heading / 100;
-                    if (!(fhdg==0)) hdgGood=true;
+                    if (!(cur.hdg==0.0000)) hdgGood=true;
+                    #if defined Debug_All || defined Debug_Telemetry    
+                       Debug.print(" 0x840 deading=");
+                       Debug.println(cur.hdg,7); 
+                     #endif               
                     break;
-                  case 0x100:              // Altitude
-                    fr_altitude= Unpack_uint32(5);
-                    cur.alt  = fr_altitude / 100;
-                    if (!(cur.alt ==0)) altGood=true; 
-                    break;  
+
                  // *****************************************************************    
                  //   Mavlink Passthrough Protocol below     
                   case 0x5002:
@@ -559,7 +604,7 @@ void ProcessData() {
                     
                     hdopGood=(fr_hdop>=3) && (fr_numsats>10);
                     #if defined Debug_All || defined Debug_Telemetry 
-                      Debug.print(" Num sats=");
+                      Debug.print(" 0x5002 Num sats=");
                       Debug.print(fr_numsats);
                       Debug.print(" gpsStatus=");
                       Debug.print(fr_gpsStatus);                
@@ -583,7 +628,7 @@ void ProcessData() {
                       cur.alt = cur.alt * -1;
                     altGood=true; 
                     #if defined Debug_All || defined Debug_Telemetry 
-                      Debug.print(" Dist to home=");
+                      Debug.print(" 0x5004 Dist to home=");
                       Debug.print(fHomeDist, 1);             
                       Debug.print(" Rel Alt=");
                       Debug.println(cur.alt,1);
@@ -598,7 +643,7 @@ void ProcessData() {
       
                     hdgGood=true;
                     #if defined Debug_All || defined Debug_Telemetry 
-                      Debug.print(" Heading=");
+                      Debug.print(" 0x5005 Heading=");
                       Debug.println(cur.hdg,2);
                     #endif
                     break;   
@@ -606,7 +651,16 @@ void ProcessData() {
                    
       }
 }
-
+#if defined Debug_All || defined DebugStatusFlags
+void DisplayStatusFlags() {
+  Debug.print("Passthrough flag="); Debug.println(Passthrough);
+  Debug.print("hdopGood="); Debug.println(hdopGood);
+  Debug.print("lonGood="); Debug.println(lonGood);
+  Debug.print("latGood="); Debug.println(latGood); 
+  Debug.print("altGood="); Debug.println(altGood);  
+  Debug.print("hdgGood="); Debug.println(hdgGood);        
+}
+#endif
 //***************************************************
   uint32_t bit32Extract(uint32_t dword,uint8_t displ, uint8_t lth) {
   uint32_t r = (dword & createMask(displ,(displ+lth-1))) >> displ;

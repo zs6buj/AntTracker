@@ -114,10 +114,10 @@ v0.28 2018-07-17 Include decode of iNav temp2 sensor 0x410 GPS status
                             // Default (comment out #define above) is 180 deg azimuth and 180 deg elevation 
 //#define No_Compass        // Use the GPS to determine initial heading of craft, and therefore the Tracker
 
-#define Debug_All
+//#define Debug_All
 //#define DebugStatusFlags
 //#define Debug_SPort
-//#define Debug_Telemetry
+#define Debug_Telemetry
 //#define Debug_AzEl
 //#define Debug_Servos 
 //#define Debug_LEDs    
@@ -760,7 +760,8 @@ void CheckForTimeouts() {
   unsigned long cMillis = millis();
     if ((gpsGood==1) && (cMillis - gpsMillis >= 5000)){
       gpsGood = 0;   // If no GPS packet for 5 seconds then GPS timeout 
-      #if defined Debug_All  
+      serGood = 0;
+      #if defined Debug_All || defined Debug_Telemetry
         Debug.println("No GPS telemetry for 5 seconds"); 
       #endif  
     }
@@ -769,14 +770,14 @@ void CheckForTimeouts() {
 //***************************************************
 
 void ServiceTheStatusLed() {
-/*
+#ifdef Debug_LEDs
     Debug.print("gpsGood = ");
     Debug.print(gpsGood);
     Debug.print("   serGood = ");
     Debug.print(serGood);
     Debug.print("   homeInitialised = ");
     Debug.println(homeInitialised);
- */
+#endif
   if (gpsGood) {
     if (homeInitialised) 
       ledState = HIGH;

@@ -104,7 +104,7 @@ v0.23 2018-06-26 Include support for 360 deg servos, craft with no GPS, limit cl
 v0.24 2018-07-01 Streamline use of Location structure  
 v0.25 2018-07-10 Improve debugging with #define Debug_SPort and #define Debug_Telemetry
 v0.26 2018-07-14 Force lon and lat not zero to real compare, not integer.
-v0.28 2018-07-17 Include decode of iNav temp2 sensor 0x410 GPS status
+v0.28 2018-07-17 Include decode of iNav temp2 sensor 0x410 GPS status.
  
  */
 

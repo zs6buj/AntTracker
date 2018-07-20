@@ -5,7 +5,7 @@
 
     Eric Stockenstrom - June 2017
 
-    v0.28  
+    v0.30  
 
 This application reads serial telemetry sent from a flight controller or GPS. The module 
 calculates where an airbourne craft is relative to the home position. From this it 
@@ -85,7 +85,8 @@ v0.25 2018-05-29 Include #define Setup_BT option for HC-06 BlueTooth slave setup
 v0.26 2018-05-30 Fix new bug in Servo. uint8_t now changed to init16_t. Oops. 
 v0.27 2018-05-30 Fixed nasty typo in No_Compass home calc!  lo1 - hom.lon; should be  lo1 = hom.lon;  
 v0.28 2018-05-31 Relax GPS lock requirement from 3D Plus (fixtype=4) to 3D (fixtype=3)
-v0.29 2018-07-01 Streamline use of Location structure         
+v0.29 2018-07-01 Streamline use of Location structure 
+v0.30 2018-07-20 Clarify compile options        
 
  */
  
@@ -94,10 +95,13 @@ v0.29 2018-07-01 Streamline use of Location structure
 
 #define mavSerial            Serial1
 
-//#define Az_Servo_360      // Means the azimuth servo can point in a 360 deg circle, elevation servo 90 deg
-                            // Default (comment out #define above) is 180 deg azimuth and 180 deg elevation 
-//#define No_Compass        // Use the GPS to determine initial heading of craft, and therefore the Tracker
-//#define Setup_BT          // Sets up a previously unused BT-06 BT slave module
+//************************************* Please select your options here before compiling **************************
+// Un-comment (activate) the options below
+//#define Az_Servo_360   // Means the azimuth servo can point in a 360 deg circle, elevation servo 90 deg
+                         // Default (comment out #define above) is 180 deg azimuth and 180 deg elevation 
+//#define No_Compass     // Use the GPS to determine initial heading of craft, and initial heading of Tracker
+//#define Setup_BT       // Sets up a previously unused BT-06 BT slave module
+//*****************************************************************************************************************
 
 #define Debug_All
 //#define Debug_Status

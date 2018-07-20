@@ -3,15 +3,15 @@
 void  PositionServos(float Az, float El, float hmHdg) {
 
   // Note my 180 degree servos have a PWM range of 700 through 2300 microseconds 
-  // Your may differ 
-  // Uncomment TestServos() in setup() code to observe how well your servos reach 0 deg and 180 deg
+  // Your's may differ 
+  // Uncomment TestServos() in setup() code to observe how well your servos reach their limits
 
-#ifdef Az_Servo_360
-  int16_t llAz = 0;     // Set the limits of the servos here
-  int16_t ulAz = 360;    
-  int16_t llEl = 0;
-  int16_t ulEl = 90;
-  int16_t MinAzPWM = 650;
+#ifdef Az_Servo_360           // Set the limits of the servos here
+  int16_t llAz = 0;           // Az lower limit in degrees
+  int16_t ulAz = 360;         // Az upper limit in degrees
+  int16_t llEl = 0;           // El lower limit in degrees
+  int16_t ulEl = 90;          // El upper limit in degrees
+  int16_t MinAzPWM = 650;     // Self explanatory
   int16_t MaxAzPWM = 2400;
   int16_t MinElPWM = 1125;
   int16_t MaxElPWM = 1875;

@@ -1,33 +1,67 @@
  
 /*
 
-    ZS6BUJ's Antenna Tracker
+     ZS6BUJ's Antenna Tracker
 
      Input LTM Protcol only - serial 2400 bps
 
      Eric Stockenstrom - August 2017
      
 
-This application reads serial telemetry sent from a flight controller or GPS. The module calculates where an airbourne craft is relative to the home position. From this it calculates the azimuth and elevation
-of the craft, and then positions 180 degree azimuth and elevation PWM controlled servos to point a 5GHz double bi-quad antenna 
-for telemetry and video.
+This application reads serial telemetry sent from a flight controller or GPS. The module 
+calculates where an airbourne craft is relative to the home position. From this it 
+calculates the azimuth and elevation of the craft, and then positions azimuth and 
+elevation PWM controlled servos to point a direction high-gain antenna for telemetry, 
+RC or/and and video.
 
-The code is written from scratch, but I've taken ideas from Jalves' OpenDIY-AT and others. Information and ideas on other protocols was obtained frpm
-GhettoProxy by Guillaume S.
+If your servo pair is of the 180 degree type, be sure to comment out this line like 
+this:    //#define Az_Servo_360 
 
-The target board is an STM32F103 "Blue Pill", chosen for its relative power, small size and second (multi) serial port(s) for debugging.
+Note that the elevation (180 degree) servo flips over to cover the field-of-view behind 
+you when the craft enters that space.
 
-To use the module, position the AntTRacker with the antenna facing the direction of your planned take off. Position the craft a few metres 
-further, also facing the same heading for take-off. The flight computer will determine the magnetic heading, from which all subsequent angles 
-are calculated.
+If your servo pair comprises a 360 degree azimuth servo and 90 degree elevation servo, be 
+sure to un-comment out this line like this:    #define Az_Servo_360 
+360 degree code contributed by macfly1202
 
+The code is written from scratch, but I've taken ideas from Jalves' OpenDIY-AT and others. 
+Information and ideas on other protocols was obtained from GhettoProxy by Guillaume S.
+
+The target board is an STM32F103 "Blue Pill", chosen for its relative power, small size 
+and second (multi) serial port(s) for debugging. The arduino Teensy 3.x is also suitable,
+but much more expensive. The arduino mini pro or similar can be made to work but is not 
+recommended for perfomance reasons and lack of second (debugging) serial port.
+
+To use the AntTRacker, position it with the antenna facing the centre of the field in front 
+of you. Position the craft a few metres further, also facing the same heading for take-off. 
+Tracking (movement of the antenna) will occur only when the craft is more than minDist = 4 
+metres from home because accuracy increases sharply thereafter.
+
+When your flight system includes a compass/magnetometer:
+
+0 Be sure to comment out this line like this :  //#define No_Compass  
 1 Power up the craft.
-2 Power up the ground Raspi board.
+2 Power up the ground ground system.
 3 Power up the AntTracker.
-4 When AntTracker successfully connects to the ground raspi, the LED on the front flashes slowly.
+4 When AntTracker successfully connects to the ground system, the LED on the front flashes slowly.
 5 When AntTracker receives its first good GPS location record, the LED flashes fast.
-6 Push the home button to register the home position and heading. The LED goes solidly on.
-7 Enjoy your flight! The Tracker will track your craft anywhere in the hemisphere around you (but not closer than 3 metres).
+6 Make sure the front of your craft is pointing in the direction of the AntTracker antenna at rest.
+  The compass heading of the craft now determines the relative heading of the AntTracker antenna.
+7 Push the home button to register the home position and heading.  The LED goes solidly on.
+8 Enjoy your flight! The Tracker will track your craft anywhere in the hemisphere around you.
+
+When your flight system does NOT include a compass/magnetometer:
+
+0 Be sure to un-comment this line like this :  #define No_Compass  
+1 Power up the craft.
+2 Power up the ground system.
+3 Power up the AntTracker.
+4 When AntTracker successfully connects to the ground system, the LED on the front flashes slowly.
+5 When AntTracker receives its first 3D fix GPS location record, the LED flashes fast.
+6 Pick up your craft and walk forward several metres (4 to 8) in the direction of the AntTracker antenna at rest.
+  This deternines the relative heading for the AntTracker antenna.
+7 Return and push the home button to register the home position and heading. The LED goes solidly on.
+8 Enjoy your flight! The Tracker will track your craft anywhere in the hemisphere around you.
 
 The small double bi-quad antenna has excellent gain, and works well with a vertically polarised stick on the craft. Other reception sticks 
 can be added for diversity, and some improvement in link resilience has been observed despite the lower gain of the other links. 
@@ -37,45 +71,54 @@ v0.14 2017-05-22 Serial input version
 v0.15 2017-05-30 Mod word length for 32bit MPUs like STM32
 v0.16 2017-08-30 Remove Mavlink support. Include support for LTM
 v0.20 2017-10-30 Fix bug in gps timeout check as per other versions
+v0.21 2018-07-01 Include support for 360 deg servos, craft with no GPS, limit close-to-home altitude error
+v0.22 2018-07-20 Clarify compile options 
  */
 
 #include <Servo.h>
 
-int iLth=0;
-int pLth;  // Packet length
+//************************************* Please select your options here before compiling **************************
+// Un-comment (activate) the options below
+//#define Az_Servo_360   // Means the azimuth servo can point in a 360 deg circle, elevation servo 90 deg
+                         // Default (comment out #define above) is 180 deg azimuth and 180 deg elevation 
+//#define No_Compass     // Use the GPS to determine initial heading of craft, and initial heading of Tracker
+//*****************************************************************************************************************
+
+int16_t iLth=0;
+int16_t pLth;  // Packet length
 byte chr = 0x00;
-const int packetSize = 70; 
+const int16_t packetSize = 70; 
 byte packetBuffer[packetSize]; 
 
-int serGood = 0;
+int16_t serGood = 0;
 
 //************* Pin Assignments
 // Serial1 telemetry pins - RX = A3     TX = A2
 
 // Serial for printout    - RX = A10    TX = A9
 
-int azPWM_Pin =  7;    // A7 Azimuth
-int elPWM_Pin =  8;    // A8 Elevation
+int16_t azPWM_Pin =  7;    // A7 Azimuth
+int16_t elPWM_Pin =  8;    // A8 Elevation
 
-int SetHomePin = 5;    // A5
+int16_t SetHomePin = 5;    // A5
 
-int StatusLed = 6;  // A6 - Off=No good GPS yet, Flashing=Good GPS but Home not set yet, Solid = Ready to Track
-int ledState = LOW; 
-unsigned long ledMillis = 0;
+int16_t  StatusLed = 6;  // A6 - Off=No good GPS yet, Flashing=Good GPS but Home not set yet, Solid = Ready to Track
+int16_t  ledState = LOW; 
+uint32_t ledMillis = 0;
 
 //*************
 
-int homeInitialised = 0;
-int gpsGood = 0;
-int hdgGood = 0;
-int gpsNumSats = 0;
-unsigned long gpsMillis = 0;
+int16_t homeInitialised = 0;
+int16_t gpsGood = 0;
+int16_t hdgGood = 0;
+int16_t gpsNumSats = 0;
+uint32_t gpsMillis = 0;
 
 //  variables for servos
-int azPWM = 0;
-int elPWM = 0;
-int LastGoodpntAz = 90;
-int LastGoodEl = 0;
+int16_t azPWM = 0;
+int16_t elPWM = 0;
+int16_t LastGoodpntAz = 90;
+int16_t LastGoodEl = 0;
 
 float fLat = 0;
 float fLon = 0;
@@ -88,44 +131,47 @@ float fHdg = 0;
 float fVBat = 0;
 float fCur = 0;
 
-int   iSpd = 0;
-int   iSat = 0;
-int   iFix = 0;
-int   iPitch = 0;
-int   iRoll = 0;
-int   iBat = 0;
-int   iRssi = 0;
-int   iAirspeed = 0;
-int   iFltMode = 0;
+int16_t   iSpd = 0;
+int16_t   iSat = 0;
+int16_t   iFix = 0;
+int16_t   iPitch = 0;
+int16_t   iRoll = 0;
+int16_t   iBat = 0;
+int16_t   iRssi = 0;
+int16_t   iAirspeed = 0;
+int16_t   iFltMode = 0;
 
-boolean bArmed = false;
-boolean bFailsafe = false;
-boolean ft = true;
+bool bArmed = false;
+bool bFailsafe = false;
+bool ft = true;
 
-int MinDisplacement = 3;
-
-//AzEl declarations
-
-float Azimuth= 90;                     
-float Elevation= 0;                     
-long Distance = 0;
+int16_t minDist = 4;
 
 // 3D Location vectors
 struct Location {
   float lat; //long
   float lon;
   float alt;
+  float hdg;
 };
 
-struct Location home         = {
-  0,0,0};   // home location
-
-float homeHdg;
+struct Location hom     = {
+  0,0,0,0};   // home location
 
 struct Location cur      = {
-  0,0,0};   // current location
+  0,0,0,0};   // current location
+  
+struct Vector {
+  float    az;                     
+  float    el;                     
+  int32_t  dist;
+};
 
-// Servo instances
+// Vector for home-to-current location
+struct Vector hc_vector  = {
+  90, 0, 0};
+
+// Servo class declarations
 Servo azServo;            // Azimuth
 Servo elServo;            // Elevation
 
@@ -185,6 +231,7 @@ TryAgain:
   
     if (!PacketGood() && homeInitialised==1) goto TryAgain;          // This is a reasonability check on the GPS data
  
+    #ifndef No_Compass 
     if (gpsGood==1 && hdgGood==1 && ft) {
       ft=false;
       if (homeInitialised ==0)
@@ -192,32 +239,54 @@ TryAgain:
       else
         Serial.println("GPS lock good again!");
     }
-   
+    #endif
 
     if (homeInitialised == 1 && gpsGood == 1) {
-      GetAzEl(home.lat, home.lon, home.alt, cur.lat, cur.lon, cur.alt);
-      if (Distance >= MinDisplacement) PositionServos(Azimuth, Elevation, homeHdg);
+      GetAzEl(hom, cur);
+      if (hc_vector.dist >= minDist) PositionServos(hc_vector.az, hc_vector.el, hom.hdg);
     }
   
   
-  int SetHomeState = digitalRead(SetHomePin);
-  if (SetHomeState == 0 && gpsGood == 1 && homeInitialised ==0){     // pin 5 is pulled up - normally high
+ uint8_t SetHomeState = digitalRead(SetHomePin);   // Check if home button is pushed
 
-    home.lat = fLat;
-    home.lon = fLon;
-    home.alt = fAlt;
-    homeHdg = fHdg;
-    homeInitialised = 1;
-    Serial.print("Home location set to Lat = ");
-    Serial.print(fLat,7);
-    Serial.print(" Lon = ");
-    Serial.print(fLon,7);
-    Serial.print(" Alt = ");
-    Serial.print(fAlt,0); 
-    Serial.println();
+  #ifdef No_Compass  // If no compass use home established when 3D+ lock established, homGood = 1
+    if ((SetHomeState == 0) && (gpsGood) && (!homeInitialised)){   
+      homeInitialised = true;
+      // Calculate heading as vector from home to where craft is now
+      float a, la1, lo1, la2, lo2;
+      lo1 = hom.lon;
+      la1 = hom.lat;
+      lo2 = cur.lon;
+      la2 = cur.lat;
+      
+      lo1=lo1/180*PI;  // Degrees to radians
+      la1=la1/180*PI;
+      lo2=lo2/180*PI;
+      la2=la2/180*PI;
+
+      a=atan2(sin(lo2-lo1)*cos(la2), cos(la1)*sin(la2)-sin(la1)*cos(la2)*cos(lo2-lo1));
+      hom.hdg=a*180/PI;   // Radians to degrees
+      if (hom.hdg<0) hom.hdg=360+hom.hdg;
+
+      hom.lat = cur.lat;
+      hom.lon = cur.lon;
+      hom.alt = cur.alt;
+
+      DisplayHome();
+      
+    }  
+  #else    // if have compass, use FC heading
+  if (SetHomeState == 0 && gpsGood && !homeInitialised){     // pin 5 is pulled up - normally high
+    homeInitialised = true;
+    hom.lat = cur.lat;
+    hom.lon = cur.lon;
+    hom.alt = cur.alt;
+    hom.hdg = cur.hdg;
+   
+    DisplayHome();
+    
     }
-
-  delay(10);
+  #endif 
 }
 //***************************************************
 //***************************************************
@@ -240,6 +309,17 @@ void ParsePacket(int lth){
     packetBuffer[i] = NextChar();
   } 
 }
+//***************************************************
+void DisplayHome() {
+    #if defined Debug_All || defined Debug_AzEl
+ //   Debug.print("******************************************");
+    Debug.print("Home location set to Lat = "); Debug.print(hom.lat,7);
+    Debug.print(" Lon = "); Debug.print(hom.lon,7);
+    Debug.print(" Alt = "); Debug.print(hom.alt,0); 
+    Debug.print(" hom.hdg = "); Debug.println(hom.hdg,0); 
+    #endif 
+}
+
 //***************************************************
 boolean UnpackAttitude(int lth) {
   ParsePacket(lth);
@@ -504,21 +584,21 @@ if (homeInitialised==0) {  //  You can't use the home co-ordinates for a reasona
   return true;
   exit;
   }
-if (cur.lat<(home.lat-1.0) || cur.lat>(home.lat+1.0)) {  // Also works for negative lat
+if (cur.lat<(hom.lat-1.0) || cur.lat>(hom.lat+1.0)) {  // Also works for negative lat
   Serial.print(" Bad lat = ");
   Serial.print(cur.lat,7);
   Serial.println("  Packet ignored");   
   return false; 
   exit; 
   }
-  if (cur.lon<(home.lon-1.0) || cur.lon>(home.lon+1.0)) { // Also works for negative lon
+  if (cur.lon<(hom.lon-1.0) || cur.lon>(hom.lon+1.0)) { // Also works for negative lon
   Serial.print(" Bad lon = ");
   Serial.print(cur.lon,7);
   Serial.println("  Packet ignored");  
   return false; 
   exit;  
   }
-if (cur.alt<(home.alt-300) || cur.alt>(home.alt+1000)) {
+if (cur.alt<(hom.alt-300) || cur.alt>(hom.alt+1000)) {
   Serial.print(" Bad alt = ");
   Serial.print(cur.alt);
   Serial.println("  Packet ignored");    

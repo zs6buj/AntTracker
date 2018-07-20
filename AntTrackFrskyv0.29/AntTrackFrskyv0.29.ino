@@ -105,14 +105,18 @@ v0.24 2018-07-01 Streamline use of Location structure
 v0.25 2018-07-10 Improve debugging with #define Debug_SPort and #define Debug_Telemetry
 v0.26 2018-07-14 Force lon and lat not zero to real compare, not integer.
 v0.28 2018-07-17 Include decode of iNav temp2 sensor 0x410 GPS status.
+v0.29 2018-07-20 Clarify compile options 
  
  */
 
 #include <Servo.h>
 
-//#define Az_Servo_360      // Means the azimuth servo can point in a 360 deg circle, elevation servo 90 deg
-                            // Default (comment out #define above) is 180 deg azimuth and 180 deg elevation 
-//#define No_Compass        // Use the GPS to determine initial heading of craft, and therefore the Tracker
+//************************************* Please select your options here before compiling **************************
+// Un-comment (activate) the options below
+//#define Az_Servo_360   // Means the azimuth servo can point in a 360 deg circle, elevation servo 90 deg
+                         // Default (comment out #define above) is 180 deg azimuth and 180 deg elevation 
+//#define No_Compass     // Use the GPS to determine initial heading of craft, and initial heading of Tracker
+//*****************************************************************************************************************
 
 //#define Debug_All
 //#define DebugStatusFlags

@@ -11,7 +11,7 @@
 This application reads serial telemetry sent from a flight controller or GPS. The module 
 calculates where an airbourne craft is relative to the home position. From this it 
 calculates the azimuth and elevation of the craft, and then positions azimuth and 
-elevation PWM controlled servos to point a direction high-gain antenna for telemetry, 
+elevation PWM controlled servos to point a directional high-gain antenna for telemetry, 
 RC or/and and video.
 
 If your servo pair is of the 180 degree type, be sure to comment out this line like 

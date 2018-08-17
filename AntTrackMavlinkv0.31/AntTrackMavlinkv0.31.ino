@@ -1,71 +1,92 @@
   
-/*
+/*  *****************************************************************************
 
-    ZS6BUJ's Antenna Tracker_Compass
+    ZS6BUJ's Antenna Tracker
 
     Eric Stockenstrom - June 2017
 
+    This program is free software. You may redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation. See here <http://www.gnu.org/licenses>
 
-This application reads serial telemetry sent from a flight controller or GPS. The module 
-calculates where an airbourne craft is relative to the home position. From this it 
-calculates the azimuth and elevation of the craft, and then positions azimuth and 
-elevation PWM controlled servos to point a direction high-gain antenna for telemetry, 
-RC or/and and video.
+    The application was written in the hope that it will be useful, but it comes
+    without any warranty or implied warranty of merchantability or fitness 
+    for a particular purpose 
+    
+   *****************************************************************************
+   
+   The code is written from scratch, but I've taken ideas from Jalves' OpenDIY-AT and others. 
+   Information and ideas on other protocols was obtained from GhettoProxy by Guillaume S.
 
-If your servo pair is of the 180 degree type, be sure to comment out this line like 
-this:    //#define Az_Servo_360 
+   The target board is an STM32F103 "Blue Pill", chosen for its relative power, small size 
+   and second (multi) serial port(s) for debugging. The arduino Teensy 3.x is also suitable,
+   but much more expensive. The arduino mini pro or similar can be made to work but is not 
+   recommended for performance reasons and lack of second (debugging) serial port.
+   
+   The application reads serial telemetry sent from a flight controller or GPS. The module 
+   calculates where an airbourne craft is relative to the home position. From this it 
+   calculates the azimuth and elevation of the craft, and then positions azimuth and 
+   elevation PWM controlled servos to point a direction high-gain antenna for telemetry, 
+   RC or/and and video.
 
-Note that the elevation (180 degree) servo flips over to cover the field-of-view behind 
-you when the craft enters that space.
+  After the craft and the tracker have been powered on, and any telemetry is received by 
+  the tracker, the tracker's LED flashes slowly. After a good GPS lock is received, the 
+  tracker's LED flashes fast.
 
-If your servo pair comprises a 360 degree azimuth servo and 90 degree elevation servo, be 
-sure to un-comment out this line like this:    #define Az_Servo_360 
-360 degree code contributed by macfly1202
+  Now, in order to establish the home position, push the Set_Home button. The LED goes on 
+  solid.(If your craft has no FC and compass, see Heading_Source discussion below);
 
-The code is written from scratch, but I've taken ideas from Jalves' OpenDIY-AT and others. 
-Information and ideas on other protocols was obtained from GhettoProxy by Guillaume S.
+  For the tracker to position the servos relative to the compass direction of the craft,
+  it needs to know the compass direction in degrees where the tracker antenna is pointing 
+  at rest. For convenience we call this the Heading_Source. Three possible heading sources 
+  are available:
 
-The target board is an STM32F103 "Blue Pill", chosen for its relative power, small size 
-and second (multi) serial port(s) for debugging. The arduino Teensy 3.x is also suitable,
-but much more expensive. The arduino mini pro or similar can be made to work but is not 
-recommended for perfomance reasons and lack of second (debugging) serial port.
+    1) Flight Computer - use this if your craft has a Flight Computer with a compass
+ 
+     Allign the craft's heading (where the nose points) with the direction of the tracker 
+    antenna, and press the Set_Home button. The tracker will use the heading of the craft 
+    obtained from the craft's Flight Computer via telemetry.
+    
+    2) GPS - use this if your craft has a GPS, but no FC or compass
+ 
+    Position the tracker box such that the antenna faces the field straight ahead. Power up
+    the craft and tracker, and wait for a good GPS lock. The tracker's LED will flash fast. 
+    Walk several metres (say 5) straight ahead with the craft, place it on the ground, 
+    return and press the Set_Home button. The tracker calculates the compass direction of a 
+    vector (line) from where the craft was at the first GPS lock, to where it was when the 
+    Set_Home button was pressed, then use as the assumed direction of the tracker antenna. 
+    
+    3) Tracker's Own Compass - use this if your craft has a GPS, but no FC or compass
+ 
+    Glue a suitable magnetometer anywhere on the tracker box, facing the direction of the 
+    antenna at rest.
 
-To use the AntTracker_Compass, position it with the antenna facing the centre of the field in front 
-of you. Position the craft a few metres further, also facing the same heading for take-off. 
-Tracking (movement of the antenna) will occur only when the craft is more than minDist = 4 
-metres from home because accuracy increases sharply thereafter.
+  Note that tracking (movement of the antenna) will occur only when the craft is more than 
+  minDist = 4 metres from home because accuracy increases sharply thereafter.   
+    
+  Before you build/compile the tracker firmware, be sure to un-comment the appropriate 
+  #define macro according to your choice of heading source:
 
-When your flight computer includes a compass/magnetometer:
+  //#define Heading_Source   1  // GPS 
+  //#define Heading_Source   2  // Flight Computer 
+  #define Heading_Source   3  // Tracker_Compass   
 
-0 Be sure to comment out this line like this :  //#define Heading_Source   FC 
-1 Power up the craft.
-2 Power up the ground ground system.
-3 Power up the AntTracker_Compass.
-4 When AntTracker_Compass successfully connects to the ground system, the LED on the front flashes slowly.
-5 When AntTracker_Compass receives its first good GPS location record, the LED flashes fast.
-6 Make sure the front of your craft is pointing in the direction of the AntTracker_Compass antenna at rest.
-  The compass heading of the craft now determines the relative heading of the AntTracker_Compass antenna.
-7 Push the home button to register the home position and heading.  The LED goes solidly on.
-8 Enjoy your flight! The Tracker_Compass will track your craft anywhere in the hemisphere around you.
+  If your servo pair is of the 180 degree type, be sure to comment out this line like 
+  this:    //#define Az_Servo_360 
 
-When your flight computer does NOT include a compass/magnetometer:
+  Note that the elevation (180 degree) servo flips over to cover the field-of-view behind 
+  you when the craft enters that space.
 
-0 Be sure to un-comment this line like this :  #define Heading_Source   GPS 
-1 Power up the craft.
-2 Power up the ground system.
-3 Power up the AntTracker_Compass.
-4 When AntTracker_Compass successfully connects to the ground system, the LED on the front flashes slowly.
-5 When AntTracker_Compass receives its first 3D fix GPS location record, the LED flashes fast.
-6 Pick up your craft and walk forward several metres (4 to 8) in the direction of the AntTracker_Compass antenna at rest.
-  This deternines the relative heading for the AntTracker_Compass antenna.
-7 Return and push the home button to register the home position and heading. The LED goes solidly on.
-8 Enjoy your flight! The Tracker_Compass will track your craft anywhere in the hemisphere around you.
+  If your servo pair comprises a 360 degree azimuth servo and 90 degree elevation servo, please
+  un-comment the line like this:    #define Az_Servo_360 - 360 degree code contributed by macfly1202
+  
+  The small double bi-quad antenna has excellent gain, and works well with a vertically polarised antenna
+  on the craft. Other antennas can be added for diversity, and some improvement in link resilience has 
+  been observed despite the possibly lower gain of the other links. Of course it is possible to stack 
+  double bi-quad antennas on the tracker, but more robust mechanicals will be called for.
 
-The small double bi-quad antenna has excellent gain, and works well with a vertically polarised stick on the craft. Other reception sticks 
-can be added for diversity, and some improvement in link resilience has been observed despite the lower gain of the other links. 
-Of course it would be possible to stack double bi-quad antennas on the AntTracker_Compass, but more robust mechanicals will be called for.
-
-
+  STM32F103C Blue-Pill wiring:
+  
     Debug monitor   Serial(0) -->TX1 Pin A9
                               <--RX1 Pin A10  
                               
@@ -73,7 +94,17 @@ Of course it would be possible to stack double bi-quad antennas on the AntTracke
                               <--RX2 Pin A3 
                               
     Compass         Optional     SCL Pin B6                          
-                                 SDA Pin B7  
+                                 SDA Pin B7 
+                                 
+    Azimuth Servo                    Pin A7 
+    Elevation Servo                  Pin A8 
+
+    SetHome button                   Pin A5
+
+    StatusLed                        Pin A6 - Off=No good GPS yet, flashing=good GPS but home not set yet, solid = ready to track
+                                  
+    Vcc - 3.3V      IMPORTANT!
+    Gnd                              
                                  
 v0.14 2017-05-22 Serial input version
 v0.15 2017-05-30 Mod word length for 32bit MPUs like STM32
@@ -117,7 +148,7 @@ v0.31 2018-08-14 Add support for compass on the Tracker to determine direction t
 //#define Debug_AzEl
 //#define Debug_Servos 
 //#define Debug_LEDs
-#define Debug_Compass                            
+//#define Debug_Compass                            
 
 uint8_t azPWM_Pin =  7;    // A7 azimuth servo
 uint8_t elPWM_Pin =  8;    // A8 elevation servo

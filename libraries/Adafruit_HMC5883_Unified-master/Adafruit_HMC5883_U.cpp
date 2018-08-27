@@ -158,6 +158,8 @@ bool Adafruit_HMC5883_Unified::begin()
   // Enable I2C
   Wire.begin();
 
+  if (read8(HMC5883_ADDRESS_MAG, HMC5883_REGISTER_MAG_MR_REG_M) == 0) return false; // zs6buj
+
   // Enable the magnetometer
   write8(HMC5883_ADDRESS_MAG, HMC5883_REGISTER_MAG_MR_REG_M, 0x00);
   

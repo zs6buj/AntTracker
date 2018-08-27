@@ -121,7 +121,7 @@ v0.28 2018-05-31 Relax GPS lock requirement from 3D Plus (fixtype=4) to 3D (fixt
 v0.29 2018-07-01 Streamline use of Location structure 
 v0.30 2018-07-20 Clarify compile options 
 v0.31 2018-08-14 Add support for compass on the Tracker to determine direction the tracker is facing        
-
+v0.32 2018-08-27 Tidy up tracker's-own-compass code
  */
  
 #include <GCS_MAVLink.h>
@@ -140,6 +140,7 @@ v0.31 2018-08-14 Add support for compass on the Tracker to determine direction t
 //#define Setup_BT       // Sets up a previously unused BT-06 BT slave module
 //*****************************************************************************************************************
 
+#define Debug_Minimum    //  Leave this as is unless you need the serial port for something else
 //#define Debug_All
 //#define Debug_Status
 //#define Mav_Debug_Heartbeat      
@@ -148,7 +149,7 @@ v0.31 2018-08-14 Add support for compass on the Tracker to determine direction t
 //#define Debug_AzEl
 //#define Debug_Servos 
 //#define Debug_LEDs
-//#define Debug_Compass                            
+#define Debug_Compass                            
 
 uint8_t azPWM_Pin =  7;    // A7 azimuth servo
 uint8_t elPWM_Pin =  8;    // A8 elevation servo
@@ -251,7 +252,7 @@ uint16_t ap_hdg;           // Vehicle heading (yaw angle) in degrees * 100, 0.0.
 //***************************************************
 void setup() {
 
-  #if defined Debug_All || defined Debug_Status || defined Debug_LEDs  || defined Mav_Debug_Heartbeat || \
+  #if defined Debug_Minimum || defined Debug_All || defined Debug_Status || defined Debug_LEDs  || defined Mav_Debug_Heartbeat || \
         defined Mav_Debug_GPS_Raw || defined Mav_Debug_GPS_Int || defined Debug_Servos || defined Debug_Compass
     #define Debug               Serial         // USB 
     Debug.begin(115200);                       // Debug monitor output
@@ -286,14 +287,19 @@ void setup() {
   elServo.attach(elPWM_Pin);
   PositionServos(90, 0, 90);   // Intialise servos to az=90, el=0, hom.hdg = 90;
 
-  #if (Heading_Source == 1)  // GPS 
-    Debug.println("Heading_Source = Craft's GPS");
-  #elif (Heading_Source == 2)  // Flight Computer  
-    Debug.println("Heading_Source = Flight Computer");
-  #elif (Heading_Source == 3)  // Tracker_Compass
-    Debug.println("Heading_Source = Tracker's Own Compass"); 
-    cpsGood = Initialise_Compass();  // Check if we have a compass on the Tracker_Compass
+  DisplayHeadingSource();
+  
+  #if (Heading_Source == 3)  // Tracker_Compass
 
+    cpsGood = Initialise_Compass();  // Check if we have a compass on the Tracker
+    
+    if (!(cpsGood)) {
+      #if defined Debug_Minimum || defined Debug_All || defined Debug_Compass  
+        Debug.println("Heading_Source = Tracker's Own Compass, but no compass found! Aborting."); 
+      #endif  
+      while (1) delay (1000);  // Wait here forever
+    }
+   
     #if defined Debug_All || defined Debug_Compass
       Debug.println("Display tracker heading for 20 seconds");
       for (int i=1; i<20;i++) {
@@ -302,12 +308,6 @@ void setup() {
       }
     #endif
     
-    if (!(cpsGood)) {
-      Debug.println("Heading_Source = Tracker's Own Compass, but no compass found! Aborting."); 
-      while (1) delay (1000);  // Wait here forever
-    }
-   #else  
-     #error You must define at least one Heading_Source !  
   #endif
   
   //TestServos();   // Uncomment this code to observe how well your servos reach their specified limits
@@ -356,7 +356,6 @@ void loop()  {
 void SetHomeParameters() {
   
     #if (Heading_Source == 1)  // GPS 
-      Debug.println("Heading_Source = Craft's GPS"); 
       if (homGood) {            // Use home established when 3D+ lock established, homGood = 1 
         // Calculate heading as vector from home to where craft is now
         float a, la1, lo1, la2, lo2;
@@ -382,8 +381,7 @@ void SetHomeParameters() {
         DisplayHome();
       }
     
-    #elif  (Heading_Source == 2)  // Flight Computer 
-      Debug.println("Heading_Source = Flight Compter"); 
+    #elif  (Heading_Source == 2)  // Flight Computer  
       hom.hdg = cur.hdg;
       
       hom.lat = cur.lat;
@@ -394,7 +392,6 @@ void SetHomeParameters() {
       DisplayHome();
     
     #elif (Heading_Source == 3)  // Tracker's Own Compass 
-      Debug.println("Heading_Source = Trackers Own Compass"); 
       hom.hdg = GetMagHeading(); 
       
       hom.lat = cur.lat;
@@ -412,13 +409,26 @@ void SetHomeParameters() {
 }
 //***************************************************
 void DisplayHome() {
-    #if defined Debug_All || defined Debug_AzEl
+  #if defined Debug_Minimum || defined Debug_All || defined Debug_AzEl
  //   Debug.print("******************************************");
     Debug.print("Home location set to Lat = "); Debug.print(hom.lat,7);
     Debug.print(" Lon = "); Debug.print(hom.lon,7);
     Debug.print(" Alt = "); Debug.print(hom.alt,0); 
-    Debug.print(" hom.hdg = "); Debug.println(hom.hdg,0); 
-    #endif 
+    Debug.print(" hom.hdg = "); Debug.print(hom.hdg,0); 
+    DisplayHeadingSource();
+  #endif 
+}
+//***************************************************
+void DisplayHeadingSource() {
+#if defined Debug_Minimum || defined Debug_All || defined Debug_Compass  
+  #if (Heading_Source == 1)  
+      Debug.println(  "Heading_Source = Craft's GPS"); 
+  #elif  (Heading_Source == 2)  
+      Debug.println("  Heading_Source = Flight Computer");
+  #elif (Heading_Source == 3)  
+      Debug.println("  Heading_Source = Tracker's Own Compass"); 
+  #endif 
+#endif  
 }
 //***************************************************
 uint8_t len;

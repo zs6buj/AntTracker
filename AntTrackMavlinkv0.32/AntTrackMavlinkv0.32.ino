@@ -121,7 +121,7 @@ v0.28 2018-05-31 Relax GPS lock requirement from 3D Plus (fixtype=4) to 3D (fixt
 v0.29 2018-07-01 Streamline use of Location structure 
 v0.30 2018-07-20 Clarify compile options 
 v0.31 2018-08-14 Add support for compass on the Tracker to determine direction the tracker is facing        
-v0.32 2018-08-27 Tidy up tracker's-own-compass code
+v0.32 2018-08-27 Tidy up tracker's-own-compass code. Patch Adafruit_HMC5883_Unified library.
  */
  
 #include <GCS_MAVLink.h>

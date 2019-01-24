@@ -1299,8 +1299,8 @@
       <!-- per camera image index, should be unique+sequential within a mission, preferably non-wrapping -->
       <field type="int32_t" name="lat" units="degE7">Latitude.</field>
       <field type="int32_t" name="lng" units="degE7">Longitude.</field>
-      <field type="float" name="alt_msl" units="m">Altitude Absolute (AMSL).</field>
-      <field type="float" name="alt_rel" units="m">Altitude Relative (above HOME location).</field>
+      <field type="float" name="alt_msl" units="m">Altitude (MSL).</field>
+      <field type="float" name="alt_rel" units="m">Altitude (Relative to HOME location).</field>
       <field type="float" name="roll" units="deg">Camera Roll angle (earth frame, +-180).</field>
       <!-- initially only supporting fixed cameras, in future we'll need feedback messages from the gimbal so we can include that offset here -->
       <field type="float" name="pitch" units="deg">Camera Pitch angle (earth frame, +-180).</field>
@@ -1575,31 +1575,31 @@
       <field name="SSA" type="float" units="deg">Side Slip Angle.</field>
     </message>
     <message id="11030" name="ESC_TELEMETRY_1_TO_4">
-      <description>ESC Telemetry Data for ESCs 1 to 4, matching data sent by BLHeli ESCs</description>
-      <field type="uint8_t[4]" name="temperature" units="degC">Temperature</field>
-      <field type="uint16_t[4]" name="voltage" units="cV">Voltage</field>
-      <field type="uint16_t[4]" name="current" units="cA">Current</field>
-      <field type="uint16_t[4]" name="totalcurrent" units="mAh">Total current</field>
-      <field type="uint16_t[4]" name="rpm" units="rpm">RPM (eRPM)</field>
-      <field type="uint16_t[4]" name="count">count of telemetry packets received (wraps at 65535)</field>
+      <description>ESC Telemetry Data for ESCs 1 to 4, matching data sent by BLHeli ESCs.</description>
+      <field type="uint8_t[4]" name="temperature" units="degC">Temperature.</field>
+      <field type="uint16_t[4]" name="voltage" units="cV">Voltage.</field>
+      <field type="uint16_t[4]" name="current" units="cA">Current.</field>
+      <field type="uint16_t[4]" name="totalcurrent" units="mAh">Total current.</field>
+      <field type="uint16_t[4]" name="rpm" units="rpm">RPM (eRPM).</field>
+      <field type="uint16_t[4]" name="count">count of telemetry packets received (wraps at 65535).</field>
     </message>
     <message id="11031" name="ESC_TELEMETRY_5_TO_8">
-      <description>ESC Telemetry Data for ESCs 5 to 8, matching data sent by BLHeli ESCs</description>
-      <field type="uint8_t[4]" name="temperature" units="degC">Temperature</field>
-      <field type="uint16_t[4]" name="voltage" units="cV">Voltage</field>
-      <field type="uint16_t[4]" name="current" units="cA">Current</field>
-      <field type="uint16_t[4]" name="totalcurrent" units="mAh">Total current</field>
-      <field type="uint16_t[4]" name="rpm" units="rpm">RPM (eRPM)</field>
-      <field type="uint16_t[4]" name="count">count of telemetry packets received (wraps at 65535)</field>
+      <description>ESC Telemetry Data for ESCs 5 to 8, matching data sent by BLHeli ESCs.</description>
+      <field type="uint8_t[4]" name="temperature" units="degC">Temperature.</field>
+      <field type="uint16_t[4]" name="voltage" units="cV">Voltage.</field>
+      <field type="uint16_t[4]" name="current" units="cA">Current.</field>
+      <field type="uint16_t[4]" name="totalcurrent" units="mAh">Total current.</field>
+      <field type="uint16_t[4]" name="rpm" units="rpm">RPM (eRPM).</field>
+      <field type="uint16_t[4]" name="count">count of telemetry packets received (wraps at 65535).</field>
     </message>
     <message id="11032" name="ESC_TELEMETRY_9_TO_12">
-      <description>ESC Telemetry Data for ESCs 9 to 12, matching data sent by BLHeli ESCs</description>
-      <field type="uint8_t[4]" name="temperature" units="degC">Temperature</field>
-      <field type="uint16_t[4]" name="voltage" units="cV">Voltage</field>
-      <field type="uint16_t[4]" name="current" units="cA">Current</field>
-      <field type="uint16_t[4]" name="totalcurrent" units="mAh">Total current</field>
-      <field type="uint16_t[4]" name="rpm" units="rpm">RPM (eRPM)</field>
-      <field type="uint16_t[4]" name="count">count of telemetry packets received (wraps at 65535)</field>
+      <description>ESC Telemetry Data for ESCs 9 to 12, matching data sent by BLHeli ESCs.</description>
+      <field type="uint8_t[4]" name="temperature" units="degC">Temperature.</field>
+      <field type="uint16_t[4]" name="voltage" units="cV">Voltage.</field>
+      <field type="uint16_t[4]" name="current" units="cA">Current.</field>
+      <field type="uint16_t[4]" name="totalcurrent" units="mAh">Total current.</field>
+      <field type="uint16_t[4]" name="rpm" units="rpm">RPM (eRPM).</field>
+      <field type="uint16_t[4]" name="count">count of telemetry packets received (wraps at 65535).</field>
     </message>
   </messages>
 </mavlink>

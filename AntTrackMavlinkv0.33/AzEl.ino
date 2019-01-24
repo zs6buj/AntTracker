@@ -81,4 +81,3 @@ float h_ratio, v_ratio, t_ratio;
     t_ratio = 1;
   return t_ratio;  
 }
-

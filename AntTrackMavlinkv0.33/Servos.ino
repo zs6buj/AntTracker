@@ -103,5 +103,3 @@ void  PositionServos(float Az, float El, float hmHdg) {
   return pntAz;
 }
 //***************************************************
-
-

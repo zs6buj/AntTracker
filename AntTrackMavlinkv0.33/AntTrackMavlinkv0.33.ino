@@ -123,6 +123,7 @@ v0.30 2018-07-20 Clarify compile options
 v0.31 2018-08-14 Add support for compass on the Tracker to determine direction the tracker is facing        
 v0.32 2018-08-27 Tidy up tracker's-own-compass code. Patch Adafruit_HMC5883_Unified library.
 v0.33 2018-10-01 Supports Mavlink 2 (and 1)
+
  */
  
 
@@ -139,7 +140,6 @@ v0.33 2018-10-01 Supports Mavlink 2 (and 1)
 #define Heading_Source   1  // GPS 
 //#define Heading_Source   2  // Flight Computer 
 //#define Heading_Source   3  // Tracker_Compass                         
-
 //#define Setup_BT       // Sets up a previously unused BT-06 BT slave module
 //*****************************************************************************************************************
 
@@ -250,8 +250,8 @@ int32_t ap_alt_ag;         // Altitude above ground (millimeters)
 int16_t ap_vx;             //  Ground X Speed (Latitude, positive north), expressed as m/s * 100
 int16_t ap_vy;             //  Ground Y Speed (Longitude, positive east), expressed as m/s * 100
 int16_t ap_vz;             // Ground Z Speed (Altitude, positive down), expressed as m/s * 100
-uint16_t ap_hdg;           // Vehicle heading (yaw angle) in degrees * 100, 0.0..359.99 degrees
-
+uint16_t ap_hdg;           // Vehicle heading (yaw angle) in degrees * 100, 0.0..359.99 degrees  
+     
 //***************************************************
 void setup() {
 
@@ -576,10 +576,11 @@ void MavLink_Receive() {
             Debug.print(" ap_vx="); Debug.print((float)ap_vx / 100, 1);
             Debug.print(" ap_vy="); Debug.print((float)ap_vy / 100, 1);
             Debug.print(" ap_vz="); Debug.print((float)ap_vz / 100, 1);
-            Debug.print(" ap_hdg="); Debug.println((float)ap_hdg / 100, 1);
+            Debug.print(" ap_hdg="); Debug.println((float)ap_gps_hdg / 100, 1);
           #endif 
                             
           break;
+           
       }
     }
   }
@@ -655,4 +656,3 @@ String TimeString (unsigned long epoch){
   S += String(ss);
   return S;
 }
-

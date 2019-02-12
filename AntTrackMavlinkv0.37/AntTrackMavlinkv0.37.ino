@@ -86,11 +86,12 @@
   double bi-quad antennas on the tracker, but more robust mechanicals will be called for.
 
   STM32F103C Blue-Pill wiring:
+  
+    Debug monitor   Serial(0) -->TX1 Pin A9
+                              <--RX1 Pin A10  
                               
-    Mavlink-in      Serial(0) USB    (or -->TX1 Pin A9  and <--RX1 Pin A10)
-    
-    Debug monitor   Serial1   -->TX1 Pin A9
-                              <--RX1 Pin A10
+    Mavlink-in      Serial1   -->TX2 Pin A2   
+                              <--RX2 Pin A3 
                               
     Compass         Optional     SCL Pin B6                          
                                  SDA Pin B7 
@@ -124,7 +125,7 @@ v0.32 2018-08-27 Tidy up tracker's-own-compass code. Patch Adafruit_HMC5883_Unif
 v0.33 2018-10-01 Supports Mavlink 2 (and 1)
 v0.34 2019-01-24 Add support for QLRS variant of Mavlink - requested by urlu75 - NOT TESTED  please report back :)
 v0.35 2019-01-30 Add #define Debug_Mav_Buffer. Uncomment to view contents of mav buffer before parsing for start/stop delimiter
-v0.36 2019-01-30 Serial telemetry in via USB, debug on serial 1
+v0.37 2019-02-12 Reintroduce PacketGood() location reasonability test to mitigate telemetry errors.
  */
  
 
@@ -132,7 +133,7 @@ v0.36 2019-01-30 Serial telemetry in via USB, debug on serial 1
 
 #include "c_library_v2\ardupilotmega\mavlink.h"  // Mavlink 2 library
 
-#define mavSerial            Serial
+#define mavSerial            Serial1
 
 //************************************* Please select your options here before compiling **************************
 // Un-comment (activate) the options below
@@ -148,7 +149,7 @@ v0.36 2019-01-30 Serial telemetry in via USB, debug on serial 1
 #define Debug_Minimum    //  Leave this as is unless you need the serial port for something else
 //#define Debug_All
 //#define Debug_Status
-//#define Mav_Debug_Heartbeat      
+#define Mav_Debug_Heartbeat      
 //#define Mav_Debug_GPS_Raw
 //#define Mav_Debug_GPS_Int 
 //#define Debug_AzEl
@@ -260,7 +261,7 @@ void setup() {
 
   #if defined Debug_Minimum || defined Debug_All || defined Debug_Status || defined Debug_LEDs  || defined Mav_Debug_Heartbeat || \
         defined Mav_Debug_GPS_Raw || defined Mav_Debug_GPS_Int || defined Debug_Servos || defined Debug_Compass
-    #define Debug               Serial1        
+    #define Debug               Serial         // USB 
     Debug.begin(115200);                       // Debug monitor output
     delay(2000);
     Debug.println("Starting up......");
@@ -343,15 +344,15 @@ void loop()  {
       if (gpsGood==1 && ft) {
         ft=false;
         if (homeInitialised ==0)
-          Serial.println("GPS lock good! Push set-home button anytime to start tracking.");
+          Debug.println("GPS lock good! Push set-home button anytime to start tracking.");
         else
-          Serial.println("GPS lock good again!");
+          Debug.println("GPS lock good again!");
       }
     #endif
 
-    if (mavGood && homeInitialised && new_GPS_data) {  //  every time there is new GPS data from mavlink
+    if (mavGood && homeInitialised && PacketGood() && new_GPS_data) {  //  every time there is new GPS data from mavlink
       GetAzEl(hom, cur);
-      if (hc_vector.dist >= minDist) PositionServos(hc_vector.az, hc_vector.el, hom.hdg);
+      if (hc_vector.dist >= minDist) PositionServos(hc_vector.az, hc_vector.el, hom.hdg);  // Relative to home heading
       new_GPS_data = false;
     }
  
@@ -591,7 +592,7 @@ void MavLink_Receive() {
             Debug.print(" ap_vx="); Debug.print((float)ap_vx / 100, 1);
             Debug.print(" ap_vy="); Debug.print((float)ap_vy / 100, 1);
             Debug.print(" ap_vz="); Debug.print((float)ap_vz / 100, 1);
-            Debug.print(" ap_hdg="); Debug.println((float)ap_gps_hdg / 100, 1);
+            Debug.print(" ap_hdg="); Debug.println((float)ap_hdg / 100, 1);
           #endif 
                             
           break;
@@ -673,10 +674,12 @@ String TimeString (unsigned long epoch){
 }
 //***************************************************
 void PrintMavBuffer (const void *object){
+  byte b; 
   int lth;
 
   const unsigned char * const bytes = static_cast<const unsigned char *>(object);
-  
+  b= bytes[3];
+  lth=2+6+b+2;                  // total length  = crc + header + payload length + (crc again for visbility)
   for ( int i = 1; i < lth; i++ ) {
     DisplayByte(bytes[i]);
   }
@@ -688,3 +691,49 @@ void DisplayByte(byte b) {
   Debug.print(b,HEX);
   Debug.print(" ");
 }
+//***************************************************
+boolean PacketGood() {
+// Allow 1 degree of lat and lon away from home, i.e. 60 nautical miles radius at the equator
+// Allow 1km up and 300m down from home altitude
+if (homeInitialised==0) {  //  You can't use the home co-ordinates for a reasonability test if you don't have them yet
+  return true;
+  exit;
+  }
+if (cur.lat<(hom.lat-1.0) || cur.lat>(hom.lat+1.0)) {  // Also works for negative lat
+  Debug.print(" Bad lat = ");
+  Debug.print(cur.lat,7);
+  Debug.println("  Packet ignored");   
+  return false; 
+  exit; 
+  }
+  if (cur.lon<(hom.lon-1.0) || cur.lon>(hom.lon+1.0)) { // Also works for negative lon
+  Debug.print(" Bad lon = ");
+  Debug.print(cur.lon,7);
+  Debug.println("  Packet ignored");  
+  return false; 
+  exit;  
+  }
+if (cur.alt<(hom.alt-300) || cur.alt>(hom.alt+1000)) {
+  Debug.print(" Bad alt = ");
+  Debug.print(cur.alt, 0);
+  Debug.println("  Packet ignored");    
+  return false; 
+  exit;  
+  }
+  if ((cur.alt-hom.alt)<-300 || (cur.alt-hom.alt)>1000) {
+  Debug.print(" Bad RelAlt = ");
+  Debug.print((cur.alt-hom.alt), 0);
+  Debug.println("  Packet ignored");    
+  return false; 
+  exit;  
+  }
+  if (cur.hdg<0 || cur.hdg>360) {
+  Debug.print(" Bad hdg = ");
+  Debug.print(cur.hdg, 0);
+  Debug.println("  Packet ignored");    
+  return false; 
+  exit;  
+  }
+return true;
+}
+//***************************************************

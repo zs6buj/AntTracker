@@ -148,7 +148,7 @@ v0.35 2019-01-30 Add #define Debug_Mav_Buffer. Uncomment to view contents of mav
 #define Debug_Minimum    //  Leave this as is unless you need the serial port for something else
 //#define Debug_All
 //#define Debug_Status
-//#define Mav_Debug_Heartbeat      
+#define Mav_Debug_Heartbeat      
 //#define Mav_Debug_GPS_Raw
 //#define Mav_Debug_GPS_Int 
 //#define Debug_AzEl
@@ -591,7 +591,7 @@ void MavLink_Receive() {
             Debug.print(" ap_vx="); Debug.print((float)ap_vx / 100, 1);
             Debug.print(" ap_vy="); Debug.print((float)ap_vy / 100, 1);
             Debug.print(" ap_vz="); Debug.print((float)ap_vz / 100, 1);
-            Debug.print(" ap_hdg="); Debug.println((float)ap_gps_hdg / 100, 1);
+            Debug.print(" ap_hdg="); Debug.println((float)ap_hdg / 100, 1);
           #endif 
                             
           break;
@@ -673,10 +673,12 @@ String TimeString (unsigned long epoch){
 }
 //***************************************************
 void PrintMavBuffer (const void *object){
+  byte b; 
   int lth;
 
   const unsigned char * const bytes = static_cast<const unsigned char *>(object);
-  
+  b= bytes[3];
+  lth=2+6+b+2;                  // total length  = crc + header + payload length + (crc again for visbility)
   for ( int i = 1; i < lth; i++ ) {
     DisplayByte(bytes[i]);
   }
@@ -688,3 +690,49 @@ void DisplayByte(byte b) {
   Debug.print(b,HEX);
   Debug.print(" ");
 }
+//***************************************************
+boolean PacketGood() {
+// Allow 1 degree of lat and lon away from home, i.e. 60 nautical miles radius at the equator
+// Allow 1km up and 300m down from home altitude
+if (homeInitialised==0) {  //  You can't use the home co-ordinates for a reasonability test if you don't have them yet
+  return true;
+  exit;
+  }
+if (cur.lat<(home.lat-1.0) || cur.lat>(home.lat+1.0)) {  // Also works for negative lat
+  Serial.print(" Bad lat = ");
+  Serial.print(cur.lat,7);
+  Serial.println("  Packet ignored");   
+  return false; 
+  exit; 
+  }
+  if (cur.lon<(hom.lon-1.0) || cur.lon>(hom.lon+1.0)) { // Also works for negative lon
+  Serial.print(" Bad lon = ");
+  Serial.print(cur.lon,7);
+  Serial.println("  Packet ignored");  
+  return false; 
+  exit;  
+  }
+if (cur.alt<(hom.alt-300) || cur.alt>(hom.alt+1000)) {
+  Serial.print(" Bad alt = ");
+  Serial.print(cur.alt);
+  Serial.println("  Packet ignored");    
+  return false; 
+  exit;  
+  }
+  if (fRelAlt<-300 || fRelAlt>1000) {
+  Serial.print(" Bad RelAlt = ");
+  Serial.print(fRelAlt);
+  Serial.println("  Packet ignored");    
+  return false; 
+  exit;  
+  }
+  if (fhdg<0 || fhdg>360) {
+  Serial.print(" Bad hdg = ");
+  Serial.print(fhdg);
+  Serial.println("  Packet ignored");    
+  return false; 
+  exit;  
+  }
+return true;
+}
+//***************************************************

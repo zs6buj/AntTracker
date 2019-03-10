@@ -1,0 +1,44 @@
+#######################################
+# Syntax Coloring Map TroykaGPS
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+GPS 	KEYWORD1	GPS
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+available			KEYWORD2
+read 				KEYWORD2
+readParsing			KEYWORD2
+getState			KEYWORD2
+getSat 				KEYWORD2
+getSpeedKn			KEYWORD2
+getSpeedKm			KEYWORD2
+getAltitude 		KEYWORD2
+getLatitudeBase10	KEYWORD2
+getLongitudeBase10	KEYWORD2
+getLatitudeBase60 	KEYWORD2
+getLongitudeBase60 	KEYWORD2
+getTime				KEYWORD2
+getDate				KEYWORD2
+getSecond			KEYWORD2
+getMinute			KEYWORD2
+getHour				KEYWORD2
+getDay				KEYWORD2
+getMonth			KEYWORD2
+getYear				KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+GPS_OK	LITERAL1
+GPS_ERROR_DATA	LITERAL1
+GPS_ERROR_SAT	LITERAL1
+SIZE_GPS_BUFFER	LITERAL1
+GPS_SERIAL	LITERAL1

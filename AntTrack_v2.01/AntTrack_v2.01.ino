@@ -128,7 +128,7 @@ v0.38 OLED support added
 
 v2.00 2019-03-03 Unified version auto detect telemetry speed and protocol. Mavlink 1 & 2, FrSky (D, S.Port and Passthru), LTM
       MSP and GPS support outstanding
-v2.01 Support for NMEA GPS added. Some bug fixes from v2.00.      
+v2.01 Support for NMEA GPS added     
  */
 
 #include <Servo.h>

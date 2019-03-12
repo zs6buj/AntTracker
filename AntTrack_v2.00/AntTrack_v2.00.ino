@@ -658,7 +658,7 @@ void OledDisplayln(String S) {
     display.setCursor(0,0);
     
     for (int i = 0; i < (max_row-1); i++) {     // leave space for new line at the bottom
-      if (i > 2) {   // don't scroll the 2 heading lines
+      if (i > 1) {   // don't scroll the 2 heading lines
         memset(OL[i].OLx, '\0', sizeof(OL[i].OLx));  // flush 
         strncpy(OL[i].OLx, OL[i+1].OLx, sizeof(OL[i+1].OLx));
       }

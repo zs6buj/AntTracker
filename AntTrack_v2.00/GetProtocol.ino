@@ -88,6 +88,7 @@ byte x;
         Debug.println("."); 
       #endif     
       OledDisplayln("Waiting for telemetry");
+      q=0;
     }
 
     delay(100);

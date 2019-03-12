@@ -105,6 +105,7 @@ byte x;
         Debug.println("."); 
       #endif     
       OledDisplayln("Waiting for telemetry");
+      q=0;
     }
 
     delay(100);
@@ -140,6 +141,9 @@ uint32_t min_pw;
    min_pw = (pw < min_pw) ? pw : min_pw;  // Choose the lowest
  }
 
+  #if defined Debug_All || defined Debug_Baud
+    Debug.print("pw="); Debug.print(pw); Debug.print("  min_pw="); Debug.println(min_pw);
+  #endif
   switch(min_pw) {   
     case 0 ... 11:     
       return 115200;

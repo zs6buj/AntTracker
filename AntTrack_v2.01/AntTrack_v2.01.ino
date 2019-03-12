@@ -148,7 +148,7 @@ Adafruit_SSD1306 display(OLED_RESET);
 //#define Az_Servo_360   // Means the azimuth servo can point in a 360 deg circle, elevation servo 90 deg
                          // Default (comment out #define above) is 180 deg azimuth and 180 deg elevation 
                          
-const uint8_t Heading_Source =  1;  // 1=GPS, 2=Flight Computer, 3=Tracker_Compass   
+const uint8_t Heading_Source =  2;  // 1=GPS, 2=Flight Computer, 3=Tracker_Compass   
                      
 //#define Setup_BT       // Sets up a previously unused BT-06 BT slave module
 //#define QLRS           // Un-comment if you use the QLRS variant of Mavlink 
@@ -159,21 +159,20 @@ const uint8_t Heading_Source =  1;  // 1=GPS, 2=Flight Computer, 3=Tracker_Compa
 //#define Debug_All
 //#define Debug_Telemetry
 //#define Debug_Protocol
-//#define Debug_Baud
+#define Debug_Baud
 //#define Debug_AzEl
 //#define Debug_Servos 
 //#define Debug_LEDs
 //#define Debug_Compass                            
  
 //#define Debug_Mav_Heartbeat      
-//#define Debug_Mav_GPS_Raw
-//#define Debug_Mav_GPS_Int 
+#define Debug_Mav_GPS
 //#define Debug_Mav_Buffer  
 
 //#define Debug_FrSky
 //#define Debug_LTM
 //#define Debug_MSP
-#define Debug_GPS
+//#define Debug_NMEA_GPS
 
 // Protocol determination ***************
 uint32_t baud = 0;
@@ -273,8 +272,8 @@ void setup() {
   OledDisplayln(""); // move down past yellow 
 
  #if defined Debug_Minimum || defined Debug_All || defined Debug_Status || defined Debug_LEDs  || defined Debug_Mav_Heartbeat || \
-     defined Debug_Mav_GPS_Raw || defined Debug_Mav_GPS_Int   || defined Debug_Servos || defined Debug_Compass || \
-     defined Debug_Telemetry || defined Debug_LTM || defined Debug_GPS
+     defined Debug_Mav_GPS || defined Debug_Mav_GPS   || defined Debug_Servos || defined Debug_Compass || \
+     defined Debug_Telemetry || defined Debug_LTM || defined Debug_NMEA_GPS
      
     #define Debug               Serial         // USB  
     Debug.begin(115200);                       // Debug monitor output
@@ -700,7 +699,7 @@ void CheckForTimeouts() {
       gpsGood = 0;   // If no GPS packet for 5 seconds then GPS timeout 
       telGood = 0;
       OledDisplayln("No GPS packts/timeout");     
-      #if defined Debug_All || defined Debug_FrSky || defined Debug_GPS || defined Debug_LTM
+      #if defined Debug_All || defined Debug_FrSky || defined Debug_NMEA_GPS || defined Debug_LTM
         Debug.println("No GPS telemetry for 5 seconds"); 
       #endif  
     }
@@ -714,7 +713,7 @@ void OledDisplayln(String S) {
     display.setCursor(0,0);
     
     for (int i = 0; i < (max_row-1); i++) {     // leave space for new line at the bottom
-      if (i > 2) {   // don't scroll the 2 heading lines
+      if (i > 1) {   // don't scroll the 2 heading lines
         memset(OL[i].OLx, '\0', sizeof(OL[i].OLx));  // flush 
         strncpy(OL[i].OLx, OL[i+1].OLx, sizeof(OL[i+1].OLx));
       }

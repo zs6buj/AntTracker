@@ -113,7 +113,7 @@ int GPS::readParsing() {
     _time[7] = time[5];
     _time[8] = '\0';
     // запись данных времени в целочисленные переменные
-    _hour = (time[0] - '0') * 10 + (time[1] - '0') + 3;
+    _hour = (time[0] - '0') * 10 + (time[1] - '0');  // changed to UTC
     _minute = (time[2] - '0') * 10 + (time[3] - '0');
     _second = (time[4] - '0') * 10 + (time[5] - '0');
 

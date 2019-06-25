@@ -20,8 +20,12 @@ uint8_t GetProtocol() {
 
   pinMode(rxPin, INPUT);      
   digitalWrite (rxPin, HIGH); // pull up enabled for noise reduction ?
-    
+  #if defined Debug_All || defined Debug_Baud
+     Debug.print("rxPin ");  Debug.println(rxPin);
+  #endif    
+   
   baud = GetBaud(rxPin); 
+  Debug.print("Baud rate detected is ");  Serial.println(baud);
     
   String s_baud=String(baud);   // integer to string. "String" overloaded
   OledDisplayln("Found telem "+ s_baud+"b/s"); 
@@ -136,15 +140,20 @@ uint32_t GetBaud(uint8_t  rxPin) {
 
 uint32_t pw = 999999;  //  Pulse width in uS
 uint32_t min_pw;
-Debug.print("getBaud");
- for (int i = 0; i < 10; i++) {
-   pw = pulseIn(rxPin,LOW);              // Returns the length of the pulse in microseconds
-   min_pw = (pw < min_pw) ? pw : min_pw;  // Choose the lowest
- }
 
+ while(digitalRead(rxPin) == 1){} // wait for low bit to start
+ 
+ for (int i = 0; i < 10; i++) {
+   pw = pulseIn(rxPin,LOW);               // Returns the length of the pulse in microseconds
+   if (pw !=0) {
+     min_pw = (pw < min_pw) ? pw : min_pw;  // Choose the lowest
+   }
+ }
+ 
   #if defined Debug_All || defined Debug_Baud
     Debug.print("pw="); Debug.print(pw); Debug.print("  min_pw="); Debug.println(min_pw);
   #endif
+
   switch(min_pw) {   
     case 0 ... 11:     
       return 115200;

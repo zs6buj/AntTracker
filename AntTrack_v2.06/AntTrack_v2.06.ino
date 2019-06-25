@@ -152,6 +152,7 @@ v2.00 2019-03-03 Unified version auto detect telemetry speed and protocol. Mavli
       MSP and GPS support outstanding
 v2.01 Support for NMEA GPS added     
 v2.05 2019/03/17 UNTESTED BETA Support for retoring home settings from EEPROM after power interruption  
+v2.06 2019/06/25 Improved auto baud rate detaction. Define rxPin correctly for Maple Mini
  */
 
 #include <Servo.h>
@@ -166,8 +167,8 @@ Adafruit_SSD1306 display(OLED_RESET);
 
 //************************************* Please select your options here before compiling **************************
 // Choose one (only) of these target boards
-//#define Target_Board   1      // Blue Pill STM32F103C    OR un-comment this line if you are using a Blue Pill STM32F103C
-#define Target_Board   2      // Maple_Mini STM32F103C   OR un-comment this line if you are using a Maple_Mini STM32F103C
+#define Target_Board   1      // Blue Pill STM32F103C    OR un-comment this line if you are using a Blue Pill STM32F103C
+//#define Target_Board   2      // Maple_Mini STM32F103C   OR un-comment this line if you are using a Maple_Mini STM32F103C
 
 // Un-comment (activate) the options below
 //#define Az_Servo_360   // Means the azimuth servo can point in a 360 deg circle, elevation servo 90 deg
@@ -184,9 +185,8 @@ const uint8_t Heading_Source =  1;  // 1=GPS, 2=Flight Computer, 3=Tracker_Compa
   #if (Target_Board == 1) // Blue Pill
     uint8_t rxPin = 3;  
     uint8_t txPin = 2; 
-    #define BuiltinLed  PC13                   // same as reserved constant LED_BUILTIN
+    #define BuiltinLed  PC13    // same as reserved constant LED_BUILTIN
   #elif (Target_Board == 2)     //  Maple Mini
-
     uint8_t txPin = 26;
     uint8_t rxPin = 25; 
     #define BuiltinLed  33      // PB1
@@ -196,8 +196,8 @@ const uint8_t Heading_Source =  1;  // 1=GPS, 2=Flight Computer, 3=Tracker_Compa
 #define Debug_Status
 //#define Debug_All
 //#define Debug_Telemetry
-#define Debug_Protocol
-#define Debug_Baud
+//#define Debug_Protocol
+//#define Debug_Baud
 //#define Debug_AzEl
 //#define Debug_Servos 
 //#define Debug_LEDs
@@ -344,12 +344,13 @@ void setup() {
     inSerial.begin(57600);               // If speed already set to 57600, else it will ignore the next command
     Serial1.print("AT+BAUD4");           // Set the HC-06 speed to default speed 9600 bps for AT command mode
     delay(3000);                         // Wait for HC-06 reboot
-  
+    inSerial.end();
     inSerial.begin(9600);               //  HC-06 bluetooth module default speed for AT command mode
     delay(200); 
     Serial1.print("AT+NAMEAntTrack");    //  Optional - Configure your HC-06 bluetooth name
     delay(200); 
     Serial1.print("AT+BAUD7");           // Set the speed to Mavlink default speed 57600 bps
+    inSerial.end();
     delay(3000);                         // Wait for HC-06 reboot
     // Now proceed as per normal serial link
   #endif
@@ -399,6 +400,7 @@ void setup() {
  // prepareEEPROM();
                               
   proto = GetProtocol();
+  
   inSerial.begin(baud);       // baud determined by GetProtocol()  
   // expect 57600 for Mavlink and FrSky, 2400 for LTM, 9600 for MSP & GPS
   switch(proto) {

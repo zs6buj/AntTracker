@@ -167,8 +167,8 @@ Adafruit_SSD1306 display(OLED_RESET);
 
 //************************************* Please select your options here before compiling **************************
 // Choose one (only) of these target boards
-#define Target_Board   1      // Blue Pill STM32F103C    OR un-comment this line if you are using a Blue Pill STM32F103C
-//#define Target_Board   2      // Maple_Mini STM32F103C   OR un-comment this line if you are using a Maple_Mini STM32F103C
+//#define Target_Board   1      // Blue Pill STM32F103C    OR un-comment this line if you are using a Blue Pill STM32F103C
+#define Target_Board   2      // Maple_Mini STM32F103C   OR un-comment this line if you are using a Maple_Mini STM32F103C
 
 // Un-comment (activate) the options below
 //#define Az_Servo_360   // Means the azimuth servo can point in a 360 deg circle, elevation servo 90 deg
@@ -326,6 +326,7 @@ void setup() {
   #endif
 
   Debug.begin(115200);                       // Debug monitor output
+  delay(1000);
   delay(2000);
   Debug.println("Starting up......");
 

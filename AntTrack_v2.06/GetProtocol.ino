@@ -138,8 +138,8 @@ byte x;
 // **********************************************************
 uint32_t GetBaud(uint8_t  rxPin) {
 
-uint32_t pw = 999999;  //  Pulse width in uS
-uint32_t min_pw;
+uint32_t pw = 999999;    //  Pulse width in uS
+uint32_t min_pw = 999999;
 
  while(digitalRead(rxPin) == 1){} // wait for low bit to start
  

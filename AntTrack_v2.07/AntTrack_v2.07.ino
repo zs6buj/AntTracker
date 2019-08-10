@@ -1,4 +1,5 @@
 
+#include <EEPROM.h>
 uint32_t val = 0;
 int addr = 0;
 

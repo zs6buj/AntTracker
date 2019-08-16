@@ -18,19 +18,12 @@ char ch[3]; // rolling input bytes
 // **********************************************************
 uint8_t GetProtocol() { 
 
-  pinMode(rxPin, INPUT);      
-  digitalWrite (rxPin, HIGH); // pull up enabled for noise reduction ?
-  #if defined Debug_All || defined Debug_Baud
-     Debug.print("rxPin ");  Debug.println(rxPin);
-  #endif    
-   
   baud = GetBaud(rxPin); 
-  Debug.print("Baud rate detected is ");  Serial.print(baud); Serial.println(" b/s");
-    
+  Debug.print("Baud rate detected is ");  Serial.print(baud); Serial.println(" b/s"); 
   String s_baud=String(baud);   // integer to string. "String" overloaded
   OledDisplayln("Telem found at "+ s_baud); 
 
-  LookForProtocol(baud);
+  DetectProtocol(baud);
  
   // Balance of probabilities - first to get to 10 occurances
   if (Mav1>10) { 
@@ -55,7 +48,7 @@ uint8_t GetProtocol() {
 }
 
 //***************************************************
-uint16_t LookForProtocol(uint32_t baud) {
+uint16_t DetectProtocol(uint32_t baud) {
   inSerial.begin(baud);
 
     chr = NxtChar();
@@ -115,7 +108,7 @@ byte x;
     q++;      
     if (q>100) {
       #if defined Debug_All || defined Debug_Telemetry
-        Debug.println("."); 
+        Debug.print("."); 
       #endif     
       OledDisplayln("Waiting for telemetry");
       q=0;
@@ -154,7 +147,7 @@ uint32_t GetBaud(uint8_t rxPin) {
     if(ftGetBaud) {
       ftGetBaud = false;
       Debug.println("Waiting for telemetry"); 
-      OledDisplayln("Waiting for telem");
+      OledDisplayln("Waiting for telemetry");
     }
     Debug.print("."); 
     delay(4000);
@@ -164,20 +157,22 @@ uint32_t GetBaud(uint8_t rxPin) {
     Debug.println();
   }
 
-//  Debug.print("Telem found at "); Debug.print(gb_baud);  Debug.println(" b/s");
-//  OledDisplayln("Telem found at " + String(gb_baud));
-
   return(gb_baud);
 }
 
 uint32_t GetConsistent(uint8_t rxPin) {
-  uint32_t t_baud[4];
+  uint32_t t_baud[5];
 
   while (true) {  
     t_baud[0] = SenseUart(rxPin);
+    delay(10);
     t_baud[1] = SenseUart(rxPin);
+    delay(10);
     t_baud[2] = SenseUart(rxPin);
+    delay(10);
     t_baud[3] = SenseUart(rxPin);
+    delay(10);
+    t_baud[4] = SenseUart(rxPin);
     #if defined Debug_All || defined Debug_Baud
       Debug.print("  t_baud[0]="); Debug.print(t_baud[0]);
       Debug.print("  t_baud[1]="); Debug.print(t_baud[1]);
@@ -186,11 +181,13 @@ uint32_t GetConsistent(uint8_t rxPin) {
     #endif  
     if (t_baud[0] == t_baud[1]) {
       if (t_baud[1] == t_baud[2]) {
-        if (t_baud[2] == t_baud[3]) {  
-          #if defined Debug_All || defined Debug_Baud    
-            Debug.print("Consistent baud found="); Debug.println(t_baud[3]); 
-          #endif   
-          return t_baud[3];           
+        if (t_baud[2] == t_baud[3]) { 
+          if (t_baud[3] == t_baud[4]) {   
+            #if defined Debug_All || defined Debug_Baud    
+              Debug.print("Consistent baud found="); Debug.println(t_baud[3]); 
+            #endif   
+            return t_baud[3]; 
+          }          
         }
       }
     }
@@ -209,7 +206,15 @@ uint32_t su_baud = 0;
 //  Debug.print("rxPin ");  Debug.println(rxPin);
 #endif  
 
-
+ while(digitalRead(rxPin) == 0) {
+  if (rxFT) {
+   rxFT = false;
+   Debug.println("Waiting for telemetry"); 
+   OledDisplayln("Waiting for telemetry");
+   delay(50);
+   }
+ }
+ 
  while(digitalRead(rxPin) == 1){} // wait for low bit to start
  
   for (int i = 0; i < 10; i++) {

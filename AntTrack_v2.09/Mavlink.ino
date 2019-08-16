@@ -94,7 +94,7 @@ void MavLink_Receive() {
             Debug.print("  ap_mavlink_version="); Debug.println(ap_mavlink_version);
           #endif
 
-          if(!telGood) {
+          if(!hbGood) {
             ap_fixtype = 0;  
             hb_count++; 
             #ifdef Debug_Status
@@ -103,10 +103,10 @@ void MavLink_Receive() {
             Debug.println("");
             #endif
             if((hb_count >= 3) || (homeInitialised)) {  // If 3 heartbeats or 1 hb && previously connected, we are connected
-              telGood=true;                       
+              hbGood=true;                       
               #ifdef Debug_Status
-              Debug.println("telGood=true"); 
-              OledDisplayln("Mavlink telmtry good!");
+              Debug.println("hbGood=true"); 
+              OledDisplayln("Heartbeat good");
               display.display(); 
               #endif
               hb_count=0;
@@ -114,10 +114,12 @@ void MavLink_Receive() {
           }
           break;
         case MAVLINK_MSG_ID_SYSTEM_TIME:          // #02
+          if (!hbGood) return;
           ap_time_unix_usec = mavlink_msg_system_time_get_time_unix_usec(&msg);
           ap_time_boot_ms = mavlink_msg_system_time_get_time_boot_ms(&msg);
-
-          LostPowerCheckAndRestore(ap_time_unix_usec/1E6);  // Within 3 minutes, then restore from EEPROM
+          timeGood = true;
+          
+          LostPowerCheckAndRestore(ap_time_unix_usec/1E6);  // Within 5 minutes, then restore from EEPROM
           
           #if defined Debug_All || defined Debug_Time 
             Debug.print("Mavlink in #02 SYSTEM_TIME: ");  
@@ -127,7 +129,7 @@ void MavLink_Receive() {
           #endif
           break;
         case MAVLINK_MSG_ID_GPS_RAW_INT:          // #24
-          if (!telGood) break;        
+          if (!hbGood) break;        
           ap_fixtype = mavlink_msg_gps_raw_int_get_fix_type(&msg);                   // 0 = No GPS, 1 =No Fix, 2 = 2D Fix, 3 = 3D Fix
           ap_sat_visible =  mavlink_msg_gps_raw_int_get_satellites_visible(&msg);    // number of visible satelites
           ap_gps_status = (ap_sat_visible*10) + ap_fixtype; 
@@ -162,7 +164,7 @@ void MavLink_Receive() {
           break;
  
         case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:     // #33
-          if ((!telGood) || (ap_fixtype < 3)) break;  
+          if ((!hbGood) || (ap_fixtype < 3)) break;  
           // We have a 3D Lock - change to 4 if you want 3D plus
           
           ap_lat = mavlink_msg_global_position_int_get_lat(&msg);             // Latitude, expressed as degrees * 1E7
@@ -189,7 +191,7 @@ void MavLink_Receive() {
           cur.alt = ap_amsl24 / 1E3;
           cur.hdg = ap_hdg / 100;
           
-          if (Heading_Source==1 && (!homSaved)) AutoStoreHome();  // Only need this when Heading_Source is GPS
+          if (Heading_Source==1 && (gpsGood) && (!homSaved)) AutoStoreHome();  // Only need this when Heading_Source is GPS 
 
           #if defined Debug_All || defined Debug_Mav_GPS_Int
             Debug.print("Mavlink in #33 GPS Int: ");
@@ -207,12 +209,11 @@ void MavLink_Receive() {
       }
     }
   }
-  if (telGood && (millis() - hb_millis >= 8000)){
-    telGood = false;   // If no heartbeat for 8 seconds then link timed out 
+  if (hbGood && (millis() - hb_millis >= 8000)){
+    hbGood = false;   // If no heartbeat for 8 seconds then link timed out 
     gpsGood = false;
-    OledDisplayln("Mavink timed out!");  
-    #ifdef Debug_All 
-      Debug.println("No heartbeat for 8 seconds"); 
-    #endif
+    OledDisplayln("Mavlink timed out!");  
+    Debug.println("Mavlink timed out!"); 
+
     }
 }

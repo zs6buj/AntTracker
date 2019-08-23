@@ -942,7 +942,7 @@ void StoreEpochPeriodic() {
 //***************************************************
 uint32_t epochHome() {
 
-uint32_t epHome = EEPROMReadlong(5);
+uint32_t epHome = EEPROMReadlong(0);
 
  #if defined Debug_All || defined Debug_EEPROM
    Debug.print("epochHome="); Debug.println(TimeString(epHome));

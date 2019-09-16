@@ -523,16 +523,6 @@ void setup() {
   Debug.begin(115200);                       // Debug monitor output
   delay(2000);
   Debug.println("Starting up......");
-
-
-  xTaskCreatePinnedToCore(
-    CheckForTimeouts
-    ,  "CheckForTimeouts"   // A name just for humans
-    ,  1024  // This stack size can be checked & adjusted by reading the Stack Highwater
-    ,  NULL
-    ,  2  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-    ,  NULL 
-    ,  1);  // Core 0 or 1
     
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  
   display.clearDisplay();

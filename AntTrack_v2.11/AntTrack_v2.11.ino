@@ -1136,7 +1136,6 @@ void CheckForTimeouts() {
       #endif  
     }
    ServiceTheStatusLed();
-   while(true);
 }
 //***************************************************
 void OledDisplayln(String S) {

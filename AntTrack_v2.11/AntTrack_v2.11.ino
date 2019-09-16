@@ -189,8 +189,8 @@ v2.11 2019/09/06 Mavlink WiFi and Bluetooth input added.  BT not tested.
 //#define Debug_Compass                            
  
 //#define Debug_Mav_Heartbeat  
-#define Debug_Mav_GPS   
-#define Debug_Mav_Buffer  
+//#define Debug_Mav_GPS   
+//#define Debug_Mav_Buffer  
 
 //#define Debug_FrSky
 //#define Debug_LTM
@@ -512,12 +512,28 @@ Servo elServo;            // Elevation
   BluetoothSerial SerialBT;
 #endif
 
+#if Target_Board == 3 
+// prototype for task    
+  void CheckForTimeouts( void *pvParameters );
+#endif
+
+
 //***************************************************
 void setup() {
   Debug.begin(115200);                       // Debug monitor output
   delay(2000);
   Debug.println("Starting up......");
-  
+
+
+  xTaskCreatePinnedToCore(
+    CheckForTimeouts
+    ,  "CheckForTimeouts"   // A name just for humans
+    ,  1024  // This stack size can be checked & adjusted by reading the Stack Highwater
+    ,  NULL
+    ,  2  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+    ,  NULL 
+    ,  1);  // Core 0 or 1
+    
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  
   display.clearDisplay();
   
@@ -1135,6 +1151,7 @@ void CheckForTimeouts() {
       #endif  
     }
    ServiceTheStatusLed();
+   while(true);
 }
 //***************************************************
 void OledDisplayln(String S) {

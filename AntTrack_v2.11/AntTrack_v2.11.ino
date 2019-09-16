@@ -512,11 +512,6 @@ Servo elServo;            // Elevation
   BluetoothSerial SerialBT;
 #endif
 
-#if Target_Board == 3 
-// prototype for task    
-  void CheckForTimeouts( void *pvParameters );
-#endif
-
 
 //***************************************************
 void setup() {

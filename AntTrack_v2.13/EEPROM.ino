@@ -12,7 +12,7 @@ void EEPROM_Setup() {
     if (!EEPROM.begin(EEPROM_SIZE))   // We use only 5
   {
     Debug.println("EEPROM failed to initialise"); 
-    OledDisplayln("EEPROM init failed!");
+    OledPrintln("EEPROM init failed!");
     while (true) delay(1000);
   }
  #if defined Debug_EEPROM

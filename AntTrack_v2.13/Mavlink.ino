@@ -76,7 +76,7 @@ void Mavlink_Receive() {
    } 
   #endif 
 
-  #if (FC_Mavlink_IO == 1) // Bluetooth
+  #if (Telemetry_In == 1) // Bluetooth
 
      bool msgRcvdBT = Read_Bluetooth(&msg);
 

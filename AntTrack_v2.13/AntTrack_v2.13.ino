@@ -310,7 +310,7 @@ void setup() {
     OledPrintln("Mavlink BT In");
   #endif  
 
-  #if (Mavlink_IO == 2)  // WiFi
+  #if (Telemetry_In  == 2)  // WiFi
     Debug.println("Mavlink WiFi In");
     OledPrintln("Mavlink WiFi In");
   #endif  

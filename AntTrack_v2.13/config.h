@@ -100,7 +100,7 @@ const uint8_t Heading_Source =  2;  // 1=GPS, 2=Flight Computer, 3=Tracker_Compa
   #endif
 
   #if (Target_Board != 3) 
-     #if (FC_Mavlink_IO == 1) || (GCS_Mavlink_IO == 1) || (FC_Mavlink_IO == 2) || (GCS_Mavlink_IO == 2)
+     #if (Telemetry_In  == 1) || (Telemetry_In  == 2) 
        #error WiFi or Bluetooth works only on an ESP32 board
      #endif  
   #endif

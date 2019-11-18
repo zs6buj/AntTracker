@@ -413,11 +413,22 @@ void setup() {
   #endif
   
 // ************************ Setup Bluetooth ***************************  
-  #if (Target_Board ==  3) 
-    #if (Telemetry_In == 1) // Bluetooth / Mavlink
-      SerialBT.begin("ESP32");
-    #endif  
-  #endif
+  #if (Target_Board ==  3) && (Telemetry_In == 1) 
+    #ifdef BT_Master_Mode
+      SerialBT.begin("AntTrack", true);            
+    #else
+        SerialBT.begin("AntTrack");   
+    #endif 
+      
+      bool bt_connected;
+
+      bt_connected = SerialBT.connect(BT_Slave_Name);
+     if(bt_connected) {
+          Debug.println("Bluetooth connected!");
+          OledPrintln("Bluetooth connected!");
+      }    
+      
+  #endif 
   
   // ************************* Setup WiFi **************************** 
   #if (Target_Board ==  3)  
@@ -470,7 +481,7 @@ void loop() {            // For WiFi TCP/IP only
 //***************************************************
 void main_loop()  {
 
-  #if (Telemetry_In == 0)       // Bluetooth
+  #if (Telemetry_In == 1)       // Bluetooth
     Mavlink_Receive();
   #endif
 

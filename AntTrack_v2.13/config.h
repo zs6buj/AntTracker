@@ -162,8 +162,8 @@ const uint8_t Heading_Source =  2;  // 1=GPS, 2=Flight Computer, 3=Tracker_Compa
   #define txPin             17;  
   #define SetHomePin        15    
   #define StatusLed         13  // Off=No good GPS yet, flashing=good GPS but home not set yet, solid = ready to track
-  #define azPWM_Pin         36  // azimuth servo 
-  #define elPWM_Pin         39  // elevation servo
+  #define azPWM_Pin         32  // azimuth servo (can't be 34,35,36,39 because input only !!)
+  #define elPWM_Pin         33  // elevation servo(can't be 34,35,36,39 because input only !!)
   #define BuiltinLed        02  // PB1   
   
   int16_t  wifi_rssi;   

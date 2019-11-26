@@ -523,7 +523,7 @@ void main_loop()  {
     }  
    #endif
   
-  //  ServiceTheStatusLed();  
+ServiceTheStatusLed();  
 
     if ( ((timeEnabled) && (lostPowerCheckDone)) || (!timeEnabled)  ) {
       if (gpsGood==1 && ft) {

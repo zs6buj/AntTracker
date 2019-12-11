@@ -4,6 +4,7 @@
   Complete change log and debugging options are at the bottom of this tab
    
 v2.13 2019-11-18 Update WiFi, BT (master/slave), board variants setup, autobaud, OledPrint to Mav2Pt v2.46  
+v2.14 2019-12-11 When Heading _Source == 3 (compass on tracker), don't need to check ap_hdg in PacketGood()
 `                    
 */
 // ******************************* Please select your options here before compiling *******************************

@@ -814,7 +814,7 @@ if ((cur.alt-hom.alt)<-300 || (cur.alt-hom.alt)>1000) {
   return false; 
   exit;  
   }
-#if (Heading_Source == 2)  //  Heading source from flight controller
+if (Heading_Source == 2) { //  Heading source from flight controller
   if (cur.hdg<0 || cur.hdg>360) {
     Debug.print(" Bad hdg! cur.hdg=");
     Debug.print(cur.hdg,0);  
@@ -823,7 +823,7 @@ if ((cur.alt-hom.alt)<-300 || (cur.alt-hom.alt)>1000) {
     return false; 
     exit;  
    }
-#endif
+}
   
 return true;
 }

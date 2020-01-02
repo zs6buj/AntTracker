@@ -780,7 +780,6 @@ boolean PacketGood() {
 // Allow 1km up and 300m down from home altitude
 if (homeInitialised==0) {  //  You can't use the home co-ordinates for a reasonability test if you don't have them yet
   return true;
-  exit;
   }
 if (cur.lat<(hom.lat-1.0) || cur.lat>(hom.lat+1.0)) {  // Also works for negative lat
   Debug.print(" Bad lat! cur.lat=");
@@ -788,31 +787,27 @@ if (cur.lat<(hom.lat-1.0) || cur.lat>(hom.lat+1.0)) {  // Also works for negativ
   Debug.print(" hom.lat=");Debug.print(hom.lat,7);
   Debug.println("  Packet ignored");   
   return false; 
-  exit; 
   }
 if (cur.lon<(hom.lon-1.0) || cur.lon>(hom.lon+1.0)) { // Also works for negative lon
   Debug.print(" Bad lon! cur.lon=");
   Debug.print(cur.lon,7);  
   Debug.print(" hom.lon=");Debug.print(hom.lon,7);
   Debug.println("  Packet ignored");  
-  return false; 
-  exit;  
+  return false;  
   }
 if (cur.alt<(hom.alt-300) || cur.alt>(hom.alt+1000)) {
   Debug.print(" Bad alt! cur.alt=");
   Debug.print(cur.alt,0);  
   Debug.print(" hom.alt=");Debug.print(hom.alt,0);
   Debug.println("  Packet ignored");    
-  return false; 
-  exit;  
+  return false;  
   }
 if ((cur.alt-hom.alt)<-300 || (cur.alt-hom.alt)>1000) {
   Debug.print(" Bad alt! cur.alt=");
   Debug.print(cur.alt,0);  
   Debug.print(" hom.alt=");Debug.print(hom.alt,0);
   Debug.println("  Packet ignored");    
-  return false; 
-  exit;  
+  return false;  
   }
 if (Heading_Source == 2) { //  Heading source from flight controller
   if (cur.hdg<0 || cur.hdg>360) {
@@ -820,8 +815,7 @@ if (Heading_Source == 2) { //  Heading source from flight controller
     Debug.print(cur.hdg,0);  
     Debug.print(" hom.hdg=");Debug.print(hom.hdg,0);
     Debug.println("  Packet ignored");    
-    return false; 
-    exit;  
+    return false;  
    }
 }
   

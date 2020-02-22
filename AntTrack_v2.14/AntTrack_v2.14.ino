@@ -369,8 +369,10 @@ void setup() {
     #endif  
   }
     
-  //TestServos();   // Uncomment this code to observe how well your servos reach their specified limits
+  #if defined TestServos
+    TestServos();   //observe how well your servos works in function of Az,El and Reference Home Heading
                     // Fine tune MaxPWM and MinPWM in Servos module
+  #endif
 
 // ************************ Setup Serial ******************************
 
@@ -685,22 +687,6 @@ void DisplayHeadingSource() {
   }
 #endif  
 }
-
-//***************************************************
-void TestServos() {
-PositionServos(90, 0, 90); 
-  for (int i=1; i<=360; i++) {
-    delay(60);
-    PositionServos(i, 30, 90);   
-    }
-  for (int i=1; i<=170; i++) {
-    delay(60);
-    PositionServos(90, i, 90);   
-    }
-   PositionServos(90, 0, 90);   
-   }
-
-
 
 //***************************************************
 
@@ -1167,3 +1153,105 @@ void RestoreHomeFromFlash() {
   #endif
   
  #endif  
+
+//***************************************************
+#if defined TestServos
+  void TestServos() {
+  PositionServos(90, 0, 90); 
+    for (int i=1; i<=360; i++) {
+      if (i<5 or (i>175 and i<185) or i>355){
+        delay(150); //Take time to observe max positions
+      }
+      else {
+        delay(20); 
+      }
+      PositionServos(i, 30, 90);   
+    }
+    digitalWrite(StatusLed,HIGH);
+    delay(1000);
+    digitalWrite(StatusLed,LOW);
+    for (int i=1; i<=180; i++) {
+      if (i<5 or i>175){
+        delay(150); //Take time to observe max positions
+      }
+      else {
+          delay(20); 
+      }
+      PositionServos(90, i, 90);   
+    }
+    PositionServos(90, 0, 90);
+  
+    //Test with various ReferenceHomeHeading
+    digitalWrite(StatusLed,HIGH);
+    delay(1000);
+    digitalWrite(StatusLed,LOW);
+    PositionServos(90, 0, 190); 
+    for (int i=1; i<=360; i++) {
+      delay(50);
+      PositionServos(i, 45, 190);   
+    }
+    digitalWrite(StatusLed,HIGH);
+    delay(1000);
+    digitalWrite(StatusLed,LOW);
+    for (int i=1; i<=180; i++) {
+      delay(20);
+      PositionServos(90, i, 190);   
+    }
+    digitalWrite(StatusLed,HIGH);
+    delay(1000);
+    digitalWrite(StatusLed,LOW);
+    PositionServos(90, 0, 250); 
+    for (int i=1; i<=360; i++) {
+      delay(50);
+      PositionServos(i, 45, 250);   
+    }
+    digitalWrite(StatusLed,HIGH);
+    delay(1000);
+    digitalWrite(StatusLed,LOW);
+    for (int i=1; i<=180; i++) {
+      delay(20);
+      PositionServos(90, i, 250);   
+    }
+    digitalWrite(StatusLed,HIGH);
+    delay(1000);
+    digitalWrite(StatusLed,LOW);
+    PositionServos(90, 0, 350); 
+    for (int i=1; i<=360; i++) {
+      delay(50);
+      PositionServos(i, 45, 350);   
+    }
+    digitalWrite(StatusLed,HIGH);
+    delay(1000);
+    digitalWrite(StatusLed,LOW);
+    for (int i=1; i<=180; i++) {
+      delay(20);
+      PositionServos(90, i, 350);   
+    }
+    PositionServos(90, 0, 350);
+    digitalWrite(StatusLed,HIGH);
+    delay(1000);
+    digitalWrite(StatusLed,LOW);
+    PositionServos(90, 0, 0);
+    digitalWrite(StatusLed,HIGH);
+    delay(1000);
+    digitalWrite(StatusLed,LOW);
+    PositionServos(90, 0, 90);
+    digitalWrite(StatusLed,HIGH);
+    delay(1000);
+    digitalWrite(StatusLed,LOW);
+    PositionServos(90, 0, 180);
+    digitalWrite(StatusLed,HIGH);
+    delay(1000);
+    digitalWrite(StatusLed,LOW);
+    PositionServos(90, 0, 270);
+    digitalWrite(StatusLed,HIGH);
+    delay(1000);
+    digitalWrite(StatusLed,LOW);
+    PositionServos(90, 0, 360);
+    digitalWrite(StatusLed,HIGH);
+    delay(1000);
+    digitalWrite(StatusLed,LOW);
+    PositionServos(90, 0, 90);
+    //End of test with different ReferenceHomeHeading
+  }
+#endif

@@ -91,10 +91,20 @@ void  PositionServos(float Az, float El, float hmHdg) {
   #endif
 
   pntAz = pntAz - rhmHdg + 90;    // Make heading relative to 90 degrees in front of us
-  if (pntAz<0) pntAz = 90-pntAz;  // Correct the 90 deg boundary if necessary
-  
+
+  #ifdef Az_Servo_360
+    if (pntAz < 0)  pntAz = 90 - pntAz;
+  #endif
   #ifndef Az_Servo_360            // Note if not. Do this for 180, not for 360 azimuth servo
+    if (pntAz < 0)
+    {
+      if (rhmHdg <= 90) pntAz = 90 - pntAz;
+      if (rhmHdg > 90 and rhmHdg <= 180) pntAz = - 180 - pntAz;
+      if (rhmHdg > 180 and rhmHdg <= 270) pntAz = pntAz - 180;
+      if (rhmHdg > 270) pntAz = 360 + pntAz;
+    }
     if ((pntAz>180) && (pntAz<=360)) pntAz=180-pntAz;  // Mirror the hemisphere behind us, and make it negative
+    if ((pntAz<-180) && (pntAz>=-360)) pntAz=-360-pntAz;
   #endif  
     
   if (pntAz>360) pntAz=pntAz-360;   // All the way round to positive territory again

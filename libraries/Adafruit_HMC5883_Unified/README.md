@@ -1,4 +1,4 @@
-#Adafruit HMC5883L Driver (3-Axis Magnetometer) #
+# Adafruit HMC5883L Driver (3-Axis Magnetometer) [![Build Status](https://github.com/adafruit/Adafruit_HMC5883_Unified/workflows/Arduino%20Library%20CI/badge.svg)](https://github.com/adafruit/Adafruit_HMC5883_Unified/actions)[![Documentation](https://github.com/adafruit/ci-arduino/blob/master/assets/doxygen_badge.svg)](http://adafruit.github.io/Adafruit_HMC5883_Unified/html/index.html)
 
 This driver is for the Adafruit HMC5883L Breakout (http://www.adafruit.com/products/1746), and is based on Adafruit's Unified Sensor Library (Adafruit_Sensor).
 

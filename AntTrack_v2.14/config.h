@@ -89,10 +89,10 @@ const uint8_t Heading_Source =  3;  // 1=GPS, 2=Flight Computer, 3=Tracker_Compa
 //*********************************************************************************************
 //**********************   S E L E C T   E S P   B O A R D   V A R I A N T   ******************
 
-#define ESP32_Variant     1    //  ESP32 Dev Module - there are several sub-variants that work
+//#define ESP32_Variant     1    //  ESP32 Dev Module - there are several sub-variants that work
 //#define ESP32_Variant     2    //  Wemos® LOLIN ESP32-WROOM-32_OLED_Dual_26p
 //#define ESP32_Variant     3    //  Dragonlink V3 slim with internal ESP32 - contributed by Noircogi
-//#define ESP32_Variant     4    //  Heltec Wifi Kit 32 - contributed by Noircogi
+#define ESP32_Variant     4    //  Heltec Wifi Kit 32 - contributed by Noircogi
 
 #define ESP8266_Variant   1   // Node MFU 12F
 
@@ -161,6 +161,18 @@ const uint8_t Heading_Source =  3;  // 1=GPS, 2=Flight Computer, 3=Tracker_Compa
   #include <ESP32_Servo.h>  
   
   #if (ESP32_Variant == 1)          // ESP32 Dev Module
+  uint8_t rxPin =           27  
+  #define txPin             17;  
+  #define SetHomePin        18    
+  #define StatusLed         25  // Off=No good GPS yet, flashing=good GPS but home not set yet, solid = ready to track
+  #define azPWM_Pin         32  // azimuth servo (can't be 34,35,36,39 because input only !!)
+  #define elPWM_Pin         33  // elevation servo(can't be 34,35,36,39 because input only !!)
+  #define BuiltinLed        02  // PB1   
+  
+  int16_t  wifi_rssi;   
+  #endif
+  
+  #if (ESP32_Variant == 4)          // Heltec Wifi Kit 32 (NOTE! 8MB) 
   uint8_t rxPin =           16;  
   #define txPin             17;  
   #define SetHomePin        15    
@@ -171,6 +183,8 @@ const uint8_t Heading_Source =  3;  // 1=GPS, 2=Flight Computer, 3=Tracker_Compa
   
   int16_t  wifi_rssi;   
   #endif
+
+  
 #endif
 
 // *************************************    D E F I N E   O L E D    *****************************

@@ -55,8 +55,8 @@ const uint8_t Heading_Source =  2;  // 1=GPS, 2=Flight Computer, 3=Tracker_Compa
 //*********************************************************************************************
 //**********************   S E L E C T   E S P   B O A R D   V A R I A N T   ******************
 
-#define ESP32_Variant     1    //  ESP32 Dev Module - there are several sub-variants that work
-//#define ESP32_Variant     4    //  Heltec Wifi Kit 32 
+//#define ESP32_Variant     1    //  ESP32 Dev Module - there are several sub-variants that work
+#define ESP32_Variant     4    //  Heltec Wifi Kit 32 
 //#define ESP32_Variant     5    //  LILYGO® TTGO T-Display ESP32 1.14" ST7789 Colour LCD
 //#define ESP32_Variant     6    //  DON'T USE ME YET !!  LILYGO® TTGO T2 SD
 
@@ -258,7 +258,7 @@ const uint8_t Heading_Source =  2;  // 1=GPS, 2=Flight Computer, 3=Tracker_Compa
       SPI/MISO             19   For optional TF/SD Card Adapter
       SPI/SCK              18   For optional TF/SD Card Adapter  
     */
-  int16_t  wifi_rssi;   
+
   #endif
   //=========================================================================   
   #if (ESP32_Variant == 5)          // LILYGO® TTGO T-Display ESP32 1.14" ST7789 Colour LCD, IDE board = "ESP32 Dev Module"
@@ -436,7 +436,8 @@ const uint8_t Heading_Source =  2;  // 1=GPS, 2=Flight Computer, 3=Tracker_Compa
   //                       W I F I   S U P P O R T - ESP32 and ES8266 Only
   //================================================================================================= 
 
-
+    int16_t   wifi_rssi;
+    
 #if (Target_Board == 3) && (Telemetry_In == 2)  // ESP32 and WiFi
 
     uint16_t  TCP_localPort = 5760;
@@ -446,7 +447,7 @@ const uint8_t Heading_Source =  2;  // 1=GPS, 2=Flight Computer, 3=Tracker_Compa
     bool      FtRemIP = true;
     uint8_t   AP_sta_count = 0;
     uint8_t   AP_prev_sta_count = 0;
-    int16_t   wifi_rssi;
+
     
     // Define link variables
     #ifndef BT_Setup

@@ -360,8 +360,6 @@ const uint8_t Heading_Source =  2;  // 1=GPS, 2=Flight Computer, 3=Tracker_Compa
   #define max_col   screen_width+1  // for terminating char        
   #define max_row   30
 
-  char snprintf_buf[max_col];   // for use with snprintf() formatting of display line
-  
     static const uint16_t threshold = 40;
     volatile bool upButton = false;
     volatile bool dnButton = false;

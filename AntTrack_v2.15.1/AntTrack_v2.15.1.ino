@@ -282,8 +282,10 @@ Servo elServo;            // Elevation
 
 
  #if (defined ESP32) || (defined ESP8266)
- //  void PaintDisplay(uint8_t, last_row_t);
- //  void Scroll_Display(scroll_t);
+   #if (defined Display_Support)
+     void PaintDisplay(uint8_t, last_row_t);
+     void Scroll_Display(scroll_t);
+   #endif  
    void IRAM_ATTR gotButtonDn();
    void IRAM_ATTR gotButtonUp();
    void IRAM_ATTR gotWifiButton();

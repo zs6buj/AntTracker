@@ -13,7 +13,7 @@ v2.15 2020-10-12 Proper TCP client added for outgoing (to telemetry source) conn
 #define Device_sysid     251                     // Our Mavlink Identity - APM FC is 1, Mission Planner is 255, QGC default is 0 
 #define Device_compid    MAV_COMP_ID_PERIPHERAL  // 158 Generic autopilot peripheral - APM FC is 1, MP is 190, QGC is  https://mavlink.io/en/messages/common.html
 
-//#define Display_Support                 // Enable if you have a display attached - choose default display type below
+#define Display_Support                 // Enable if you have a display attached - choose default display type below
 #define SSD1306_Display                 // OLED display type - if you have a display you must define which type
 //#define ST7789_Display                // TFT display type - if you have a display you must define which type 
 

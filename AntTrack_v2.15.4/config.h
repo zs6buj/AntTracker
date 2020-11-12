@@ -4,7 +4,7 @@
   Complete change log and debugging options are at the bottom of this tab
    
 v2.15.3 2020-11-08 Fix 10 to power calc for FrSky X.  
-v2.15.4 2020-11-12 Patch by mric3412 (positionServos bug in some home heading cases) properly included.               
+v2.15.4 2020-11-12 Patch by mric3412 (PositionServos bug in some home heading cases) properly included.               
 
 `                    
 */

@@ -482,8 +482,22 @@ void setup() {
   #if (Telemetry_In == 0)    //  Serial
 
     protocol = GetProtocol();
-  
-    inSerial.begin(baud);       
+
+    #if ( (defined ESP8266) || (defined ESP32) ) 
+      inSerial.begin(baud, SERIAL_8N1, rxPin, txPin, frInvert); 
+    #elif (defined TEENSY3X) 
+      frSerial.begin(frBaud); // Teensy 3.x    tx pin hard wired
+       if (frInvert) {          // For S.Port not F.Port
+         UART0_C3 = 0x10;       // Invert Serial1 Tx levels
+         UART0_S2 = 0x10;       // Invert Serial1 Rx levels;       
+       }
+       #if (defined frOneWire )  // default
+         UART0_C1 = 0xA0;        // Switch Serial1 to single wire (half-duplex) mode  
+       #endif    
+    #else
+      inSerial.begin(baud);
+    #endif   
+            
     // expect 57600 for Mavlink and FrSky, 2400 for LTM, 9600 for MSP & GPS
     switch(protocol) {
     

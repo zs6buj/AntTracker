@@ -5,7 +5,7 @@
    
 v2.15.3 2020-11-08 Fix 10 to power calc for FrSky X.  
 v2.15.4 2020-11-12 Patch by mric3412 (PositionServos bug in some home heading cases) properly included. 
-v2.15.5 2021-02-01 Add hardware signal inversion for S.Port input. Notified @mello73.              
+v2.15.5 2021-02-01 Add hardware signal inversion for S.Port input. Notified by @mello73.              
 
 `                    
 */
@@ -159,7 +159,7 @@ const uint8_t Heading_Source =  2;  // 1=GPS, 2=Flight Computer, 3=Tracker_Compa
 #if (Target_Board == 0)           // Teensy3x NOT YET IMPLEMENTED !
   #define rxPin        9  
   #define txPin       10
-  #define frInvert          true
+  bool frInvert = true;      
   #define frOneWire         true
   #define SetHomePin 
   #define StatusLed   14
@@ -199,7 +199,7 @@ const uint8_t Heading_Source =  2;  // 1=GPS, 2=Flight Computer, 3=Tracker_Compa
   #if (ESP32_Variant == 1)          // ESP32 Dev Module
   uint8_t rxPin =           27;  
   #define txPin             17 
-  #define frInvert          true 
+  bool frInvert = true;        
   #define SetHomePin        18    
   #define StatusLed         25  // Off=No good GPS yet, flashing=good GPS but home not set yet, solid = ready to track
   #define BuiltinLed        99
@@ -230,7 +230,7 @@ const uint8_t Heading_Source =  2;  // 1=GPS, 2=Flight Computer, 3=Tracker_Compa
   #if (ESP32_Variant == 4)          // Heltec Wifi Kit 32 (NOTE! 8MB) 
   uint8_t rxPin =           27;  
   #define txPin             17  
-  #define frInvert          true
+  bool frInvert = true;      
   #define SetHomePin        18    
   #define StatusLed         13  // Off=No good GPS yet, flashing=good GPS but home not set yet, solid = ready to track
   #define BuiltinLed        99 
@@ -269,7 +269,7 @@ const uint8_t Heading_Source =  2;  // 1=GPS, 2=Flight Computer, 3=Tracker_Compa
   #if (ESP32_Variant == 5)          // LILYGO® TTGO T-Display ESP32 1.14" ST7789 Colour LCD, IDE board = "ESP32 Dev Module"
     uint8_t rxPin =           27;  
     #define txPin             17 
-    #define frInvert          true    
+    bool frInvert = true;          
     #define SetHomePin        15
     #define StatusLed         25        // Add your own LED with around 1K series resistor
     #define BuiltinLed        99    
@@ -301,7 +301,7 @@ const uint8_t Heading_Source =  2;  // 1=GPS, 2=Flight Computer, 3=Tracker_Compa
   #if (ESP32_Variant == 6)          // LILYGO® TTGO T2 ESP32 OLED Arduino IDE board = "ESP32 Dev Module"
     uint8_t rxPin =           27;  
     #define txPin             17 
-    #define frInvert          true     
+    bool frInvert = true;           
     #define SetHomePin        15
     #define StatusLed         25        // Add your own LED with around 1K series resistor
     #define BuiltinLed        99    

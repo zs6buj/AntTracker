@@ -51,7 +51,7 @@ TryAgain:
     goto TryAgain;    // Don't know this packet type
   }
 
- // DisplayTheBuffer(pLth); 
+ // PrintMavBuffer(pLth); 
   
   
 }
@@ -67,7 +67,7 @@ byte x;
   // Data is available
   hbGood = 1;                     // We have a good serial connection!
   x = Serial1.read();
-//  PrintByte(x);
+// Printbyte(x, false, ' ');  
   return x;
 }
 //***************************************************
@@ -93,7 +93,7 @@ boolean UnpackAttitude(int lth) {
   cur.hdg = jHdg;
   hdgGood=1;
   #if defined Debug_All || defined Debug_LTM
-    DisplayTheBuffer(lth); 
+    PrintMavBuffer(lth); 
     Log.print(" Pitch = ");
     Log.print(iPitch);
     Log.print(" Roll = ");
@@ -140,7 +140,7 @@ boolean UnpackGPS(int lth) {
   gpsGood_millis = millis();                 // Time of last good GPS packet
 
   #if defined Debug_All || defined Debug_LTM
-    DisplayTheBuffer(lth); 
+    PrintMavBuffer(lth); 
     Log.print(" Lat = ");
     Log.print(cur.lat,7);
     Log.print(" Lon = ");
@@ -185,7 +185,7 @@ boolean UnpackSensors(int lth) {
   fVBat = jVBat / 1E3;
   fCur = jCur / 1E3;
   #if defined Debug_All || defined Debug_LTM
-    DisplayTheBuffer(lth); 
+    PrintMavBuffer(lth); 
     Log.print(" Bat Volts = ");
     Log.print(fVBat,1);
     Log.print(" Current = ");

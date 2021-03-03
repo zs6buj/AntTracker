@@ -115,7 +115,7 @@ void Mavlink_Receive() {
   #if (Telemetry_In == 0)              // Serial    
     while(inSerial.available()) {
       uint8_t c = inSerial.read();
-      //PrintByte(c);
+      //Printbyte(c, false, ' ');
       #ifdef Debug_Mav_Buffer
         Log.println("Mavlink buffer : ");
       PrintMavBuffer(&msg);

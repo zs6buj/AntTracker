@@ -180,11 +180,15 @@
 #include <SPI.h>
 #include <Wire.h>
 
-    String    pgm_path;
-    String    pgm_name;
+   String    pgm_path;
+   String    pgm_name;
 
-    bool pb_rx = true;
+   bool pb_rx = true;
+    
+   typedef enum frport_type_set { f_none = 0, f_port1 = 1, f_port2 = 2, s_port = 3, f_auto} frport_t;  
 
+   typedef enum polarity_set { idle_low = 0, idle_high = 1, no_traffic = 2 } pol_t;    
+    
     // Protocol determination
     uint32_t baud = 0;
     uint8_t  protocol = 0;
@@ -209,6 +213,8 @@
     uint32_t millisSync = 0;
     uint32_t epochSync = 0;
     uint32_t millisFcHheartbeat = 0;
+    uint32_t serGood_millis = 0;
+    uint32_t packetloss_millis = 0;
     
     bool      hbGood = false; 
     bool      mavGood = false;   
@@ -220,12 +226,15 @@
     bool      pwmPrev = false;
     bool      gpsGood = false; 
     bool      gpsPrev = false;    
-    
+    bool      serGood = false;            
+
     uint32_t  frGood_millis = 0;
     uint32_t  mavGood_millis = 0;   
     uint32_t  pwmGood_millis = 0;       
     uint32_t  gpsGood_millis = 0;
 
+    uint32_t  goodFrames = 0;
+    uint32_t  badFrames = 0;
 
     //====================
     bool  wifiSuDone = false;
@@ -244,8 +253,9 @@
     int16_t iLth=0;
     int16_t pLth;  // Packet length
     byte chr = 0x00;
-    const int packetSize = 70; 
-    byte inBuf[packetSize]; 
+    byte prev_chr = 0x00;    
+    const int inMax = 70; 
+    byte inBuf[inMax]; 
 
     //  variables for servos
     int16_t azPWM = 0;
@@ -314,7 +324,7 @@
 
 
  #if (defined ESP32) || (defined ESP8266)
-   #if (defined Display_Support)
+   #if (defined displaySupport)
      void PaintDisplay(uint8_t, last_row_t);
      void Scroll_Display(scroll_t);
    #endif  
@@ -331,7 +341,11 @@
  void SaveHomeToFlash();
  void PrintByte(byte b);
  void PrintMavBuffer(const void *object);
- 
+ void CheckForTimeouts();
+ void LostPowerCheckAndRestore(uint32_t);
+ uint32_t Get_Volt_Average1(uint16_t);  
+ uint32_t Get_Current_Average1(uint16_t);
+
 //***************************************************
 void setup() {
   Log.begin(115200);
@@ -527,11 +541,40 @@ void setup() {
 // ************************ Setup Serial ******************************
 
   #if (Telemetry_In == 0)    //  Serial
-
-    protocol = GetProtocol();
-
+  
+      pol_t pol = (pol_t)getPolarity(rxPin);
+      bool ftp = true;
+      while (pol == no_traffic) {
+        if (ftp) {
+          Log.printf("No telem on rx pin:%d ", rxPin);
+          String s_rxPin=String(rxPin);   // integer to string
+          LogScreenPrintln("No telem on rxpin:"+ s_rxPin); 
+          ftp = false;
+        }
+        static uint8_t cl = 0;
+        if (cl > 30) {
+          Log.println();
+          cl = 0;
+        }
+        Log.print(".");
+        pol = (pol_t)getPolarity(rxPin);
+        delay(1000);
+      }
+      if (!ftp) Log.println();
+      if (pol == idle_low) {
+        rxInvert = true;
+        Log.printf("Serial port rx pin %d is IDLE_LOW, inverting rx polarity\n", rxPin);
+      } else {
+        rxInvert = false;
+        Log.printf("Serial port rx pin %d is IDLE_HIGH, regular rx polarity retained\n", rxPin);        
+      }
+      
+    protocol = getProtocol();
+    //Log.printf("Protocol:%d\n", protocol);
     #if ( (defined ESP8266) || (defined ESP32) ) 
+      delay(10);
       inSerial.begin(baud, SERIAL_8N1, rxPin, txPin, rxInvert); 
+      delay(10);
     #elif (defined TEENSY3X) 
       frSerial.begin(frBaud); // Teensy 3.x    tx pin hard wired
        if (rxInvert) {          // For S.Port not F.Port
@@ -558,19 +601,27 @@ void setup() {
         Log.println("Mavlink 2 found");
         timeEnabled = true;
         break;
-      case 3:    // FrSky protocol  
-        LogScreenPrintln("FrSky protocol found");
-        Log.println("FrSky protocol found");       
+      case 3:    // FrSky S.Port 
+        LogScreenPrintln("FrSky S.Port found");
+        Log.println("FrSky S.Port found");       
         break;
-      case 4:    // LTM protocol found  
+      case 4:    // FrSky F.Port 1
+        LogScreenPrintln("FrSky F.Portl found");
+        Log.println("FrSky F.Port1 found");       
+        break;
+      case 5:    // FrSky F.Port 2
+        LogScreenPrintln("FrSky F.Port2 found");
+        Log.println("FrSky F.Port2 found");       
+        break; 
+      case 6:    // LTM protocol found  
         LogScreenPrintln("LTM protocol found"); 
         Log.println("LTM protocol found");       
         break;     
-      case 5:    // MSP protocol found 
+      case 7:    // MSP protocol found 
         LogScreenPrintln("MSP protocol found"); 
         Log.println("MSP protocol found");   
         break; 
-      case 6:    // GPS NMEA protocol found 
+      case 8:    // GPS NMEA protocol found 
         LogScreenPrintln("NMEA protocol found"); 
         Log.println("NMEA protocol found"); 
         set_up_GPS(); 
@@ -655,16 +706,22 @@ void loop() {
       case 2:    // Mavlink 2
         Mavlink_Receive();
         break;
-      case 3:    // FrSky
-        FrSky_Receive();                     
+      case 3:    // S.Port
+        FrSky_Receive(3);                     
         break;
-      case 4:    // LTM   
+       case 4:    // F.Port1
+        FrSky_Receive(4);                     
+        break;
+       case 5:    // F.Port2
+        FrSky_Receive(5);                     
+        break;              
+      case 6:    // LTM   
         LTM_Receive();   
         break;  
-      case 5:    // MSP
+      case 7:    // MSP
  //     MSP_Receive(); 
         break;
-      case 6:    // GPS
+      case 8:    // GPS
         GPS_Receive(); 
         break;
       default:   // Unknown protocol 

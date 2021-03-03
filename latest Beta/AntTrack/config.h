@@ -5,19 +5,19 @@
 
 #define MAJOR_VERSION      2
 #define MINOR_VERSION      16
-#define PATCH_LEVEL        0
+#define PATCH_LEVEL        1
 
 /*
 =================================================================================================== 
                                 M o s t    R e c e n t   C h a n g e s
 =================================================================================================== 
   Complete change log and debugging options are at the bottom of this tab
-   
-v2.15.3 2020-11-08 Fix 10 to power calc for FrSky X.  
-v2.15.4 2020-11-12 Patch by mric3412 (PositionServos bug in some home heading cases) properly included. 
-v2.15.5 2021-02-01 Add hardware signal inversion for S.Port input. Notified by @mello73.              
-v2.16.0 2021-02-22 Adopt GitHub Tags
-        2021-02-27 Add HUD display. Add FrSky UDP telemetry in 
+  
+GitHub Tag
+----------                
+v2.16.0   2021-02-22 Adopt GitHub Tags
+          2021-02-27 Add HUD display. Add FrSky UDP telemetry in
+V2.16.1   2021-03-03 Add support for F.Port, auto inversion         
 `                    
 */
 // ******************************* Please select your options here before compiling *******************************
@@ -84,8 +84,8 @@ const uint8_t Heading_Source =  2;  // 1=GPS, 2=Flight Computer, 3=Tracker_Compa
 //**********************   S E L E C T   E S P   B O A R D   V A R I A N T   ******************
 
 //#define ESP32_Variant     1    //  ESP32 Dev Module - there are several sub-variants that work
-//#define ESP32_Variant     4    //  Heltec Wifi Kit 32 
-#define ESP32_Variant     5    //  LILYGO® TTGO T-Display ESP32 1.14" ST7789 Colour LCD
+#define ESP32_Variant     4    //  Heltec Wifi Kit 32 
+//#define ESP32_Variant     5    //  LILYGO® TTGO T-Display ESP32 1.14" ST7789 Colour LCD
 
 
 //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -147,13 +147,13 @@ const uint8_t Heading_Source =  2;  // 1=GPS, 2=Flight Computer, 3=Tracker_Compa
  #endif  
 
  #if (Target_Board == 1) 
-   #if defined Display_Support
+   #if defined displaySupport
      #error Blue Pill  version does not yet support a display
    #endif  
  #endif  
 
  #if (Target_Board == 2) 
-   #if defined Display_Support
+   #if defined displaySupport
      #error Maple Mini version does not yet support a display
    #endif  
  #endif  
@@ -195,7 +195,7 @@ const uint8_t Heading_Source =  2;  // 1=GPS, 2=Flight Computer, 3=Tracker_Compa
   #define azPWM_Pin 
   #define elPWM_Pin 
   #define BuiltinLed  13
-  #undef  Display_Support 
+  #undef  displaySupport 
   
   //=========================================================================   
 #elif (Target_Board == 1)         // Blue Pill
@@ -235,7 +235,7 @@ const uint8_t Heading_Source =  2;  // 1=GPS, 2=Flight Computer, 3=Tracker_Compa
   #define elPWM_Pin         33  // elevation servo(can't be 34,35,36,39 because input only !!)
   #define BuiltinLed        02  // PB1   
 
-    #if (defined Display_Support)   // Display type defined with # define Display_Support   
+    #if (defined displaySupport)   // Display type defined with # define displaySupport   
       /* Below please choose either Touch pin-pair or Digital pin-pair for display scrolling
        *  Pin == 99 means the pin-pair is not used
        */ 
@@ -265,23 +265,24 @@ const uint8_t Heading_Source =  2;  // 1=GPS, 2=Flight Computer, 3=Tracker_Compa
   #define azPWM_Pin         32  // azimuth servo (can't be 34,35,36,39 because input only !!)
   #define elPWM_Pin         33  // elevation servo(can't be 34,35,36,39 because input only !!)
 
-    #if !defined Display_Support      // I2C OLED board is built into Heltec WiFi Kit 32
-      #define Display_Support
-    #endif
+    #if !defined displaySupport       // I2C OLED board is built into Heltec WiFi Kit 32
+      #define displaySupport
+    #endif  
     #define SSD1306_Display         // OLED display type  
     #define SCR_ORIENT   1          // 1 Landscape or 0 Portrait 
     /* Below please choose either Touch pin-pair or Digital pin-pair for display scrolling
      *  Pin == 99 means the pin-pair is not used
      */ 
-    #define Pup           99        // Board Button 1 to scroll the display up
-    #define Pdn           99        // Board Button 2 to scroll the display down    
-    #define Tup           34        // 33 Touch pin to scroll the display up
-    #define Tdn           35        // 32 Touch pin to scroll the display down 
-       
+    #define Pup           99        // Board Button to scroll the display up
+    #define Pdn           99        // Board Button to scroll the display down
+    #define Pinfo         99        // 02 Digital pin to toggle information/log page
+    #define Tup           33        // 33 Touch pin to scroll the display up
+    #define Tdn           32        // 32 Touch pin to scroll the display down 
+    #define Tinfo         02        // 02 Touch pin to toggle information/log page
     #define SDA           04        // I2C OLED board 
     #define SCL           15        // I2C OLED board
     #define i2cAddr      0x3C       // I2C OLED board
-    #define OLED_RESET    16        // RESET here so no reset lower down    
+    #define OLED_RESET    16        // RESET here so no reset lower down     
 
     /*  
       SPI/CS               05   For optional TF/SD Card Adapter
@@ -293,8 +294,10 @@ const uint8_t Heading_Source =  2;  // 1=GPS, 2=Flight Computer, 3=Tracker_Compa
   #endif
   //=========================================================================   
   #if (ESP32_Variant == 5)          // LILYGO® TTGO T-Display ESP32 1.14" ST7789 Colour LCD, IDE board = "ESP32 Dev Module"
-    uint8_t rxPin =           27;  
-    #define txPin             17 
+    //uint8_t rxPin =           27;  
+    //#define txPin             17 
+    uint8_t rxPin =           13;       // FrSky debug
+    #define txPin             15     
     bool rxInvert = false;              // ONLY FOR FrSky S.Port, NOT F.Port, NOT MAVLINK
     #define SetHomePin        15
     #define StatusLed         25        // Add your own LED with around 1K series resistor
@@ -335,8 +338,8 @@ const uint8_t Heading_Source =  2;  // 1=GPS, 2=Flight Computer, 3=Tracker_Compa
     #define BuiltinLed        99    
     #define azPWM_Pin         14  // azimuth servo (can't be 34,35,36,39 because input only !!)
     #define elPWM_Pin         16  // elevation servo(can't be 34,35,36,39 because input only !!)    
-    #if !defined Display_Support      // I2C OLED board is built into TTGO T2
-      #define Display_Support
+    #if !defined displaySupport      // I2C OLED board is built into TTGO T2
+      #define displaySupport
     #endif
     #if !defined SSD1306_Display    
       #define SSD1306_Display         // OLED display type
@@ -533,7 +536,7 @@ const uint8_t Heading_Source =  2;  // 1=GPS, 2=Flight Computer, 3=Tracker_Compa
     uint8_t   scroll_row = 0;
     uint32_t  scroll_millis =0 ;
 
-  #endif   // end of Display_Support
+  #endif   // end of displaySupport
 
   //=================================================================================================   
   //                     B L U E T O O T H   S U P P O R T -  E S P 3 2  O n l y
@@ -653,6 +656,7 @@ const uint8_t Heading_Source =  2;  // 1=GPS, 2=Flight Computer, 3=Tracker_Compa
 //#define Debug_Protocol
 
 //#define Debug_Baud
+
 //#define Debug_AzEl
 //#define Debug_Servos 
 //#define Debug_LEDs
@@ -662,7 +666,7 @@ const uint8_t Heading_Source =  2;  // 1=GPS, 2=Flight Computer, 3=Tracker_Compa
 //#define Debug_Mav_Heartbeat  
 //#define Debug_Mav_GPS   
 //#define Debug_Mav_Buffer  
-
+//#define Debug_FrSky
 //#define Debug_LTM
 //#define Debug_MSP
 //#define Debug_NMEA_GPS
@@ -673,9 +677,11 @@ const uint8_t Heading_Source =  2;  // 1=GPS, 2=Flight Computer, 3=Tracker_Compa
 
 //#define Debug_BT
 //#define Debug_WiFi
-
+//#define Debug_CRC
 //#define Debug_FrSky_Messages_UDP
-#define Print_Decoded_FrSky
+//#define Debug_FrPort_Stream
+//#define Debug_FPort_Buffer
+#define Report_Packetloss   2     // F.Port packet loss every n minutes
 // *****************************************************************************************************************
 
 /*
@@ -702,5 +708,8 @@ v2.14 2019-12-11 When Heading _Source == 3 (compass on tracker), don't need to c
       2020-01-02 Sloppy exits removed. :)          
 v2.15 2020-10-12 Proper TCP client added for outgoing (to telemetry source) connect   
                  Display scrolling added
-                 TCP in tests good.      
+                 TCP in tests good.     
+v2.15.3 2020-11-08 Fix 10 to power calc for FrSky X.  
+v2.15.4 2020-11-12 Patch by mric3412 (PositionServos bug in some home heading cases) properly included. 
+v2.15.5 2021-02-01 Add hardware signal inversion for S.Port input. Notified by @mello73.                  
 */

@@ -545,8 +545,9 @@ uint16_t mav_checksum;          ///< X.25 CRC_Out
     Log.print("mav1: /");
 
     if (j == 0) {
-      PrintByteLF(bytes[0], 0);   // CRC_Out1
-      PrintByteLF(bytes[1], 0);   // CRC_Out2
+      Printbyte(bytes[0], false, ' '); // CRC_Out1
+      Printbyte(bytes[1], false, ' '); // CRC_Out2
+
       Log.print("/");
       }
     mav_magic = bytes[j+2];   
@@ -564,7 +565,7 @@ uint16_t mav_checksum;          ///< X.25 CRC_Out
     Log.print("len="); Log.print(mav_len); Log.print("\t"); 
     Log.print("/");
     for (int i = (j+2); i < (j+10); i++) {  // Print the header
-      PrintByteLF(bytes[i], 0); 
+       Printbyte(bytes[i], false, ' '); 
     }
     
     Log.print("  ");
@@ -577,12 +578,12 @@ uint16_t mav_checksum;          ///< X.25 CRC_Out
     tl = (mav_len+10);                // Total length: 8 bytes header + Payload + 2 bytes CRC_Out
  //   for (int i = (j+10); i < (j+tl); i++) {  
     for (int i = (j+10); i <= (tl); i++) {    
-     PrintByteLF(bytes[i], 0);     
+      Printbyte(bytes[i], false, ' '); 
     }
     if (j == -2) {
       Log.print("//");
-      PrintByteLF(bytes[mav_len + 8], 0); 
-      PrintByteLF(bytes[mav_len + 9], 0); 
+      Printbyte(bytes[mav_len + 8], false, ' '); 
+      Printbyte(bytes[mav_len + 9], false, ' ');       
       }
     Log.println("//");  
   } else {
@@ -600,8 +601,8 @@ uint16_t mav_checksum;          ///< X.25 CRC_Out
     
     Log.print("mav2:  /");
     if (j == 0) {
-      PrintByteLF(bytes[0], 0);   // CRC_Out1
-      PrintByteLF(bytes[1], 0);   // CRC_Out2 
+      Printbyte(bytes[0], false, ' '); // CRC_Out1 
+      Printbyte(bytes[1], false, ' '); // CRC_Out2            
       Log.print("/");
     }
     mav_magic = bytes[2]; 
@@ -619,7 +620,7 @@ uint16_t mav_checksum;          ///< X.25 CRC_Out
     Log.print("len="); Log.print(mav_len); Log.print("\t"); 
     Log.print("/");
     for (int i = (j+2); i < (j+12); i++) {  // Print the header
-     PrintByteLF(bytes[i], 0); 
+     Printbyte(bytes[i], false, ' '); 
     }
 
     Log.print("  ");
@@ -638,27 +639,33 @@ uint16_t mav_checksum;          ///< X.25 CRC_Out
       if (i == (mav_len + 12 + 2+j)) {
         Log.print("/");
       }
-      PrintByteLF(bytes[i], 0); 
+      Printbyte(bytes[i], false, ' ');       
     }
     Log.println();
   }
 
    Log.print("Raw: ");
    for (int i = 0; i < 40; i++) {  //  unformatted
-      PrintByteLF(bytes[i], 0); 
+      Printbyte(bytes[i], false, ' ');  
     }
    Log.println();
   
 }
 //=================================================================================================  
-void PrintByteLF(byte b, bool LF) {  // line feed
+void Printbyte(byte b, bool LF, char delimiter) {
   if ((b == 0x7E) && (LF)) {
     Log.println();
   }
+  
+  if (b == 0x7E)  {//             || (b == 0x10)  || (b == 0x32)) {
+    Log.println();
+  } 
   if (b<=0xf) Log.print("0");
   Log.print(b,HEX);
+  Log.write(delimiter);
 }
 
+//==================================
 void PrintByte(byte b) {
   if (b<=0xf) Log.print("0");
     Log.print(b,HEX);
@@ -666,17 +673,17 @@ void PrintByte(byte b) {
 }
 
 //=================================================================================================  
-void DisplayTheBuffer (int lth){
+void PrintMavBuffer(int lth){
   for ( int i = 0; i < lth; i++ ) {
-    PrintByte(inBuf[i]);
+    Printbyte(inBuf[i], false, ' ');
   }
   Log.println();
 }
 //=================================================================================================  
-void DisplayFrsBuffer (byte *buf, uint8_t len){
+void PrintFrsBuffer(byte *buf, uint8_t len){
   Log.printf("len:%d  ", len);
   for ( int i = 0; i < len; i++ ) {
-    PrintByte(buf[i]);
+    Printbyte(buf[i], false, ' ');
   }
   Log.println();
 }

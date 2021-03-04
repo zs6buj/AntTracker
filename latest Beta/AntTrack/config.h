@@ -5,7 +5,7 @@
 
 #define MAJOR_VERSION      2
 #define MINOR_VERSION      16
-#define PATCH_LEVEL        1
+#define PATCH_LEVEL        2
 
 /*
 =================================================================================================== 
@@ -17,7 +17,9 @@ GitHub Tag
 ----------                
 v2.16.0   2021-02-22 Adopt GitHub Tags
           2021-02-27 Add HUD display. Add FrSky UDP telemetry in
-V2.16.1   2021-03-03 Add support for F.Port, auto inversion         
+V2.16.1   2021-03-03 Add support for F.Port, auto inversion 
+V2.16.2   2021-03-04 Debug FrSky frame decode (fix offset)
+                     Fix HUD RSSI blank        
 `                    
 */
 // ******************************* Please select your options here before compiling *******************************
@@ -84,8 +86,8 @@ const uint8_t Heading_Source =  2;  // 1=GPS, 2=Flight Computer, 3=Tracker_Compa
 //**********************   S E L E C T   E S P   B O A R D   V A R I A N T   ******************
 
 //#define ESP32_Variant     1    //  ESP32 Dev Module - there are several sub-variants that work
-#define ESP32_Variant     4    //  Heltec Wifi Kit 32 
-//#define ESP32_Variant     5    //  LILYGO® TTGO T-Display ESP32 1.14" ST7789 Colour LCD
+//#define ESP32_Variant     4    //  Heltec Wifi Kit 32 
+#define ESP32_Variant     5    //  LILYGO® TTGO T-Display ESP32 1.14" ST7789 Colour LCD
 
 
 //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -104,18 +106,18 @@ const uint8_t Heading_Source =  2;  // 1=GPS, 2=Flight Computer, 3=Tracker_Compa
       
 #elif defined (__BluePill_F103C8__) ||  defined (MCU_STM32F103RB)
   #define Target_Board   1      // Blue Pill STM32F103C  
+  #define STM32F103C
          
 #elif defined (STM32_MEDIUM_DENSITY) 
-  #define Target_Board   2      // Maple_Mini STM32F103C  
-     
+  #define Target_Board   2      // Maple_Mini STM32F103C     
 #elif defined (_BOARD_MAPLE_MINI_H_)
   // LeafLabs high density
   #define Target_Board   2      // Maple_Mini 
-
+  #define STM32F103C
 #elif defined STM32_HIGH_DENSITY
   // LeafLabs high density
   #define Target_Board   2      // Maple_Mini 
-   
+  #define STM32F103C
 #elif defined ESP32
   #define Target_Board   3      // Espressif ESP32 Dev Module
 
@@ -679,6 +681,8 @@ const uint8_t Heading_Source =  2;  // 1=GPS, 2=Flight Computer, 3=Tracker_Compa
 //#define Debug_WiFi
 //#define Debug_CRC
 //#define Debug_FrSky_Messages_UDP
+#define Debug_FrSky_Messages
+//#define Debug_FrSky
 //#define Debug_FrPort_Stream
 //#define Debug_FPort_Buffer
 #define Report_Packetloss   2     // F.Port packet loss every n minutes

@@ -181,9 +181,9 @@
         if ( SPort_Read_A_Frame(&inBuf[0]) ) {
           #if (defined Debug_FPort_Buffer) 
             Log.print("Good FrSky Frame Read: ");
-            PrintFrsBuffer(inBuf, 11); //magic, lth, type, prime, payload[6], crc
+            PrintFrsBuffer(inBuf, 10); //magic, lth, type, prime, payload[6], crc
           #endif           
-          Frs_Decode(&inBuf[0]);  
+          Frs_Decode(&inBuf[2]);  
         }
       }
   
@@ -193,7 +193,7 @@
             Log.print("Good FrSky Frame Read: ");
             PrintFrsBuffer(inBuf, 11);    // null, lth, type, prime, payload[6], crc
           #endif            
-          Frs_Decode(&inBuf[0]);     
+          Frs_Decode(&inBuf[2]);     
         }    
       }    
     }
@@ -212,15 +212,30 @@
          Log.printf("S.Port goodFrames:%d   badFrames:%d   frame loss:%.3f%%\n", goodFrames, badFrames, packetloss);
        }      
       #endif  
-       
+/*
+      static bool sync = false;   // first 0x7E found
+      if (!(sync)) {
+        while ( (inSerial.available()) && (b != 0x7E) ){
+          b = SafeRead();
+          Printbyte(b, true, '.');
+        }
+        sync = true;
+      }
+   */   
+      delay(1);            // I am important!
+      
       while (inSerial.available()) {
     
         if (b == 0x7E) {  // end of frame parse
-          if (i == 2) {
+          if (i == 3) {
             memset(&buf[2], 0x00, inMax-2); // clear the rest
           }
+          //Log.printf("0x7E found  i:%d  ", i);   PrintFrsBuffer(buf, 10);
           buf[0] = b;
-          i = 1;                 
+          i = 1;  
+          if (buf[1] == 0x1b) {   // our DIY sensor)
+            //Log.printf("0x1B found, buf[2]:%X ", buf[2]);                 
+          }
           if (buf[2] == 0x10) {
             if (buf[9] == (0xFF-crcin)){  // Test CRC
               frGood = true;            
@@ -230,19 +245,19 @@
               return true;              // RETURN
             } else {
               badFrames++;              
-              //Log.print(" CRC Bad!: "); 
-           
+              //Log.print(" CRC Bad!: ");          
             }
           }
           crcin = 0;
         }  // end of b == 0x7E
          
         b = SafeRead();
+        //Printbyte(b, true, ','); Log.printf(":i[%d] ", i);
         if (b != 0x7E) {  // if next start/stop don't put it in the buffer
-            if ((i > 1) && (i < 9))  crcStepIn(b);   
-            buf[i] = b;              
-            if (i<inMax-1) i++;          
+          if ((i > 1) && (i < 9))  crcStepIn(b);           
         }
+        buf[i] = b;              
+        if (i<inMax-1) i++;          
       }
       return false;     
     }
@@ -487,7 +502,7 @@
       lth--;
       
       #if (defined Debug_FrPort_Stream)  
-        Printbyte(b, false, '<');
+        Printbyte(b, true, '<');
       #endif 
       delay(0); // yield to rtos for wifi & bt to get a sniff      
       return b;
@@ -509,7 +524,7 @@
         b ^= 0x20;
       }
       #if (defined Debug_FrPort_Safe_Read)  
-        Printbyte(b, false, '<');
+        Printbyte(b, true, '<');
       #endif 
       delay(0); // yield to rtos for wifi & bt to get a sniff 
       return b;
@@ -574,7 +589,7 @@
         fr_payload = uint32Extract(buf, 3);
         //Log.printf("appID:%4X\n", appID);
         switch(appID) {
-                   // *****************************************************************
+
                 //   Old D Style Hub/legacy protocol below 
                   case 0x01:                         // GPS Alt BP
                     if (!d_dia) {
@@ -586,21 +601,21 @@
                       altGood=true; 
                       new_GPS_data = true;     
                     }
-                    #if defined Debug_All || defined Debug_FrSky              
+                    #if defined Debug_All || defined Debug_FrSky_Messages             
                       Log.print(" GPS Altitude 0x01=");
                       Log.println(cur.hdg,0);
                     #endif
                     break;
                   case 0x12:                        // Lon BP - before point
                     lonDDMM = uint32Extract(buf, 3);
-                    #if defined Debug_All || defined Debug_FrSky              
+                    #if defined Debug_All || defined Debug_FrSky_Messages             
                       Log.print(" lonDDMM 0x12=");
                       Log.println(lonDDMM);
                     #endif             
                     break;
                   case 0x13:                       // Lat BP
                     latDDMM = uint32Extract(buf, 3);
-                    #if defined Debug_All || defined Debug_FrSky              
+                    #if defined Debug_All || defined Debug_FrSky_Messages             
                       Log.print(" latDDMM 0x13=");
                       Log.println(latDDMM);
                     #endif           
@@ -608,7 +623,7 @@
                   case 0x14:        
                     cur.hdg = uint16Extract(buf, 3);      // Course / Heading BP
                     if (!(cur.hdg==0.000)) hdgGood=true;
-                    #if defined Debug_All || defined Debug_FrSky              
+                    #if defined Debug_All || defined Debug_FrSky_Messages             
                       Log.print(" Heading 0x14=");
                       Log.println(cur.hdg,0);
                     #endif
@@ -622,7 +637,7 @@
                     if (EW==0x57)  cur.lon = 0-cur.lon; //  "W", as opposed to "E"
                     lonGood=true;
                     new_GPS_data = true;  
-                    #if defined Debug_All || defined Debug_FrSky              
+                    #if defined Debug_All || defined Debug_FrSky_Messages             
                       Log.print(" Lon After Point 0x1A=");
                       Log.println(cur.lon,0);
                     #endif
@@ -637,21 +652,21 @@
                     if (NS==0x53) cur.lat = 0-cur.lat;  //  "S", as opposed to "N" 
                     latGood=true;
                     new_GPS_data = true;
-                    #if defined Debug_All || defined Debug_FrSky              
+                    #if defined Debug_All || defined Debug_FrSky_Messages             
                       Log.print(" Lat After Point 0x1B=");
                       Log.println(cur.lat,0);
                     #endif
                     break;
                   case 0x22:                      // Lon E/W
                     EW = uint8Extract(buf, 3);
-                    #if defined Debug_All || defined Debug_FrSky              
+                    #if defined Debug_All || defined Debug_FrSky_Messages             
                       Log.print(" Lon E/W 0x22=");
                       Log.println(EW);
                     #endif
                     break;
                   case 0x23:                      // Lat N/S
                     NS = uint8Extract(buf, 3);  
-                    #if defined Debug_All || defined Debug_FrSky              
+                    #if defined Debug_All || defined Debug_FrSky_Messages             
                       Log.print(" Lon Lat N/S 0x23=");
                       Log.println(NS);
                     #endif
@@ -701,7 +716,7 @@
 
                     hdopGood = (fr_gps_accuracy > 7);  // 0 thru 9 - 9 best
                     
-                    #if defined Debug_All || defined Debug_FrSky 
+                    #if defined Debug_All || defined Debug_FrSky_Messages
                       Log.print("fr_gp_fix="); Serial.print(fr_gps_fix);     
                       Log.print(" fr_gps_homefix ="); Log.print(fr_gps_homefix);
                       Log.print(" fr_gp_homereset="); Log.print(fr_gps_homereset);     
@@ -721,17 +736,19 @@
                    #endif   
                    switch(ms2bits) {
                      case 0:   // Latitude Positive
-                       cur.lat = fr_lat = fr_latlong / 6E5;     // lon always comes first                      
-                       #if defined Debug_All || defined Debug_FrSky                 
+                       fr_lat = fr_latlong;     // lon always comes first   
+                       cur.lat = (float)(fr_lat / 6E5);     // lon always comes first                                           
+                       #if defined Debug_All || defined Debug_FrSky_Messages                
                          Log.print(" FrSky 0x800 latitude=");
                          Log.println(cur.lat,7);
                        #endif
                        latGood=true;
                        new_GPS_data = true; 
                        break;
-                     case 1:   // Latitude Negative       
-                       cur.lat = fr_lat = 0-(fr_latlong / 6E5); 
-                       #if defined Debug_All || defined Debug_FrSky            
+                     case 1:   // Latitude Negative 
+                       fr_lat = fr_latlong;                         
+                       cur.lat = (float)(0-(fr_lat / 6E5)); 
+                       #if defined Debug_All || defined Debug_FrSky_Messages           
                          Log.print(" FrSky 0x800 latitude=");
                          Log.println(cur.lat,7);  
                        #endif   
@@ -742,8 +759,9 @@
                        }
                        break;
                      case 2:   // Longitude Positive
-                       cur.lon = fr_lon = fr_latlong / 6E5;                    
-                       #if defined Debug_All || defined Debug_FrSky    
+                       fr_lon = fr_latlong;    
+                       cur.lon = (float)(fr_lon / 6E5);                                         
+                       #if defined Debug_All || defined Debug_FrSky_Messages   
                          Log.print(" FrSky 0x800 longitude=");
                          Log.println(cur.lon,7); 
                        #endif                       
@@ -751,7 +769,8 @@
                        new_GPS_data = true;                         
                        break;
                      case 3:   // Longitude Negative
-                       cur.lon = fr_lon = 0-(fr_latlong / 6E5);  
+                       fr_lon = fr_latlong; 
+                       cur.lon = (float)(0-(fr_lon / 6E5));                         
                        #if defined Debug_All                        
                          Log.print(" FrSky 0x800 longitude=");
                          Log.println(cur.lon,7); 
@@ -763,12 +782,12 @@
                     break;
                   case 0x820:              // Altitude
                     fr_altitude= uint32Extract(buf, 3);
-                    cur.alt  = fr_altitude / 100;
+                    cur.alt  = (float)(fr_altitude / 100);
                     if (!(cur.alt ==0.0000)){
                       altGood=true; 
                       new_GPS_data = true;
                     }
-                    #if defined Debug_All || defined Debug_FrSky    
+                    #if defined Debug_All || defined Debug_FrSky_Messages   
                        Log.print(" FrSky 0x820 altitude=");
                        Log.println(cur.alt,1); 
                      #endif    
@@ -776,9 +795,9 @@
                     break;          
                   case 0x840:              // Heading
                     fr_heading= uint32Extract(buf, 3);
-                    cur.hdg = fr_heading / 100;
+                    cur.hdg = (float)(fr_heading / 100);
                     if (!(cur.hdg==0.0000)) hdgGood=true;
-                    #if defined Debug_All || defined Debug_FrSky    
+                    #if defined Debug_All || defined Debug_FrSky_Messages   
                        Log.print(" FrSky 0x840 heading=");
                        Log.println(cur.hdg,1); 
                      #endif               
@@ -822,7 +841,7 @@
                     if (neg==1) cur.alt = 0 - cur.alt;
                     new_GPS_data = true;
                     hdopGood=(fr_hdop>=3) && (fr_numsats>10);
-                    #if defined Debug_All || defined Debug_FrSky 
+                    #if defined Debug_All || defined Debug_FrSky_Messages
                       Log.print(" FrSky 0x5002 Num sats=");
                       Log.print(fr_numsats);
                       Log.print(" gpsStatus=");
@@ -831,6 +850,8 @@
                       Log.print(fr_hdop);                    
                       Log.print(" gpsAlt=");
                       Log.print(cur.alt, 1);
+                      Log.print(" hdopGood=");
+                      Log.print(hdopGood);                      
                       Log.print(" neg=");
                       Log.println(neg);   
                     #endif
@@ -861,7 +882,7 @@
                     if (bit32Extract(fr_home,24,1) == 1) 
                       cur.alt = cur.alt * -1;
                     altGood=true; 
-                    #if defined Debug_All || defined Debug_FrSky 
+                    #if defined Debug_All || defined Debug_FrSky_Messages
                       Log.print(" FrSky 0x5004 Dist to home=");
                       Log.print(fHomeDist, 1);             
                       Log.print(" Rel Alt=");
@@ -873,12 +894,12 @@
                   // Vert and Horiz Velocity and Yaw angle (Heading)
                     fr_velyaw = uint32Extract(buf, 3);      
                     fr_velyaw = fr_home_dist = bit32Extract(fr_velyaw, 16, 11);
-                    cur.hdg = fr_velyaw/10;
+                    cur.hdg = fr_velyaw * 0.1F;
       
                     hdgGood=true;
-                    #if defined Debug_All || defined Debug_FrSky 
+                    #if defined Debug_All || defined Debug_FrSky_Messages
                       Log.print(" FrSky 0x5005 Heading=");
-                      Log.println(cur.hdg,2);
+                      Log.println(cur.hdg,1);
                     #endif
                     break;   
                

@@ -152,8 +152,13 @@
         PaintLogScreen(row, omit_last_row);
       }
       uint16_t lth = strlen(S.c_str());           // store the new line a char at a time
-      if (lth > max_col-1) {
-        Log.printf("Display width of %d exceeded for |%s|\n", SCR_W_CH, S.c_str());  // SCR_W_CH = max_col-1
+      if (lth > max_col-1) { 
+        #if defined STM32F103C
+            Log.print("Display width of "); Log.print(SCR_W_CH);
+            Log.print(" exceeded for |"); Log.print(S); Log.println("|");  
+          #else
+            Log.printf("Display width of %d exceeded for |%s|\n", SCR_W_CH, S.c_str());  // SCR_W_CH = max_col-1
+          #endif            
         lth = max_col-1;  // prevent array overflow
       }
 
@@ -203,7 +208,12 @@
        
       uint8_t lth = strlen(S.c_str());          // store the line a char at a time
       if (lth > SCR_W_CH) {
-        Log.printf("Display width of %d exceeded for |%s|\n", SCR_W_CH, S.c_str());  // SCR_W_CH = max_col-1
+        #if defined STM32F103C
+          Log.print("Display width of "); Log.print(SCR_W_CH);
+          Log.print(" exceeded for |"); Log.print(S); Log.println("|");  
+        #else
+          Log.printf("Display width of %d exceeded for |%s|\n", SCR_W_CH, S.c_str());  // SCR_W_CH = max_col-1
+        #endif   
         lth = max_col-1;  // prevent array overflow
       }  
 
@@ -365,7 +375,7 @@
           display.setCursor(xx, yy);            
           snprintf(snprintf_buf, snp_max, "Sats %2d RSSI %2d%%", fr_numsats, fr_rssi); 
           display.fillRect(xx+(5*CHAR_W_PX), yy, 3 * CHAR_W_PX, CHAR_H_PX, SCR_BACKGROUND);  
-          display.fillRect(xx+(10*CHAR_W_PX), yy, 4 * CHAR_W_PX, CHAR_H_PX, SCR_BACKGROUND);   // blank rssi         
+          display.fillRect(xx+(13*CHAR_W_PX), yy, 4 * CHAR_W_PX, CHAR_H_PX, SCR_BACKGROUND);   // blank rssi         
           display.println(snprintf_buf);       
 
            
@@ -653,11 +663,8 @@ uint16_t mav_checksum;          ///< X.25 CRC_Out
 }
 //=================================================================================================  
 void Printbyte(byte b, bool LF, char delimiter) {
-  if ((b == 0x7E) && (LF)) {
-    Log.println();
-  }
   
-  if (b == 0x7E)  {//             || (b == 0x10)  || (b == 0x32)) {
+  if ( (b == 0x7E) && (LF) ) {//             || (b == 0x10)  || (b == 0x32)) {
     Log.println();
   } 
   if (b<=0xf) Log.print("0");
@@ -681,7 +688,7 @@ void PrintMavBuffer(int lth){
 }
 //=================================================================================================  
 void PrintFrsBuffer(byte *buf, uint8_t len){
-  Log.printf("len:%d  ", len);
+  Log.print("len:"); Log.print(len); Log.print("  ");
   for ( int i = 0; i < len; i++ ) {
     Printbyte(buf[i], false, ' ');
   }
@@ -964,14 +971,24 @@ void RestoreHomeFromFlash() {
         #if (Telemetry_In == 2)                // Mavlink 
           #if (WiFi_Protocol == 2)         // Mav UDP 
             mav_udp_object.begin(UDP_localPort);
-            Log.printf("Mav UDP instance started, listening on IP %s, UDP port %d\n", localIP.toString().c_str(), UDP_localPort);
+            #if defined STM32F103C
+              Log.print("Mav UDP instance started, listening on IP "); Log.print(localIP.toString().c_str());
+              Log.print(", UDP port "); Log.println(UDP_localPort);  
+            #else
+              Log.printf("Mav UDP instance started, listening on IP %s, UDP port %d\n", localIP.toString().c_str(), UDP_localPort);
+            #endif   
             LogScreenPrint("UDP port = ");  LogScreenPrintln(String(UDP_localPort));
           #endif
         #endif
 
         #if (Telemetry_In == 3)               // FrSky
           frs_udp_object.begin(UDP_localPort+1);
-          Log.printf("Frs UDP instance started, listening on IP %s, UDP port %d\n", localIP.toString().c_str(), UDP_localPort+1);
+          #if defined STM32F103C
+            Log.print("Frs UDP instance started, listening on IP "); Log.print(localIP.toString().c_str());
+            Log.print(", UDP port "); Log.println(UDP_localPort+1);  
+          #else
+            Log.printf("Frs UDP instance started, listening on IP %s, UDP port %d\n", localIP.toString().c_str(), UDP_localPort+1);
+          #endif           
           LogScreenPrint("UDP port = ");  LogScreenPrintln(String(UDP_localPort+1));       
         #endif
         
@@ -1035,7 +1052,7 @@ void RestoreHomeFromFlash() {
 
     WiFiClient newClient;        
     while (!newClient.connect(TCP_remoteIP, TCP_remotePort)) {
-      Log.printf("Local outgoing tcp client connect failed, retrying %d\n", retry);
+      Log.print("Local outgoing tcp client connect failed, retrying ");  Log.println(retry);
       retry--;
       if (retry == 0) {
          Log.println("Tcp client connect aborted!");

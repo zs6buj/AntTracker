@@ -327,6 +327,9 @@
    #if (defined displaySupport)
      void PaintDisplay(uint8_t, last_row_t);
      void Scroll_Display(scroll_t);
+     void SetupLogDisplayStyle();     
+     void DisplayFlightInfo();
+         
    #endif  
    void IRAM_ATTR gotButtonDn();
    void IRAM_ATTR gotButtonUp();
@@ -341,6 +344,7 @@
  void SaveHomeToFlash();
  void PrintByte(byte b);
  void PrintMavBuffer(const void *object);
+ void PrintFrsBuffer(byte *, uint8_t);
  void CheckForTimeouts();
  void LostPowerCheckAndRestore(uint32_t);
  uint32_t Get_Volt_Average1(uint16_t);  
@@ -355,8 +359,13 @@ void setup() {
   pgm_name = pgm_path.substring(pgm_path.lastIndexOf("\\")+1);  
   pgm_name = pgm_name.substring(0, pgm_name.lastIndexOf('.'));  // remove the extension
   Log.print("Starting "); Log.print(pgm_name);
-  Log.printf(" version:%d.%02d.%02d\n", MAJOR_VERSION,  MINOR_VERSION, PATCH_LEVEL);
-    
+  #if defined STM32F103C
+    Log.print(" version:"); Log.print(MAJOR_VERSION);
+    Log.print("."); Log.print(MINOR_VERSION); 
+    Log.print("."); Log.println(PATCH_LEVEL);      
+  #else
+    Log.printf(" version:%d.%02d.%02d\n", MAJOR_VERSION,  MINOR_VERSION, PATCH_LEVEL);
+  #endif     
   #if ((defined ESP32) || (defined ESP8266)) && (defined Debug_WiFi)
    WiFi.onEvent(WiFiEventHandler);   
   #endif  
@@ -430,8 +439,16 @@ void setup() {
       clear_line[eol] = ' ';
     }
     clear_line[eol] = 0x00;
-
-    Log.printf("%dx%d  TEXT_SIZE=%d  CHAR_W_PX=%d  CHAR_H_PX=%d  SCR_H_CH=%d  SCR_W_CH=%d\n", SCR_H_PX, SCR_W_PX, TEXT_SIZE, CHAR_W_PX, CHAR_H_PX, SCR_H_CH, SCR_W_CH);
+    #if defined STM32F103C
+      Log.print(SCR_H_PX); Log.print("x"); Log.print(SCR_W_PX);
+      Log.print("  TEXT_SIZE:"); Log.print(TEXT_SIZE); 
+      Log.print("  CHAR_W_PX:"); Log.print(CHAR_W_PX);  
+      Log.print("  CHAR_H_PX:"); Log.print(CHAR_H_PX); 
+      Log.print("  SCR_H_CH:"); Log.print(SCR_H_CH);  
+      Log.print("  SCR_W_CH:"); Log.println(SCR_W_CH);                    
+    #else
+      Log.printf(" version:%d.%02d.%02d\n", MAJOR_VERSION,  MINOR_VERSION, PATCH_LEVEL);
+    #endif  
     
     LogScreenPrintln("Starting .... ");
   #endif

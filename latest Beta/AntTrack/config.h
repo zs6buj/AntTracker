@@ -86,8 +86,8 @@ const uint8_t Heading_Source =  2;  // 1=GPS, 2=Flight Computer, 3=Tracker_Compa
 //**********************   S E L E C T   E S P   B O A R D   V A R I A N T   ******************
 
 //#define ESP32_Variant     1    //  ESP32 Dev Module - there are several sub-variants that work
-//#define ESP32_Variant     4    //  Heltec Wifi Kit 32 
-#define ESP32_Variant     5    //  LILYGO® TTGO T-Display ESP32 1.14" ST7789 Colour LCD
+#define ESP32_Variant     4    //  Heltec Wifi Kit 32 
+//#define ESP32_Variant     5    //  LILYGO® TTGO T-Display ESP32 1.14" ST7789 Colour LCD
 
 
 //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

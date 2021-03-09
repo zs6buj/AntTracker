@@ -297,7 +297,7 @@
           xx = 18 * CHAR_W_PX;
           yy = 14 * CHAR_W_PX;        
           display.setCursor(xx, yy); 
-          snprintf(snprintf_buf, snp_max, "Alt:%d", ap33_alt_ag / 1000);    // mm => m 
+          snprintf(snprintf_buf, snp_max, "Alt:%d", cur.alt);    // mm => m 
           display.fillRect(xx+(4*CHAR_W_PX), yy, (4*CHAR_W_PX), CHAR_H_PX, ILI9341_BLUE); // clear the previous line   
           display.println(snprintf_buf); 
 
@@ -330,13 +330,13 @@
           xx = 0;
           yy = 18 * CHAR_H_PX;
           display.setCursor(xx,yy);       
-          snprintf(snprintf_buf, snp_max, "Lat:%.7f", fr_lat);
+          snprintf(snprintf_buf, snp_max, "Lat:%.7f", cur.lat);
           display.fillRect(xx, yy, (15*CHAR_W_PX), CHAR_H_PX, ILI9341_BLUE); // clear the previous line        
           display.println(snprintf_buf);  
           xx = 18 * CHAR_W_PX;   
           yy = 18 * CHAR_H_PX;  
           display.setCursor(xx, yy);    
-          snprintf(snprintf_buf, snp_max, "Lon:%.7f", fr_lon);
+          snprintf(snprintf_buf, snp_max, "Lon:%.7f", cur.lon);
           display.fillRect(xx, yy, 21 * CHAR_W_PX, CHAR_H_PX, ILI9341_BLUE); // clear the previous line            
           display.println(snprintf_buf);  
           display.setTextSize(2);    // 26 ch wide x 15 ch deep
@@ -375,7 +375,7 @@
           display.setCursor(xx, yy);            
           snprintf(snprintf_buf, snp_max, "Sats %2d RSSI %2d%%", fr_numsats, fr_rssi); 
           display.fillRect(xx+(5*CHAR_W_PX), yy, 3 * CHAR_W_PX, CHAR_H_PX, SCR_BACKGROUND);  
-          display.fillRect(xx+(13*CHAR_W_PX), yy, 4 * CHAR_W_PX, CHAR_H_PX, SCR_BACKGROUND);   // blank rssi         
+          display.fillRect(xx+(12*CHAR_W_PX), yy, 4 * CHAR_W_PX, CHAR_H_PX, SCR_BACKGROUND);   // blank rssi         
           display.println(snprintf_buf);       
 
            

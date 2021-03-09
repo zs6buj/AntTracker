@@ -5,7 +5,7 @@
 
 #define MAJOR_VERSION      2
 #define MINOR_VERSION      16
-#define PATCH_LEVEL        2
+#define PATCH_LEVEL        3
 
 /*
 =================================================================================================== 
@@ -19,7 +19,10 @@ v2.16.0   2021-02-22 Adopt GitHub Tags
           2021-02-27 Add HUD display. Add FrSky UDP telemetry in
 V2.16.1   2021-03-03 Add support for F.Port, auto inversion 
 V2.16.2   2021-03-04 Debug FrSky frame decode (fix offset)
-                     Fix HUD RSSI blank        
+                     Fix HUD RSSI blank    
+V2.16.3   2021-03-04 Always auto detect serial speed. Always sense polarity, autobaud and detect protocol
+          2021-03-09 Include sport, fport1 and fport2. 
+          2021-03-09 Tidy up.                       
 `                    
 */
 // ******************************* Please select your options here before compiling *******************************
@@ -39,7 +42,6 @@ V2.16.2   2021-03-04 Debug FrSky frame decode (fix offset)
 //#define BT_Master_Mode true    // Master connects to BT_Slave_Name --- false for BT Slave Mode
 const char* BT_Slave_Name   =   "Crossfire 0277";  // Example
 
-#define AutoBaud              // UART Serial Only - Auto detect telemetry speed
 //=================================================================================================
 //                            D E F A U L T   W I F I   S E T T I N G S   
 //=================================================================================================
@@ -51,7 +53,7 @@ const char* BT_Slave_Name   =   "Crossfire 0277";  // Example
 #define APpw                 "password"         // Change me! Must be >= 8 chars
 #define APchannel            9                  // The wifi channel to use for our AP
 #define STAssid              "OmegaOffice"      // Target AP to connect to (in STA mode) <====
-#define STApw                "password"         // Target AP password (in STA mode). Must be >= 8 chars      
+#define STApw                "Navara@98"         // Target AP password (in STA mode). Must be >= 8 chars      
 
 // Choose one default mode for ESP only - AP means advertise as an access point (hotspot). STA means connect to a known host
 //#define WiFi_Mode   1  //AP            
@@ -86,8 +88,8 @@ const uint8_t Heading_Source =  2;  // 1=GPS, 2=Flight Computer, 3=Tracker_Compa
 //**********************   S E L E C T   E S P   B O A R D   V A R I A N T   ******************
 
 //#define ESP32_Variant     1    //  ESP32 Dev Module - there are several sub-variants that work
-#define ESP32_Variant     4    //  Heltec Wifi Kit 32 
-//#define ESP32_Variant     5    //  LILYGO® TTGO T-Display ESP32 1.14" ST7789 Colour LCD
+//#define ESP32_Variant     4    //  Heltec Wifi Kit 32 
+#define ESP32_Variant     5    //  LILYGO® TTGO T-Display ESP32 1.14" ST7789 Colour LCD
 
 
 //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -296,7 +298,7 @@ const uint8_t Heading_Source =  2;  // 1=GPS, 2=Flight Computer, 3=Tracker_Compa
   #endif
   //=========================================================================   
   #if (ESP32_Variant == 5)          // LILYGO® TTGO T-Display ESP32 1.14" ST7789 Colour LCD, IDE board = "ESP32 Dev Module"
-    //uint8_t rxPin =           27;  
+    //uint8_t rxPin =           27;       // default
     //#define txPin             17 
     uint8_t rxPin =           13;       // FrSky debug
     #define txPin             15     
@@ -681,10 +683,11 @@ const uint8_t Heading_Source =  2;  // 1=GPS, 2=Flight Computer, 3=Tracker_Compa
 //#define Debug_WiFi
 //#define Debug_CRC
 //#define Debug_FrSky_Messages_UDP
-#define Debug_FrSky_Messages
+//#define Debug_FrSky_Messages
 //#define Debug_FrSky
 //#define Debug_FrPort_Stream
 //#define Debug_FPort_Buffer
+
 #define Report_Packetloss   2     // F.Port packet loss every n minutes
 // *****************************************************************************************************************
 

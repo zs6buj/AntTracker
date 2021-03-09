@@ -185,7 +185,7 @@
 
    bool pb_rx = true;
     
-   typedef enum frport_type_set { f_none = 0, f_port1 = 1, f_port2 = 2, s_port = 3, f_auto} frport_t;  
+   typedef enum frport_type_set { f_none = 0, f_port1 = 1, f_port2 = 2, s_port = 3, f_auto = 4} frport_t;  
 
    typedef enum polarity_set { idle_low = 0, idle_high = 1, no_traffic = 2 } pol_t;    
     
@@ -203,7 +203,7 @@
     uint16_t addr = 0;
     uint8_t  ledState = LOW; 
 
-    const uint8_t timeout_secs = 5;   
+    const uint8_t timeout_secs = 8;   
     
     uint32_t millisLED = 0;
     uint32_t millisStartup = 0;
@@ -447,7 +447,7 @@ void setup() {
       Log.print("  SCR_H_CH:"); Log.print(SCR_H_CH);  
       Log.print("  SCR_W_CH:"); Log.println(SCR_W_CH);                    
     #else
-      Log.printf(" version:%d.%02d.%02d\n", MAJOR_VERSION,  MINOR_VERSION, PATCH_LEVEL);
+      Log.printf("%dx%d  TEXT_SIZE:%d   CHAR_W_PX:%d  CHAR_H_PX:%d   SCR_H_CH:   SCR_W_CH:%d \n", SCR_H_PX, SCR_W_PX, TEXT_SIZE, CHAR_W_PX, CHAR_H_PX, SCR_H_CH, SCR_W_CH);
     #endif  
     
     LogScreenPrintln("Starting .... ");
@@ -558,38 +558,54 @@ void setup() {
 // ************************ Setup Serial ******************************
 
   #if (Telemetry_In == 0)    //  Serial
-  
+
       pol_t pol = (pol_t)getPolarity(rxPin);
       bool ftp = true;
-      while (pol == no_traffic) {
+      static int8_t cdown = 30; 
+      bool polGood = true;    
+      while ( (pol == no_traffic) && (cdown) ){
         if (ftp) {
-          Log.printf("No telem on rx pin:%d ", rxPin);
+          Log.printf("No telem on rx pin:%d. Retrying ", rxPin);
           String s_rxPin=String(rxPin);   // integer to string
           LogScreenPrintln("No telem on rxpin:"+ s_rxPin); 
           ftp = false;
         }
-        static uint8_t cl = 0;
-        if (cl > 30) {
-          Log.println();
-          cl = 0;
-        }
-        Log.print(".");
+        Log.print(cdown); Log.print(" ");
         pol = (pol_t)getPolarity(rxPin);
-        delay(1000);
+        delay(500);      
+        if (cdown-- == 1 ) {
+          Log.println();
+          Log.println("Auto sensing abandoned. Defaulting to IDLE_HIGH 57600 b/s");
+          LogScreenPrintln("Default to idle_high");
+          polGood = false;
+   
+        }
       }
-      if (!ftp) Log.println();
+      
+    if (polGood) {    // expect 57600 for Mavlink and FrSky, 2400 for LTM, 9600 for MSP & GPS
       if (pol == idle_low) {
         rxInvert = true;
         Log.printf("Serial port rx pin %d is IDLE_LOW, inverting rx polarity\n", rxPin);
       } else {
         rxInvert = false;
         Log.printf("Serial port rx pin %d is IDLE_HIGH, regular rx polarity retained\n", rxPin);        
-      }
-      
-    protocol = getProtocol();
+      }     
+      baud = getBaud(rxPin);
+      Log.print("Baud rate detected is ");  Log.print(baud); Log.println(" b/s"); 
+      String s_baud=String(baud);   // integer to string. "String" overloaded
+      LogScreenPrintln("Telem at "+ s_baud);
+      protocol = detectProtocol(baud);
     //Log.printf("Protocol:%d\n", protocol);
+      
+    } else {
+      pol = idle_high;
+      baud = 57600;
+      protocol = 2;  
+    }
+    
+
     #if ( (defined ESP8266) || (defined ESP32) ) 
-      delay(10);
+      delay(100);
       inSerial.begin(baud, SERIAL_8N1, rxPin, txPin, rxInvert); 
       delay(10);
     #elif (defined TEENSY3X) 
@@ -604,8 +620,8 @@ void setup() {
     #else
       inSerial.begin(baud);
     #endif   
-            
-    // expect 57600 for Mavlink and FrSky, 2400 for LTM, 9600 for MSP & GPS
+
+
     switch(protocol) {
     
       case 1:    // Mavlink 1
@@ -679,7 +695,7 @@ void setup() {
   // ************************* Setup WiFi **************************** 
   #if (defined ESP32)  || (defined ESP8266)
 
-   #if (Telemetry_In == 2) || (Telemetry_In == 3)   //  WiFi Mavlink or FrSky
+   #if (Telemetry_In == 2) || (Telemetry_In == 3)  //  WiFi Mavlink or FrSky
      SetupWiFi();  
    #endif
    
@@ -698,19 +714,19 @@ void loop() {
 
   #if (Telemetry_In == 2)         // Mavlink WiFi
   
-    #if (WiFi_Protocol == 1)  // Mav TCP
+    #if (WiFi_Protocol == 1)      // Mav TCP
       if (outbound_clientGood) {     
         Mavlink_Receive();
       }
     #endif
-    #if (WiFi_Protocol == 2)  // Mav UDP 
+    #if (WiFi_Protocol == 2)      // Mav UDP 
       Mavlink_Receive();
     #endif   
   #endif
 
   #if (Telemetry_In == 3)         //   FrSky UDP
       if (wifiSuGood) {     
-        FrSky_Receive();
+        FrSky_Receive(9);
       }
     #endif
   

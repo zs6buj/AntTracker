@@ -18,29 +18,12 @@ uint16_t  r = 0;
 
 char ch[3]; // rolling input bytes
 
-// **********************************************************
-uint8_t getProtocol() { 
-     
-   #if defined AutoBaud
-      baud = getBaud(rxPin);
-      Log.print("Baud rate detected is ");  Log.print(baud); Log.println(" b/s"); 
-      String s_baud=String(baud);   // integer to string. "String" overloaded
-      LogScreenPrintln("Telem at "+ s_baud);   
-   #else 
-     baud = 57600;  // default if not autobaud
-     Log.print("Default baud rate is ");  Log.print(baud); Log.println(" b/s"); 
-     String s_baud=String(baud);   // integer to string. "String" overloaded
-     LogScreenPrintln("Default b/s:"+ s_baud);  
-   #endif  
-   uint8_t proto = detectProtocol(baud);
-   return proto;
-}
 
 //***************************************************
 uint16_t detectProtocol(uint32_t baud) {
 
     #if ( (defined ESP8266) || (defined ESP32) ) 
-       delay(10);
+      delay(100);
       inSerial.begin(baud, SERIAL_8N1, rxPin, txPin, rxInvert); 
     #elif (defined TEENSY3X) 
       frSerial.begin(frBaud); // Teensy 3.x    tx pin hard wired
@@ -205,7 +188,7 @@ uint32_t getBaud(uint8_t rxPin) {
   uint8_t i = 0;
   uint8_t col = 0;
   pinMode(rxPin, INPUT);       
-  digitalWrite (rxPin, HIGH); // pull up enabled for noise reduction ?
+  digitalWrite (rxPin, HIGH); // for noise reduction ?
 
   uint32_t gb_baud = GetConsistent(rxPin);
   while (gb_baud == 0) {
@@ -233,7 +216,6 @@ uint32_t getBaud(uint8_t rxPin) {
 
   //Log.print("Telem found at "); Log.print(gb_baud);  Log.println(" b/s");
   //LogScreenPrintln("Telem found at " + String(gb_baud));
-
   return(gb_baud);
 }
 //************************************************

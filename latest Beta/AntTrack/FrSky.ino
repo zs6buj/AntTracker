@@ -42,7 +42,6 @@
   bool Passthru = false;
   bool d_dia = false;
   bool x_dia = false;
-  bool pt_dia = false;
 
   bool iNav = false;
 
@@ -123,12 +122,12 @@
       #endif
    
       #if (Telemetry_In == 3)         //   FrSky UDP 
-        Frs_Receive_UDP(proto);
+        Frs_Receive_UDP();
       #endif
     }
     //=======================================================================
     #if (Telemetry_In == 3)          // UDP
-    void Frs_Receive_UDP(uint8_t proto) {  
+    void Frs_Receive_UDP() {  
 
       uint16_t len = frs_udp_object.parsePacket();   // packet to in buffer
       if (len == 0) return;
@@ -212,16 +211,7 @@
          Log.printf("S.Port goodFrames:%d   badFrames:%d   frame loss:%.3f%%\n", goodFrames, badFrames, packetloss);
        }      
       #endif  
-/*
-      static bool sync = false;   // first 0x7E found
-      if (!(sync)) {
-        while ( (inSerial.available()) && (b != 0x7E) ){
-          b = SafeRead();
-          Printbyte(b, true, '.');
-        }
-        sync = true;
-      }
-   */   
+  
       delay(1);            // I am important!
       
       while (inSerial.available()) {
@@ -233,9 +223,7 @@
           //Log.printf("0x7E found  i:%d  ", i);   PrintFrsBuffer(buf, 10);
           buf[0] = b;
           i = 1;  
-          if (buf[1] == 0x1b) {   // our DIY sensor)
-            //Log.printf("0x1B found, buf[2]:%X ", buf[2]);                 
-          }
+
           if (buf[2] == 0x10) {
             if (buf[9] == (0xFF-crcin)){  // Test CRC
               frGood = true;            
@@ -825,11 +813,6 @@
                   
                   // GPS Status &  gpsAlt
                     Passthru=true;
-                    if (!pt_dia) {
-                      pt_dia=true;
-                      Log.println("Passthru dialect detected");                       
-                      LogScreenPrintln("Passthru dialect"); 
-                    }
 
                     fr_gps = uint32Extract(buf, 3);
                     fr_numsats = bit32Extract(fr_gps, 0, 4);

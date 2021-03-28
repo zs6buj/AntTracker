@@ -59,18 +59,10 @@ uint16_t   ap24_epv;                    // GPS VDOP vertical dilution of positio
 uint16_t   ap24_vel;                    //  GPS ground speed (m/s * 100)
 uint16_t   ap24_cog;                    // Course over ground in degrees * 100, 0.0..359.99 degrees. 
 
-// Message ATTITUDE ( #30 )
-float ap_roll;                          // Roll angle (rad, -pi..+pi)
-float ap_pitch;                         // Pitch angle (rad, -pi..+pi)
-float ap_yaw;                           // Yaw angle (rad, -pi..+pi)
-float ap_rollspeed;                     // Roll angular speed (rad/s)
-float ap_pitchspeed;                    // Pitch angular speed (rad/s)
-float ap_yawspeed;                      // Yaw angular speed (rad/s)
-
 // Message GLOBAL_POSITION_INT ( #33 ) (Filtered)
 int32_t ap33_lat;                       // Latitude, expressed as degrees * 1E7
 int32_t ap33_lon;                       // Longitude, expressed as degrees * 1E7
-int32_t ap33_amsl;                      // Altitude above mean sea level (millimeters)
+int32_t ap33_amsl;                    // Altitude above mean sea level (millimeters)
 int32_t ap33_alt_ag;                    // Altitude above ground (millimeters)
 int16_t ap33_vx;                        //  Ground X Speed (Latitude, positive north), expressed as m/s * 100
 int16_t ap33_vy;                        //  Ground Y Speed (Longitude, positive east), expressed as m/s * 100
@@ -84,14 +76,6 @@ uint8_t ap_rssi35;
 
 //uint16_t ap65_chan16_raw;        // Used for RSSI uS 1000=0%  2000=100%
 uint8_t  ap65_rssi;              // Receive signal strength indicator, 0: 0%, 100: 100%, 255: invalid/unknown
-
-// Message #74 VFR_HUD  
-float    ap74_air_spd;
-float    ap74_grd_spd;
-int16_t  ap74_hdg;
-uint16_t ap74_throt;          // %
-float    ap74_amsl;   
-float    ap74_climb; 
 
 // Message #109 RADIO_status (Sik radio firmware)
 uint8_t   ap109_rssi;           // local signal strength
@@ -265,12 +249,9 @@ void Mavlink_Receive() {
           if (!hbGood) return;
           ap_time_unix_usec = mavlink_msg_system_time_get_time_unix_usec(&msg);
           ap_time_boot_ms = mavlink_msg_system_time_get_time_boot_ms(&msg);
-
-          epochSync = ap_time_unix_usec/1E6;
-          if (epochSync != 0) {
-            timeGood = true;
-            millisSync = millis();   
-          }
+          timeGood = true;
+          
+          LostPowerCheckAndRestore(ap_time_unix_usec/1E6);  // Within 5 minutes, then restore from EEPROM
           
           #if defined Debug_All || defined Debug_Time 
             Log.print("Mavlink in #02 SYSTEM_TIME: ");  
@@ -297,7 +278,7 @@ void Mavlink_Receive() {
 
            cur.lat =  (float)ap24_lat / 1E7;
            cur.lon = (float)ap24_lon / 1E7;
-           //cur.alt = ap24_amsl / 1E3; // use ap33_alt_ag
+           cur.alt = ap24_amsl / 1E3;
 
           if (ap24_sat_visible > 15) {                // @rotorman 2021/01/18
             if (ap24_sat_visible == 255)
@@ -306,7 +287,7 @@ void Mavlink_Receive() {
              fr_numsats = 15; // limit to 15 due to only 4 bits available
           }  else 
               fr_numsats = ap24_sat_visible;
-
+               
           #if defined Debug_All || defined Debug_Mav_GPS 
             Log.print("Mavlink in #24 GPS_RAW_INT: ");  
             Log.print("ap24_fixtype="); Log.print(ap24_fixtype);
@@ -320,45 +301,14 @@ void Mavlink_Receive() {
             Log.print("  GPS status="); Log.print(ap24_gps_status);
             Log.print("  latitude="); Log.print((float)(ap24_lat)/1E7, 7);
             Log.print("  longitude="); Log.print((float)(ap24_lon)/1E7, 7);
-            Log.print("  gps alt amsl="); Log.print((float)(ap24_amsl)/1E3, 0);
+            Log.print("  gps alt amsl"); Log.print((float)(ap24_amsl)/1E3, 0);
             Log.print("  eph (hdop)="); Log.print(ap24_eph);               // HDOP
             Log.print("  epv (vdop)="); Log.print(ap24_epv);
             Log.print("  vel="); Log.print((float)ap24_vel / 100, 1);         // GPS ground speed (m/s)
             Log.print("  cog="); Log.println((float)ap24_cog / 100, 1);       // Course over ground in degrees
-          #endif    
-           
+          #endif     
           break;
-        case MAVLINK_MSG_ID_ATTITUDE:                // #30
-          if (!hbGood) break;   
-
-          ap_roll = mavlink_msg_attitude_get_roll(&msg);              // Roll angle (rad, -pi..+pi)
-          ap_pitch = mavlink_msg_attitude_get_pitch(&msg);            // Pitch angle (rad, -pi..+pi)
-          ap_yaw = mavlink_msg_attitude_get_yaw(&msg);                // Yaw angle (rad, -pi..+pi)
-          ap_rollspeed = mavlink_msg_attitude_get_rollspeed(&msg);    // Roll angular speed (rad/s)
-          ap_pitchspeed = mavlink_msg_attitude_get_pitchspeed(&msg);  // Pitch angular speed (rad/s)
-          ap_yawspeed = mavlink_msg_attitude_get_yawspeed(&msg);      // Yaw angular speed (rad/s)           
-
-          ap_roll = RadToDeg(ap_roll);   // Now degrees
-          ap_pitch = RadToDeg(ap_pitch);
-          ap_yaw = RadToDeg(ap_yaw);
-          fr_froll = ap_roll; 
-          fr_fpitch = ap_pitch;          
-  
-          #if defined Mav_Debug_All || defined Mav_Debug_Attitude   
-            Log.print("Mavlink from FC #30 Attitude: ");      
-            Log.print(" ap_roll degs=");
-            Log.print(ap_roll, 1);
-            Log.print(" ap_pitch degs=");   
-            Log.print(ap_pitch, 1);
-            Log.print(" ap_yaw degs=");         
-            Log.println(ap_yaw, 1);
-          #endif  
-                     
-          #if (defined frBuiltin)
-            FrPort.PushMessage(0x5006, 0 );  // 0x5006 Attitude   
-          #endif        
-
-          break;   
+ 
         case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:     // #33
           if ((!hbGood) || (ap24_fixtype < 3)) break;  
           // We have a 3D Lock - change to 4 if you want 3D plus
@@ -383,10 +333,10 @@ void Mavlink_Receive() {
 
           cur.lat =  (float)ap33_lat / 1E7;
           cur.lon = (float)ap33_lon / 1E7;
-          cur.alt = ap33_alt_ag / 1E3;        
+          cur.alt = ap33_amsl / 1E3;
           cur.hdg = ap33_hdg / 100;
           
-          if (headingSource==1 && (gpsGood) && (!homeInitialised) && (!homSaved)) AutoStoreHome();  // Only need this when headingSource is GPS 
+          if (Heading_Source==1 && (gpsGood) && (!homSaved)) AutoStoreHome();  // Only need this when Heading_Source is GPS 
 
           #if defined Debug_All || defined Debug_Mav_GPS
             Log.print("Mavlink in #33 GPS Int: ");
@@ -424,26 +374,6 @@ void Mavlink_Receive() {
             }              
             break;
             
-        case MAVLINK_MSG_ID_VFR_HUD:                 //  #74
-          if (!mavGood) break;      
-          ap74_air_spd = mavlink_msg_vfr_hud_get_airspeed(&msg);
-          ap74_grd_spd = mavlink_msg_vfr_hud_get_groundspeed(&msg);      //  in m/s
-          ap74_hdg = mavlink_msg_vfr_hud_get_heading(&msg);           //  in degrees
-          ap74_throt = mavlink_msg_vfr_hud_get_throttle(&msg);           //  integer percent
-          ap74_amsl = mavlink_msg_vfr_hud_get_alt(&msg);                 //  m
-          ap74_climb = mavlink_msg_vfr_hud_get_climb(&msg);              //  m/s
-
-          fr_yaw = ap74_hdg * 10; 
-          
-         #if defined Mav_Debug_All || defined Mav_Debug_Hud
-            Log.print("Mavlink from FC #74 VFR_HUD: ");
-            Log.print("Airspeed= "); Log.print(ap74_air_spd, 2);                 // m/s    
-            Log.print("  Groundspeed= "); Log.print(ap74_grd_spd, 2);            // m/s
-            Log.print("  Heading= ");  Log.print(ap74_hdg);                      // deg
-            Log.print("  Throttle %= ");  Log.print(ap74_throt);                 // %
-            Log.print("  Baro alt= "); Log.print(ap74_amsl, 0);                  // m                  
-            Log.print("  Climb rate= "); Log.println(ap74_climb);                // m/s
-          #endif              
         case MAVLINK_MSG_ID_RADIO_STATUS:         // #109
           if (!mavGood) break;
             ap109_rssi = mavlink_msg_radio_status_get_rssi(&msg);            // air signal strength

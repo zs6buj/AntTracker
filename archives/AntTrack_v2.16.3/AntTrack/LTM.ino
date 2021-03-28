@@ -135,7 +135,7 @@ boolean UnpackGPS(int lth) {
     new_GPS_data = true;
   }
 
-  if (headingSource==1 && (gpsGood) && (!homeInitialised) && (!homSaved)) AutoStoreHome();  // Only need this whenheadingSource is GPS  
+  if (Heading_Source==1 && (gpsGood) && (!homSaved)) AutoStoreHome();  // Only need this when Heading_Source is GPS 
   
   gpsGood_millis = millis();                 // Time of last good GPS packet
 

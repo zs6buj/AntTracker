@@ -4,8 +4,8 @@
 //                                    C O N F I G U R A T I O N 
 
 #define MAJOR_VERSION      2
-#define MINOR_VERSION      17
-#define PATCH_LEVEL        0
+#define MINOR_VERSION      16
+#define PATCH_LEVEL        3
 
 /*
 =================================================================================================== 
@@ -15,17 +15,19 @@
   
 GitHub Tag
 ----------                
-
-V2.17.0   2021-03-16 Add "GPS on the Tracker" option, aka movable tracker.  
-          2021-03-17 Use ap33_alt_ag instead of ap33_amsl. Still calcs relative alt above field.   
-          2021-03-24 Beta. Support dynamic (moving) tracker with mag and GPS on the box. 
-                     Bug fixes.                           
+v2.16.0   2021-02-22 Adopt GitHub Tags
+          2021-02-27 Add HUD display. Add FrSky UDP telemetry in
+V2.16.1   2021-03-03 Add support for F.Port, auto inversion 
+V2.16.2   2021-03-04 Debug FrSky frame decode (fix offset)
+                     Fix HUD RSSI blank    
+V2.16.3   2021-03-04 Always auto detect serial speed. Always sense polarity, autobaud and detect protocol
+          2021-03-09 Include sport, fport1 and fport2. 
+          2021-03-09 Tidy up.                       
 `                    
 */
 // ******************************* Please select your options here before compiling *******************************
 #define Device_sysid     251                     // Our Mavlink Identity - APM FC is 1, Mission Planner is 255, QGC default is 0 
 #define Device_compid    MAV_COMP_ID_PERIPHERAL  // 158 Generic autopilot peripheral - APM FC is 1, MP is 190, QGC is  https://mavlink.io/en/messages/common.html
-
 
 // Choose one only of these input channels 
 // How does telemetry enter the tracker?
@@ -34,49 +36,12 @@ V2.17.0   2021-03-16 Add "GPS on the Tracker" option, aka movable tracker.
 //#define Telemetry_In  2    // Mavlink WiFi - ESP32 only
 //#define Telemetry_In  3    // FrSky UDP - ESP32 only
 
-
-// Select a heading source. We need this to relate the external world of co-ordinates to the internal tracker co_ordinates.
-#define Heading_Source  2     // 1=Flight_GPS, 2=Flight_Computer, 3=Trackerbox_Compass  4=Trackerbox_GPS_And_Compass
-
-//#define HMC5883L            // Select compass type
-#define QMC5883L
-
-// If the tracker box has a GPS AND a compass attached, we support a moving tracker. For example,
-// the tracker could be on one moving vehicle and track a second moving vehicle, or a 'plane could 
-// always point an antenna at home base.
-
-
-#define home_decay_secs 60  // Home data decay secs. if power lost and restored within decay secs, Home is restored from NVM.
-
-
 // NOTE: The Bluetooth class library uses a lot of application memory. During Compile/Flash
 //  you may need to select Tools/Partition Scheme: "Minimal SPIFFS (1.9MB APP ...)
-
 
 //#define BT_Master_Mode true    // Master connects to BT_Slave_Name --- false for BT Slave Mode
 const char* BT_Slave_Name   =   "Crossfire 0277";  // Example
 
-
-// Un-comment or select the options below:
-//#define Az_Servo_360   // Means the azimuth servo can point in a 360 deg circle, elevation servo 90 deg
-                         // Default (comment out #define above) is 180 deg azimuth and 180 deg elevation 
-                         
- 
-                     
-//#define QLRS           // Un-comment if you use the QLRS variant of Mavlink 
-
-//*********************************************************************************************
-//**********************   S E L E C T   E S P   B O A R D   V A R I A N T   ******************
-
-//#define ESP32_Variant     1    //  ESP32 Dev Module - there are several sub-variants that work
-//#define ESP32_Variant     4    //  Heltec Wifi Kit 32 
-//#define ESP32_Variant     5    //  LILYGO® TTGO T-Display ESP32 1.14" ST7789 Colour LCD
-//#define ESP32_Variant     6    // LILYGO® TTGO T2 ESP32 OLED Arduino IDE board = "ESP32 Dev Module"
-#define ESP32_Variant     7    // ESP32 Dev Module with ILI9341 2.8" colour TFT SPI 240x320
-//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 //=================================================================================================
 //                            D E F A U L T   W I F I   S E T T I N G S   
 //=================================================================================================
@@ -88,7 +53,7 @@ const char* BT_Slave_Name   =   "Crossfire 0277";  // Example
 #define APpw                 "password"         // Change me! Must be >= 8 chars
 #define APchannel            9                  // The wifi channel to use for our AP
 #define STAssid              "OmegaOffice"      // Target AP to connect to (in STA mode) <====
-#define STApw                "password"         // Target AP password (in STA mode). Must be >= 8 chars      
+#define STApw                "Navara@98"         // Target AP password (in STA mode). Must be >= 8 chars      
 
 // Choose one default mode for ESP only - AP means advertise as an access point (hotspot). STA means connect to a known host
 //#define WiFi_Mode   1  //AP            
@@ -110,6 +75,27 @@ uint16_t  TCP_remotePort = 5760;
 uint16_t  UDP_localPort = 14550;    // Mav readPort  Frsky +1
 uint16_t  UDP_remotePort = 14555;   // Mav sendPort  FrSky +1
 //=================================================================================================
+
+// Un-comment (activate) the options below
+//#define Az_Servo_360   // Means the azimuth servo can point in a 360 deg circle, elevation servo 90 deg
+                         // Default (comment out #define above) is 180 deg azimuth and 180 deg elevation 
+                         
+const uint8_t Heading_Source =  2;  // 1=GPS, 2=Flight Computer, 3=Tracker_Compass   
+                     
+//#define QLRS           // Un-comment if you use the QLRS variant of Mavlink 
+
+//*********************************************************************************************
+//**********************   S E L E C T   E S P   B O A R D   V A R I A N T   ******************
+
+//#define ESP32_Variant     1    //  ESP32 Dev Module - there are several sub-variants that work
+//#define ESP32_Variant     4    //  Heltec Wifi Kit 32 
+#define ESP32_Variant     5    //  LILYGO® TTGO T-Display ESP32 1.14" ST7789 Colour LCD
+
+
+//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
 // ****************************************** Auto Determine Target Platform **************************************
@@ -160,36 +146,25 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort  FrSky +1
     #error Please choose at least one target board
   #endif
 
-  #if (Target_Board == 0) 
-    #error Teensy 3.x not yet supported
-  #endif  
+ #if (Target_Board == 0) 
+   #error Teensy 3.x not yet supported
+ #endif  
 
-  #if (Target_Board == 1) 
-    #if defined displaySupport
+ #if (Target_Board == 1) 
+   #if defined displaySupport
      #error Blue Pill  version does not yet support a display
-    #endif  
-  #endif  
+   #endif  
+ #endif  
 
-  #if (Target_Board == 2) 
-    #if defined displaySupport
-      #error Maple Mini version does not yet support a display
-    #endif  
-  #endif  
+ #if (Target_Board == 2) 
+   #if defined displaySupport
+     #error Maple Mini version does not yet support a display
+   #endif  
+ #endif  
 
-  #if not defined Heading_Source
-   #error Please define a Heading_Source
-  #endif
-  #if ((Heading_Source == 3) || (Heading_Source == 4))
-    #if ( (not defined HMC5883L) && (not defined QMC5883L) )
-      #error Please define a compass type 
-    #endif
-  #endif  
-
-  uint8_t headingSource = Heading_Source;
- 
   #if (Target_Board == 4) 
-    #error ESP8266 might work but you need to work out the detail yourself
-  #endif 
+   #error ESP8266 might work but you need to work out the detail yourself
+ #endif 
  
   #if (Target_Board != 3) 
      #if (Telemetry_In  == 1) || (Telemetry_In  == 2) 
@@ -214,10 +189,8 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort  FrSky +1
 
   
 #if (Target_Board == 0)           // Teensy3x NOT YET IMPLEMENTED !
-  #define in_rxPin        9  
-  #define in_txPin       10
-  uint8_t gps_rxPin =    0;     // uart2 for tracker box GPS if applicable
-  #define gps_txPin      1  
+  #define rxPin        9  
+  #define txPin       10
   bool rxInvert = true;           // ONLY FOR FrSky S.Port, NOT F.Port, NOT MAVLINK     
   #define frOneWire         true
   #define SetHomePin 
@@ -232,10 +205,8 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort  FrSky +1
 #elif (Target_Board == 1)         // Blue Pill
 
   #include <Servo.h>  
-  uint8_t in_rxPin =        PA03;  // rx2
-  #define in_txPin          PA02   // tx2
-  uint8_t gps_rxPin =       PA11;  // rx3  
-  #define gps_txPin         PA10   // tx3
+  uint8_t rxPin =           PA03;  
+  #define txPin             PA02  
   #define SetHomePin        PA0;    
   #define StatusLed         PA06  // Off=No good GPS yet, flashing=good GPS but home not set yet, solid = ready to track
   #define azPWM_Pin         PA07  // azimuth servo 
@@ -245,14 +216,12 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort  FrSky +1
 #elif (Target_Board == 2)         // Maple Mini
 
   #include <Servo.h>  
-  uint8_t in_rxPin =       26;  // rx1
-  #define in_txPin         25   // tx1
-  uint8_t gps_rxPin =       0;  // rx3  
-  #define gps_txPin         1   // tx3  
+  uint8_t rxPin =           26;  
+  #define txPin             25  
   #define SetHomePin        5    
   #define StatusLed         6   // Off=No good GPS yet, flashing=good GPS but home not set yet, solid = ready to track
   #define azPWM_Pin         7   // azimuth servo 
-  #define elPWM_Pin         8   // elevation servo  consider pin 10  this pin=rx2 (9=tx2)
+  #define elPWM_Pin         8   // elevation servo
   #define BuiltinLed        33  // PB1   
   
 #elif (Target_Board == 3)         // ESP32 Platform
@@ -260,10 +229,8 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort  FrSky +1
   #include <ESP32_Servo.h>  
   //=========================================================================   
   #if (ESP32_Variant == 1)          // ESP32 Dev Module
-  uint8_t in_rxPin =        27;  // uart1
-  #define in_txPin          17 
-  uint8_t gps_rxPin =       13;  // uart2 for tracker box GPS if applicable
-  #define gps_txPin          4  
+  uint8_t rxPin =           27;  
+  #define txPin             17 
   bool rxInvert = true;          // ONLY FOR FrSky S.Port, NOT F.Port, NOT MAVLINK
   #define SetHomePin        18    
   #define StatusLed         25  // Off=No good GPS yet, flashing=good GPS but home not set yet, solid = ready to track
@@ -272,22 +239,17 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort  FrSky +1
   #define elPWM_Pin         33  // elevation servo(can't be 34,35,36,39 because input only !!)
   #define BuiltinLed        02  // PB1   
 
-    //#define displaySupport       // uncomment me if you have a SSD1306 display
     #if (defined displaySupport)   // Display type defined with # define displaySupport   
-      #define SSD1306_Display         // OLED display type    
       /* Below please choose either Touch pin-pair or Digital pin-pair for display scrolling
        *  Pin == 99 means the pin-pair is not used
        */ 
-      #define Pup           99        // Board Button 1 to scroll the display up
-      #define Pdn           99        // Board Button 2 to scroll the display down   
-      #define Pinfo         99        // Digital pin to toggle information/log page
-      #define Tup           33        // Touch pin to scroll the display up
-      #define Tdn           32        // Touch pin to scroll the display down 
-      #define Tinfo         99        // 02 Touch pin to toggle information/log page   
-          
-      #define SDA           21        // I2C OLED board and/or Compass
-      #define SCL           22        // I2C OLED board and/or Compass
-      #define display_i2c_addr      0x3C       // I2C OLED board
+      #define Pup           99        // 35 Board Button 1 to scroll the display up
+      #define Pdn           99        //  0 Board Button 2 to scroll the display down    
+      #define Tup           33        // 33 Touch pin to scroll the display up
+      #define Tdn           32        // 32 Touch pin to scroll the display down   
+      #define SDA           21        // I2C OLED board
+      #define SCL           22        // I2C OLED board
+      #define i2cAddr      0x3C       // I2C OLED board
     #endif   
     /*  
       SPI/CS                       Pin 05   For optional TF/SD Card Adapter
@@ -298,10 +260,8 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort  FrSky +1
   #endif
   //=========================================================================   
   #if (ESP32_Variant == 4)          // Heltec Wifi Kit 32 (NOTE! 8MB) 
-  uint8_t in_rxPin =        27;  // uart1
-  #define in_txPin          17 
-  uint8_t gps_rxPin =       13;  // uart2 for tracker box GPS if applicable
-  #define gps_txPin         14    
+  uint8_t rxPin =           27;  
+  #define txPin             17  
   bool rxInvert = true;            // ONLY FOR FrSky S.Port, NOT F.Port, NOT MAVLINK
   #define SetHomePin        18    
   #define StatusLed         13  // Off=No good GPS yet, flashing=good GPS but home not set yet, solid = ready to track
@@ -323,10 +283,9 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort  FrSky +1
     #define Tup           33        // 33 Touch pin to scroll the display up
     #define Tdn           32        // 32 Touch pin to scroll the display down 
     #define Tinfo         02        // 02 Touch pin to toggle information/log page
-    
-    #define SDA           04        // I2C OLED board and/or Compass
-    #define SCL           15        // I2C OLED board and/or Compass
-    #define display_i2c_addr      0x3C       // I2C OLED board
+    #define SDA           04        // I2C OLED board 
+    #define SCL           15        // I2C OLED board
+    #define i2cAddr      0x3C       // I2C OLED board
     #define OLED_RESET    16        // RESET here so no reset lower down     
 
     /*  
@@ -339,17 +298,17 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort  FrSky +1
   #endif
   //=========================================================================   
   #if (ESP32_Variant == 5)          // LILYGO® TTGO T-Display ESP32 1.14" ST7789 Colour LCD, IDE board = "ESP32 Dev Module"
-    uint8_t in_rxPin =        27;       // uart1 for general serial in, including flight gps
-    #define in_txPin          17 
-    uint8_t gps_rxPin =       13;       // uart2 for tracker box GPS if applicable
-    #define gps_txPin         15
+    //uint8_t rxPin =           27;       // default
+    //#define txPin             17 
+    uint8_t rxPin =           13;       // FrSky debug
+    #define txPin             15     
     bool rxInvert = false;              // ONLY FOR FrSky S.Port, NOT F.Port, NOT MAVLINK
-    #define SetHomePin        12
+    #define SetHomePin        15
     #define StatusLed         25        // Add your own LED with around 1K series resistor
     #define BuiltinLed        99    
     #define azPWM_Pin         32  // azimuth servo (can't be 34,35,36,39 because input only !!)
     #define elPWM_Pin         33  // elevation servo(can't be 34,35,36,39 because input only !!)    
-    #define startWiFiPin  99      // 99=none. No input pin available (non touch!) Could use touchpin with a bit of messy work.    
+    #define startWiFiPin  99        // 99=none. No input pin available (non touch!) Could use touch with a bit of messy work.    
     
     #if !defined displaySupport    // I2C TFT board is built into TTGO T-Display
       #define displaySupport
@@ -369,17 +328,14 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort  FrSky +1
     
     #define SCR_ORIENT     1        // 1 Landscape or 0 Portrait
  
-    #define SDA           21        // I2C TFT board and/or Compass
-    #define SCL           22        
-    #define display_i2c_addr      0x3C     
-    #define compass_i2c_addr      0x1E   // 0x1E for HMC5883L   0x0D for QMC5883
+    #define SDA           21        // I2C TFT board 
+    #define SCL           22        // I2C TFT board
+    #define i2cAddr      0x3C       // I2C TFT board
   #endif
    //=========================================================================   
   #if (ESP32_Variant == 6)          // LILYGO® TTGO T2 ESP32 OLED Arduino IDE board = "ESP32 Dev Module"
-    uint8_t in_rxPin =        17;       // uart1 for general serial in, including flight gps
-    #define in_txPin          18 
-    uint8_t gps_rxPin =       19;       // uart2 for tracker box GPS
-    #define gps_txPin         21  
+    uint8_t rxPin =           27;  
+    #define txPin             17 
     bool rxInvert = true;               // ONLY FOR FrSky S.Port, NOT F.Port, NOT MAVLINK
     #define SetHomePin        15
     #define StatusLed         25        // Add your own LED with around 1K series resistor
@@ -396,55 +352,15 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort  FrSky +1
     /* Below please choose either Touch pin-pair or Digital pin-pair for display scrolling
      *  Pin == 99 means the pin-pair is not used
      */ 
-    #define Pinfo         99        // Digital pin to toggle information/log page          
     #define Pup           99        // Board Button 1 to scroll the display up
-    #define Pdn           99        // Board Button 2 to scroll the display down  
-    #define Tinfo         99        //    Touch pin to toggle information/log page         
+    #define Pdn           99        // Board Button 2 to scroll the display down    
     #define Tup           33        // 33 Touch pin to scroll the display up
     #define Tdn           32        // 32 Touch pin to scroll the display down  
      
     #define SDA           13        // I2C OLED board 
     #define SCL           14        // I2C OLED board
-    #define display_i2c_addr      0x3C       // I2C OLED board
+    #define i2cAddr      0x3C       // I2C OLED board
   #endif 
-  //=========================================================================  
-  #if (ESP32_Variant == 7)          // ESP32 Dev Module with ILI9341 2.8" colour TFT SPI 240x320
-    uint8_t in_rxPin =        13; //16;       // uart1 for general serial in, including flight gps
-    #define in_txPin           4  //17 
-    uint8_t gps_rxPin =       13;       // uart2 for tracker box GPS if applicable
-    #define gps_txPin          4
-    bool rxInvert = false;              // ONLY FOR FrSky S.Port, NOT F.Port, NOT MAVLINK
-    #define SetHomePin         5
-    #define StatusLed          2        // Add your own LED with around 1K series resistor
-    #define BuiltinLed        99    
-    #define azPWM_Pin         32  // azimuth servo (can't be 34,35,36,39 because input only !!)
-    #define elPWM_Pin         33  // elevation servo(can't be 34,35,36,39 because input only !!)    
-    #define startWiFiPin  99      // 99=none. No input pin available (non touch!) Could use touchpin with a bit of messy work.
-    #if !defined displaySupport     
-      #define displaySupport
-    #endif
-    #define ILI9341_Display         // ILI9341 2.8" COLOUR TFT SPI 240x320 V1.2  
-    #define SCLK          18        // blue wire on my test setup
-    #define MOSI          23        // yellow wire
-    #define CS            25        // white wire
-    #define DC            26        // green wire  
-    #define RST           27        // brown wire
-    // LED=3.3V,  Vcc=5v,  Gnd 
-    // MISO                not used by Adafruit     
-    
-    /* Below please choose either Touch pin-pair or Digital pin-pair for display scrolling
-     *  Pin == 99 means the pin-pair is not used
-     */ 
-               
-    #define Pup           99        // 35 Board Button 1 to scroll the display up
-    #define Pdn           99        //  0 Board Button 2 to scroll the display down     
-    #define Tup           12        // Touch pin to scroll the display up
-    #define Tdn           14        // Touch pin to scroll the display down   
-
-    #define SDA           21        // I2C for tracker box compass
-    #define SCL           22        // I2C 
-
-  #endif     
 #endif
 
   //=================================================================================================   
@@ -487,7 +403,7 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort  FrSky +1
     //==========================================================
     
     #if (defined ST7789_Display)      // TTGO T_Display 1.14 TFT display 135 x 240 SPI
-      #include <TFT_eSPI.h>           // Remember to select the T_Display board in User_Setup_Select.h in TFT_eSPI library (135 x 240)                        
+      #include <TFT_eSPI.h>           // Remember to select the T_Display board in User_Setup_Select.h in TFT_eSPI library (135 x 240) 
       TFT_eSPI display = TFT_eSPI();
       #define SCR_W_PX      240       // OLED display width, in pixels
       #define SCR_H_PX      135       // OLED display height, in pixels
@@ -589,6 +505,7 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort  FrSky +1
     static const uint16_t threshold = 40;
     volatile bool upButton = false;
     volatile bool dnButton = false;
+    volatile bool infoButton = false;
     
     #if (not defined Tup) 
       #define Tup         99
@@ -730,11 +647,9 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort  FrSky +1
 
   #define Log                   Serial         // USB  
   #if (Telemetry_In == 0)    
-    #define inSerial            Serial1        // ESP32 General telemetry input   
+    #define inSerial            Serial2        // ESP32 General telemetry input   
   #endif  
-  #if (Heading_Source == 4) 
-    #define gpsSerial           Serial2        // ESP32 Tracker box GPS
-  #endif  
+
 
 // ******************************** D E B U G G I N G   O P T I O N S ***************************************
 
@@ -749,7 +664,7 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort  FrSky +1
 //#define Debug_AzEl
 //#define Debug_Servos 
 //#define Debug_LEDs
-//#define Debug_boxCompass    
+//#define Debug_Compass    
                         
 //#define Debug_Input
 //#define Debug_Mav_Heartbeat  
@@ -758,7 +673,7 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort  FrSky +1
 //#define Debug_FrSky
 //#define Debug_LTM
 //#define Debug_MSP
-//#define Debug_inGPS               // a GPS on the 'plane
+//#define Debug_NMEA_GPS
 
 //#define Debug_EEPROM
 //#define Debug_Time 
@@ -772,11 +687,8 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort  FrSky +1
 //#define Debug_FrSky
 //#define Debug_FrPort_Stream
 //#define Debug_FPort_Buffer
-//#define Debug_boxGPS             // the GPS on the tracker box
-//#define Debug_boxCompass         // The compass on the tracker box
 
 #define Report_Packetloss   2     // F.Port packet loss every n minutes
-
 // *****************************************************************************************************************
 
 /*
@@ -791,7 +703,7 @@ v2.00 2019-03-03 Unified version auto detect telemetry speed and protocol. Mavli
       MSP and GPS support outstanding
 v2.01 Support for NMEA GPS added     
 v2.05 2019/03/17 UNTESTED BETA Support for retoring home settings from EEPROM after power interruption  
-v2.06 2019/06/25 Improved auto baud rate detection. Define in_rxPin correctly for Maple Mini
+v2.06 2019/06/25 Improved auto baud rate detection. Define rxPin correctly for Maple Mini
 v2.07 2019/08/10 Tidy up mavlink library paths
 v2.08 2019/08/13 Fix mavlink ap_fixtype >2 before using lat and lon. Scroll entire Oled screen.
 v2.09 2019/08/16 Supports ESP32 Dev Board - BETA
@@ -806,13 +718,5 @@ v2.15 2020-10-12 Proper TCP client added for outgoing (to telemetry source) conn
                  TCP in tests good.     
 v2.15.3 2020-11-08 Fix 10 to power calc for FrSky X.  
 v2.15.4 2020-11-12 Patch by mric3412 (PositionServos bug in some home heading cases) properly included. 
-v2.15.5 2021-02-01 Add hardware signal inversion for S.Port input. Notified by @mello73.   
-v2.16.0   2021-02-22 Adopt GitHub Tags
-          2021-02-27 Add HUD display. Add FrSky UDP telemetry in
-V2.16.1   2021-03-03 Add support for F.Port, auto inversion 
-V2.16.2   2021-03-04 Debug FrSky frame decode (fix offset)
-                     Fix HUD RSSI blank    
-V2.16.3   2021-03-04 Always auto detect serial speed. Always sense polarity, autobaud and detect protocol
-          2021-03-09 Include sport, fport1 and fport2. 
-          2021-03-09 Tidy up.               
+v2.15.5 2021-02-01 Add hardware signal inversion for S.Port input. Notified by @mello73.                  
 */

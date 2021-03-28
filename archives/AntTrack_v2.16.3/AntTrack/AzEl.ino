@@ -41,17 +41,16 @@ void getAzEl(const struct Location &hom, const struct Location &cur){
   d = 6371000 * c;    // Radius of the Earth is 6371km
   hc_vector.dist = d;
 
-
   // Calculate elevation
-  int16_t altR = cur.alt - hom.alt;  // Relative alt or delta between tracker box and craft
+  int16_t altR = cur.alt - hom.alt;  // Relative alt
 
-  if (headingSource != 4) altR = altR * LimitCloseToHomeError(d, altR);
+  altR = altR * LimitCloseToHomeError(d, altR);
   
   hc_vector.el=atan(altR/d);
   hc_vector.el=hc_vector.el*360/(2*PI);     // Radians to degrees
   
   #if defined Debug_All || defined Debug_AzEl
-  if (hc_vector.dist >= minDist) {  // Craft must be minDist away otherwise calculations are unreliable
+  if (hc_vector.dist >= minDist) {  // Otherwise calculations are unreliable
     float elapsed = millis() - millisStartup;
     elapsed /=1000;
     Log.print("  hc_vector.az= "); Log.print(hc_vector.az); 

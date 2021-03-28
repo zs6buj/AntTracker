@@ -24,28 +24,6 @@
     int16_t fr_bat1_amps;      // dA )A * 10)
     uint16_t fr_bat1_mAh;
     
-    // 0x5004 Home
-    uint32_t fr_home;   
-    uint16_t fr_home_dist;
-    int16_t  fr_home_angle;       // degrees
-    int16_t  fr_home_arrow;       // 0 = heading pointing to home, unit = 3 degrees
-    int16_t  fr_home_alt;    
-    float fHomeDist;   
-    
-    // 0x5005 Velocity and yaw
-    uint32_t pt_velyaw;
-    float fr_vy;    // climb in decimeters/s
-    float fr_vx;    // groundspeed in decimeters/s
-    float fr_yaw;   // heading units of 0.2 degrees
-       
-    // 0x5006 Attitude and range
-    uint16_t fr_roll;
-    uint16_t fr_pitch;
-    uint16_t fr_range;
-    float    fr_froll;
-    float    fr_fpitch;
-    float    fr_frange; 
-       
     //0x5008 Batt    
     uint16_t fr_bat2_mAh;
     
@@ -108,7 +86,9 @@
   
   uint32_t fr_heading;
   uint32_t fr_altitude;
-
+  uint32_t fr_home;
+  uint16_t fr_home_dist;
+  float fHomeDist;
   short fr_pwr;
   uint32_t fr_gps;
 
@@ -896,8 +876,8 @@
                   case 0x5005:                      
                   // Vert and Horiz Velocity and Yaw angle (Heading)
                     fr_velyaw = uint32Extract(buf, 3);      
-                    fr_yaw = fr_home_dist = bit32Extract(fr_velyaw, 16, 11);
-                    cur.hdg = fr_yaw * 0.1F;
+                    fr_velyaw = fr_home_dist = bit32Extract(fr_velyaw, 16, 11);
+                    cur.hdg = fr_velyaw * 0.1F;
       
                     hdgGood=true;
                     #if defined Debug_All || defined Debug_FrSky_Messages
@@ -905,31 +885,13 @@
                       Log.println(cur.hdg,1);
                     #endif
                     break;   
-                    
-                  case 0x5006:                         // Roll, Pitch and Range - Max Hz                   
-                   fr_roll = bit32Extract(fr_payload,0,11);        
-                   fr_roll = (fr_roll - 900) * 0.2;             //  -- roll [0,1800] ==> [-180,180] 
-                   fr_pitch = bit32Extract(fr_payload,11,10);   
-                   fr_pitch = (fr_pitch - 450) * 0.2;           //  -- pitch [0,900] ==> [-90,90]
-                   fr_range = bit32Extract(fr_payload,22,10) * TenToPwr(bit32Extract(fr_payload,21,1));
-                   fr_froll = fr_roll * 0.001F;
-                   fr_fpitch = fr_pitch * 0.001F;
-                   #if defined Debug_All || defined Debug_FrSky_Messages
-                     Log.print("Frsky 5006: Range=");
-                     Log.print(fr_range,2);
-                     Log.print(" Roll=");
-                     Log.print(fr_roll);
-                     Log.print("deg   Pitch=");
-                     Log.print(fr_pitch);   
-                     Log.println("deg");               
-                   #endif
-                   break;                
+               
                    
         }
 
         gpsGood = hdopGood & lonGood & latGood & altGood & hdgGood ; 
-        if (headingSource==1 && (gpsGood) && (!homeInitialised) && (!homSaved)) AutoStoreHome();  // Only need this when headingSource is GPS    
-
+    
+        if (Heading_Source==1 && (gpsGood) && (!homSaved)) AutoStoreHome();  // Only need this when Heading_Source is GPS 
     }
 
     //========================================================

@@ -24,7 +24,7 @@ uint16_t detectProtocol(uint32_t baud) {
 
     #if ( (defined ESP8266) || (defined ESP32) ) 
       delay(100);
-      inSerial.begin(baud, SERIAL_8N1, in_rxPin, in_txPin, rxInvert); 
+      inSerial.begin(baud, SERIAL_8N1, rxPin, txPin, rxInvert); 
     #elif (defined TEENSY3X) 
       frSerial.begin(frBaud); // Teensy 3.x    tx pin hard wired
        if (rxInvert) {          // For S.Port not F.Port
@@ -44,13 +44,14 @@ uint16_t detectProtocol(uint32_t baud) {
       if (chr==0xFE) {   
         int pl = NxtChar();   // Payload length
         if (pl>=8 && pl<=37) {
-          Mav1++;                  // Found candidate Mavlink 1
+          Mav1++;             // Found candidate Mavlink 1
           if (Mav1>10) {
             inSerial.end();
             return 1; 
           }
         }
       }
+
       if (chr==0xFD) {
         Mav2++;                     // Found candidate Mavlink 2
         if (Mav2>10) {
@@ -58,6 +59,7 @@ uint16_t detectProtocol(uint32_t baud) {
           return 2;    
         }
       }
+
       if (chr==0x7E)                             // Could be S.Port or F.Port1
         if (ch[1]==0x7E) {                       // must be FPort1
           FPort1++;
@@ -73,6 +75,7 @@ uint16_t detectProtocol(uint32_t baud) {
           return 3;        
         }
       } 
+      
       if ( ( (ch[2] == 0x0D) || (ch[2] == 0x18)|| (ch[2] == 0x23) ) && ( (chr == 0xf1) || (chr == 0xf1) ) )  {  // fp2 OTA     
         FPort2++; 
         if (FPort2>10) {
@@ -87,7 +90,7 @@ uint16_t detectProtocol(uint32_t baud) {
           return 5;  
         }             
       } 
-
+      
       /*
       if (chr==0x24) {    //  'S'
         chr = NxtChar(); // start2 should be 0x54 ('T')
@@ -102,7 +105,7 @@ uint16_t detectProtocol(uint32_t baud) {
           return 6; 
         }
       }
-
+      
       if ((ch[0]=='$') && (ch[1]=='M') && (ch[2]=='<')) {
         MSP++;       // Found candidate MSP 
         if (MSP>10) {
@@ -111,15 +114,14 @@ uint16_t detectProtocol(uint32_t baud) {
         }
       }
 
-      if ((ch[0]=='$') && (ch[1]=='G') && ((ch[2]=='N') || (ch[2]=='P') ) ){
-
+      if ((ch[0]=='$') && (ch[1]=='G') && (ch[2]=='P')) {
         NMEA_GPS++; // Found candidate GPS
         if (NMEA_GPS>10) {
           inSerial.end();
           return 8;      
         }
       }
-/*
+
     #if defined Debug_All || defined Debug_Protocol
       Log.print("Mav1=");  Log.println(Mav1);
       Log.print("Mav2=");  Log.println(Mav2);
@@ -129,7 +131,8 @@ uint16_t detectProtocol(uint32_t baud) {
       Log.print("LTM=");  Log.println(LTM);
       Log.print("MSP=");  Log.println(MSP);
       Log.print("NMEA_GPS=");  Log.println(NMEA_GPS);
-   */
+    #endif  
+  
     chr = NxtChar(); 
     ch[0] = ch[1];   // rolling input bytes
     ch[1] = ch[2];
@@ -167,7 +170,7 @@ byte x;
   r++;
   
   #if defined Debug_All || defined Debug_Protocol
-    //Log.print((char)x); 
+   // Log.print((char)x); 
      Printbyte(x, false, ' ');  
    
    if ((r % 50) == 0) {
@@ -179,15 +182,15 @@ byte x;
   return x;
 }
 // **********************************************************
-uint32_t getBaud(uint8_t pin) {
-  Log.print("autoBaud - sensing pin "); Log.println(pin);
- // Log.printf("autoBaud - sensing pin %2d \n", pin );
+uint32_t getBaud(uint8_t rxPin) {
+  Log.print("AutoBaud - sensing rxPin "); Log.println(rxPin);
+ // Log.printf("AutoBaud - sensing rxPin %2d \n", rxPin );
   uint8_t i = 0;
   uint8_t col = 0;
-  pinMode(pin, INPUT);       
-  digitalWrite (pin, HIGH); // for noise reduction ?
+  pinMode(rxPin, INPUT);       
+  digitalWrite (rxPin, HIGH); // for noise reduction ?
 
-  uint32_t gb_baud = GetConsistent(pin);
+  uint32_t gb_baud = GetConsistent(rxPin);
   while (gb_baud == 0) {
     if(ftgetBaud) {
       ftgetBaud = false;
@@ -200,12 +203,12 @@ uint32_t getBaud(uint8_t pin) {
     }
     if (col > 60) {
       Log.println(); 
-        Log.print("No telemetry found on pin "); Log.println(pin);
-  //    Log.printf("No telemetry found on pin %2d\n", pin); 
+        Log.print("No telemetry found on pin "); Log.println(rxPin);
+  //    Log.printf("No telemetry found on pin %2d\n", rxPin); 
       col = 0;
       i = 0;
     }
-    gb_baud = GetConsistent(pin);
+    gb_baud = GetConsistent(rxPin);
   } 
   if (!ftgetBaud) {
     Log.println();
@@ -216,19 +219,19 @@ uint32_t getBaud(uint8_t pin) {
   return(gb_baud);
 }
 //************************************************
-uint32_t GetConsistent(uint8_t pin) {
+uint32_t GetConsistent(uint8_t rxPin) {
   uint32_t t_baud[5];
 
   while (true) {  
-    t_baud[0] = SenseUart(pin);
+    t_baud[0] = SenseUart(rxPin);
     delay(10);
-    t_baud[1] = SenseUart(pin);
+    t_baud[1] = SenseUart(rxPin);
     delay(10);
-    t_baud[2] = SenseUart(pin);
+    t_baud[2] = SenseUart(rxPin);
     delay(10);
-    t_baud[3] = SenseUart(pin);
+    t_baud[3] = SenseUart(rxPin);
     delay(10);
-    t_baud[4] = SenseUart(pin);
+    t_baud[4] = SenseUart(rxPin);
     #if defined Debug_All || defined Debug_Baud
       Log.print("  t_baud[0]="); Log.print(t_baud[0]);
       Log.print("  t_baud[1]="); Log.print(t_baud[1]);
@@ -250,7 +253,7 @@ uint32_t GetConsistent(uint8_t pin) {
   }
 }
 //************************************************
-uint32_t SenseUart(uint8_t  pin) {
+uint32_t SenseUart(uint8_t  rxPin) {
 
 uint32_t pw = 999999;  //  Pulse width in uS
 uint32_t min_pw = 999999;
@@ -258,21 +261,21 @@ uint32_t su_baud = 0;
 const uint32_t su_timeout = 5000; // uS !  Default timeout 1000mS!
 
   #if defined Debug_All || defined Debug_Baud
-    Log.printf("pin:%d  rxInvert:%d\n", pin, rxInvert);  
+    Log.printf("rxPin:%d  rxInvert:%d\n", rxPin, rxInvert);  
   #endif  
 
   if (rxInvert) {
-    while(digitalRead(pin) == 0){ };  // idle_low, wait for high bit (low pulse) to start
+    while(digitalRead(rxPin) == 0){ };  // idle_low, wait for high bit (low pulse) to start
   } else {
-    while(digitalRead(pin) == 1){ };  // idle_high, wait for high bit (high pulse) to start  
+    while(digitalRead(rxPin) == 1){ };  // idle_high, wait for high bit (high pulse) to start  
   }
 
   for (int i = 0; i < 10; i++) {
 
     if (rxInvert) {               //  Returns the length of the pulse in uS
-      pw = pulseIn(pin,HIGH, su_timeout);     
+      pw = pulseIn(rxPin,HIGH, su_timeout);     
     } else {
-      pw = pulseIn(pin,LOW, su_timeout);    
+      pw = pulseIn(rxPin,LOW, su_timeout);    
     }    
 
     if (pw !=0) {
@@ -329,19 +332,34 @@ const uint32_t su_timeout = 5000; // uS !  Default timeout 1000mS!
 #endif
 
     //======================================================
-    pol_t getPolarity(uint8_t pin) {
-      const uint32_t su_timeout = 5000; // uS !  Default timeout 1000mS!
-      uint32_t pw_hi = 0;
-      uint32_t pw_lo = 0;   
-      for (int i = 0; i < 20; i++) {
-        pw_hi += pulseIn(pin,HIGH, su_timeout);
-        pw_lo += pulseIn(pin,LOW, su_timeout); 
-        delayMicroseconds(20);
-      }  
-      //Log.printf("pw_hi:%d  pw_lo:%d\n", pw_hi, pw_lo);  
-      if (pw_hi > pw_lo) {
-        return idle_low;
-      } else {
-        return idle_high;        
-      }
+    pol_t getPolarity(uint8_t rxpin) {
+      uint16_t hi = 0;
+      uint16_t lo = 0;  
+      const uint16_t mx = 1000;
+      while ((lo <= mx) && (hi <= mx)) {
+
+        if (digitalRead(rxpin) == 0) { 
+          lo++;
+        } else 
+        if (digitalRead(rxpin) == 1) {  
+          hi++;
+        }
+
+        if (lo > mx) {
+          if (hi == 0) {         
+            return no_traffic;
+          } else {
+            return idle_low; 
+          }
+        }
+        if (hi > mx) {
+          if (lo == 0) {
+            return no_traffic;
+          } else {
+            return idle_high; 
+          }
+        }
+        delayMicroseconds(200);
+       //Log.printf("rxpin:%d  %d\t\t%d\n",rxpin, lo, hi);  
+     } 
     } 

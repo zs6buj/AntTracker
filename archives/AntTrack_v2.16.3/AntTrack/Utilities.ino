@@ -11,7 +11,30 @@
 //================================================================================================= 
 
   #if defined displaySupport  
-    void HandleDisplayButtons() {      
+    void HandleDisplayButtons() {
+
+      if (Pinfo != 99)  {   // if digital pin for info display enumerated
+        infoButton = !digitalRead(Pinfo);  // low == pressed
+      }
+        
+      if ((infoButton) && (!infoPressBusy)) { 
+        infoPressBusy = true; 
+        infoNewPress = true;          
+        info_debounce_millis = millis();   
+
+        info_millis = millis();                       
+        if (show_log) {
+          show_log = false; 
+          info_millis = millis() + db_period;  
+        } else {
+          show_log = true;    
+        }
+      }
+        
+      if(millis() - info_debounce_millis > db_period) { 
+        infoPressBusy = false; 
+        infoButton = false; // for slow decay touch buttons
+      }
 
       if (millis() - last_log_millis > 15000) { // after 15 seconds default to flight info screen
         last_log_millis = millis();             // and enable toggle button again
@@ -60,10 +83,13 @@
       upButton = true;
     }
 
-    void IRAM_ATTR gotButtonDn(){    
+    void IRAM_ATTR gotButtonDn(){
       dnButton = true;  
     }
     
+    void IRAM_ATTR gotButtonInfo(){
+      infoButton = true;
+    }
     #endif 
     //===================================
    
@@ -73,15 +99,15 @@
       show_log = true;    
       scroll_millis = millis(); 
       
-      if (up_dn == up) {   // towards last line painted, so lines move up
+      if (up_dn == up) {
          scroll_row--;
          scroll_row = constrain(scroll_row, SCR_H_CH, row);
          upButton = false; 
          PaintLogScreen(scroll_row, show_last_row);   // paint down to scroll_row
       }
-      if (up_dn == down) {  // towards first line painted, so lines move down
-          scroll_row++;      
-          scroll_row = constrain(scroll_row, (row < SCR_H_CH) ? row : SCR_H_CH, row);               
+      if (up_dn == down) {
+          scroll_row++; 
+          scroll_row = constrain(scroll_row, SCR_H_CH, row);       
           dnButton = false; 
           PaintLogScreen(scroll_row, show_last_row);  // paint down to scroll_row      
       }   
@@ -101,15 +127,8 @@
           display.clearDisplay();
         #endif  
         display.setCursor(0,0);  
-        int8_t first_row;
-        int8_t last_row;
-        if (row < SCR_H_CH) {
-          first_row = (last_row_action==omit_last_row) ? 1 : 0; 
-          last_row = (last_row_action==omit_last_row) ? new_row : new_row ;           
-        } else {
-          first_row = (last_row_action==omit_last_row) ? (new_row - SCR_H_CH +1) : (new_row - SCR_H_CH); 
-          last_row = (last_row_action==omit_last_row) ? new_row : new_row ;            
-        }           
+        int8_t first_row = (last_row_action==omit_last_row) ? (new_row - SCR_H_CH +1) : (new_row - SCR_H_CH); 
+        int8_t last_row = (last_row_action==omit_last_row) ? new_row : (new_row );        
         for (int i = first_row ; i < last_row; i++) { // drop first line, display rest of old lines & leave space for new line          
           display.println(ScreenRow[i].x);
         }
@@ -128,11 +147,9 @@
       if (display_mode != logg) {
           SetupLogDisplayStyle();
           display_mode = logg; 
-          PaintLogScreen(row, omit_last_row);
-      } else {   
-        if (row >= SCR_H_CH) {                      // if the new line exceeds the page lth, re-display existing lines
-          PaintLogScreen(row, omit_last_row);
-        }
+      }   
+      if (row >= SCR_H_CH) {                 // if the new line exceeds the page lth, re-display existing lines
+        PaintLogScreen(row, omit_last_row);
       }
       uint16_t lth = strlen(S.c_str());           // store the new line a char at a time
       if (lth > max_col-1) { 
@@ -154,7 +171,7 @@
         ScreenRow[row].x[col] = '\0';
       } 
 
-      display.println(ScreenRow[row].x);        // display the new line
+      display.println(ScreenRow[row].x);        // display the new line, which is always the last line
       #if (defined SSD1306_Display)
         display.display();
       #endif  
@@ -173,16 +190,16 @@
     //===================================
    
     void LogScreenPrint(String S) {
-    #if defined displaySupport   
-    
+    #if defined displaySupport  
+
       if (display_mode != logg) {
           SetupLogDisplayStyle();
           display_mode = logg; 
-          PaintLogScreen(row, omit_last_row);
-      } else {   
-        if (row >= SCR_H_CH) {                      // if the new line exceeds the page lth, re-display existing lines
-          PaintLogScreen(row, omit_last_row);
-        }
+      }   
+
+     // scroll_row = row; 
+      if (row >= SCR_H_CH) {              // if the new line exceeds the page lth, re-display existing lines
+        PaintLogScreen(row, omit_last_row);
       }
       display.print(S);                         // the new line
       #if (defined SSD1306_Display)
@@ -235,7 +252,7 @@
           info_millis = millis();  
 
           // artificial horizon
-          draw_horizon(fr_froll, fr_fpitch, SCR_W_PX, SCR_H_PX);
+          draw_horizon(ap_roll, ap_pitch, SCR_W_PX, SCR_H_PX);
 
           display.setTextSize(2);    // 26 ch wide x 15 ch deep
           
@@ -259,23 +276,22 @@
           xx = 17 * CHAR_W_PX;
           yy = 0 ;          
           display.setCursor(xx, yy);  
-          snprintf(snprintf_buf, snp_max, "RSSI:%2d%%", ap_rssi); 
-          display.fillRect(xx+(5*CHAR_W_PX), yy, 4 * CHAR_W_PX, CHAR_H_PX, ILI9341_BLUE); // clear the previous line               
+          snprintf(snprintf_buf, snp_max, "RSSI:%ld%%", ap_rssi); 
+          display.fillRect(xx+(4*CHAR_W_PX), yy, 4 * CHAR_W_PX, CHAR_H_PX, ILI9341_BLUE); // clear the previous line               
           display.println(snprintf_buf);
               
           // distance to home
           xx = 0;
           yy = 13.5 * CHAR_H_PX;        
           display.setCursor(xx, yy); 
-          snprintf(snprintf_buf, snp_max, "Home:%d", hc_vector.dist);    // m 
+          snprintf(snprintf_buf, snp_max, "Home:%d", pt_home_dist);    // m 
           display.fillRect(xx+(5*CHAR_W_PX), yy, (4*CHAR_W_PX), CHAR_H_PX, ILI9341_BLUE); // clear the previous line   
           display.println(snprintf_buf); 
 
           // arrow to home
           xx = 14 * CHAR_W_PX;
-          yy = 13.5 * CHAR_H_PX;           
-          fr_home_angle = Add360(hc_vector.az, -180);  
-          draw_home_arrow(xx, yy, fr_home_angle, SCR_W_PX, SCR_H_PX);
+          yy = 13.5 * CHAR_H_PX;   
+          draw_home_arrow(xx, yy, pt_home_angle, SCR_W_PX, SCR_H_PX);
    
           // altitude above home
           xx = 18 * CHAR_W_PX;
@@ -466,113 +482,8 @@
     #endif
    }
    #endif    
-    //=================================================================== 
-    #if  (defined ILI9341_Display)
-    uint32_t draw_horizon(float roll, float pitch, int16_t width, int16_t height) {
-      int16_t x0, y0, x1, y1, xc, yc, ycp, lth, tick_lean;
-      static int16_t px0, py0, px1, py1, pycp, ptick_lean; 
-      uint8_t tick_height = 5;  
-      float roll_slope = 0;      // [-180,180]
-      float pitch_offset = 0;     //  [-90,90]
-      const float AngleToRad = PI / 180;
-      
-      xc = width / 2;    // centre point / pivot / origin
-      yc = height / 2;   // 
 
-      display.drawLine(0 + (width * 0.2), yc, width - (width * 0.2), yc, ILI9341_WHITE);   // static reference horizon
-      display.drawLine(xc, yc+10, xc, yc-10, ILI9341_WHITE);
-      
-      roll_slope = tan(roll * AngleToRad);             // roll slope 
-      pitch_offset = (sin(pitch * AngleToRad)) * yc;   // pitch offset  
-      tick_lean = roll_slope * tick_height;
-
-      lth = (xc * 0.8) * cos(roll * AngleToRad);
-      x0 = (xc - lth);
-      x1 = (xc + lth);
-
-      y0 = yc - ((xc - x0) * roll_slope);
-      y1 = yc + ((x1 - xc) * roll_slope);   
-  
-      y0 += pitch_offset;
-      y1 += pitch_offset;
-      ycp = yc + pitch_offset;
-     
-      static bool ft = true;
-      if (!ft) {
-        display.drawLine(px0, py0, px1, py1, ILI9341_BLUE);   // Erase old horizon line 
-        display.drawLine(xc-ptick_lean, pycp+tick_height, xc+ptick_lean, pycp-tick_height, ILI9341_BLUE); 
-        display.drawLine(xc-ptick_lean+1, pycp+tick_height, xc+ptick_lean+1, pycp-tick_height, ILI9341_BLUE);
-        display.drawLine(px0-ptick_lean+1, py0+tick_height, px0+ptick_lean+1, py0-tick_height, ILI9341_BLUE);
-        display.drawLine(px1-ptick_lean+1, py1+tick_height, px1+ptick_lean+1, py1-tick_height, ILI9341_BLUE);        
-        display.drawLine(px0+1, py0, px1+1, py1,ILI9341_BLUE);
-      }  
-      ft = false;
-      display.drawLine(x0, y0, x1, y1, ILI9341_WHITE);      // Horizon line over the top
-      display.drawLine(xc-tick_lean, ycp+tick_height, xc+tick_lean, ycp-tick_height, ILI9341_WHITE);
-      display.drawLine(xc-tick_lean+1, ycp+tick_height, xc+tick_lean+1, ycp-tick_height, ILI9341_WHITE);
-      display.drawLine(x0-tick_lean+1, y0+tick_height, x0+tick_lean+1, y0-tick_height, ILI9341_WHITE);
-      display.drawLine(x1-tick_lean+1, y1+tick_height, x1+tick_lean+1, y1-tick_height, ILI9341_WHITE); 
-      display.drawLine(x0+1, y0, x1+1, y1, ILI9341_WHITE);
-      px0 = x0;
-      py0 = y0;
-      px1 = x1;
-      py1 = y1;    
-      pycp = ycp;
-      ptick_lean = tick_lean;
-    
-      return micros();   
-    }
-    #endif
-    //=================================================================== 
-    #if  (defined ILI9341_Display)
-    void draw_home_arrow(int16_t x, int16_t y, int16_t arrow_angle, int16_t width, int16_t height) {
-      int16_t x0, y0, x1, y1, x2, y2, x3, y3;
-      static int16_t px0, py0, px1, py1, px2, py2, px3, py3;
-      int16_t opp, adj, hyp, opp90, adj90, hyp90;
-      const int16_t al = 40;  // arrow length  
-      static bool ft = true;
-      const float AngleToRad = PI / 180;
-      
-      int16_t home_angle = 0 - arrow_angle - 25;    // direction of rotation
-    
-      home_angle = (home_angle < 0) ? home_angle + 360 : home_angle;
-      home_angle = (home_angle > 360) ? home_angle - 360 : home_angle;   
-      //Log.printf("home_angle=%d \n", pt_home_angle);         
-      hyp = al / 2;        
-      opp = hyp * sin(home_angle * AngleToRad);
-      adj = hyp * cos(home_angle * AngleToRad);
-      
-      hyp90 = al / 5; 
-      opp90 = hyp90 * sin((home_angle + 90) * AngleToRad);
-      adj90 = hyp90 * cos((home_angle + 90) * AngleToRad); 
-      
-      x0 = x + adj; 
-      y0 = y - opp; 
-      
-      x1 = x - adj;
-      y1 = y + opp;
- 
-      x2 = x1 + adj90;
-      y2 = y1 - opp90;
-
-      x3 = x1 - adj90;
-      y3 = y1 + opp90;
-           
-      if (!ft) {
-       //display.drawTriangle(px0, py0, px2, py2, px3, py3, ILI9341_BLUE);   
-       display.fillTriangle(px0, py0, px2, py2, px3, py3, ILI9341_BLUE);                 
-      }
-      ft = false;     
-
-      //display.drawTriangle(x0, y0, x2, y2, x3, y3, ILI9341_RED); 
-      display.fillTriangle(x0, y0, x2, y2, x3, y3, ILI9341_RED);         
-             
-      px0 = x0; py0 = y0; px1 = x1; py1 = y1; px2 = x2; py2 = y2; px3 = x3; py3 = y3;
-
-    }
-    #endif
-    //===================================================================     
-
+//=================================================================================================  
 String TimeString (unsigned long epoch){
  uint8_t hh = (epoch  % 86400L) / 3600;   // remove the days (86400 secs per day) and div the remainer to get hrs
  uint8_t mm = (epoch  % 3600) / 60;       // calculate the minutes (3600 ms per minute)
@@ -804,21 +715,21 @@ if (cur.lon<(hom.lon-1.0) || cur.lon>(hom.lon+1.0)) { // Also works for negative
   Log.println("  Packet ignored");  
   return false;  
   }
-if (cur.alt<(hom.alt-300) || cur.alt>(hom.alt+2000)) {
+if (cur.alt<(hom.alt-300) || cur.alt>(hom.alt+1000)) {
   Log.print(" Bad alt! cur.alt=");
   Log.print(cur.alt,0);  
   Log.print(" hom.alt=");Log.print(hom.alt,0);
   Log.println("  Packet ignored");    
   return false;  
   }
-if ((cur.alt-hom.alt)<-300 || (cur.alt-hom.alt)>2000) {
+if ((cur.alt-hom.alt)<-300 || (cur.alt-hom.alt)>1000) {
   Log.print(" Bad alt! cur.alt=");
   Log.print(cur.alt,0);  
   Log.print(" hom.alt=");Log.print(hom.alt,0);
   Log.println("  Packet ignored");    
   return false;  
   }
-if (headingSource == 2) { //  Heading source from flight controller
+if (Heading_Source == 2) { //  Heading source from flight controller
   if (cur.hdg<0 || cur.hdg>360) {
     Log.print(" Bad hdg! cur.hdg=");
     Log.print(cur.hdg,0);  
@@ -849,22 +760,15 @@ return true;
      }
 
      if ((millis() - gpsGood_millis) > (timeout_secs * 1000) ) {
-      gpsGood = false;        // If no inGPS packet  
+      gpsGood = false;        // If no GPS packet  
     }    
-    
-    #if (Heading_Source == 4)
-      if ((millis() - boxgpsGood_millis) > (timeout_secs * 1000) ) {
-        boxgpsGood = false;        // If no box GPS packet  
-      }  
-    #endif
-     
-    ReportOnlineStatus();
-    ServiceTheStatusLed();  
-    
+   
+     ReportOnlineStatus();
     }   
     //===================================================================     
     
     void ReportOnlineStatus() {
+  
        if (frGood != frPrev) {  // report on change of status
          frPrev = frGood;
          if (frGood) {
@@ -876,7 +780,7 @@ return true;
          }
        }
        
-       if (pwmGood != pwmPrev) {  
+       if (pwmGood != pwmPrev) {  // report on change of status
          pwmPrev = pwmGood;
          if (pwmGood) {
            Log.println("RC PWM good");
@@ -886,29 +790,16 @@ return true;
           LogScreenPrintln("RC PWM timeout");         
          }
        }
-       if (gpsGood != gpsPrev) {  
+       if (gpsGood != gpsPrev) {  // report on change of status
          gpsPrev = gpsGood;
          if (gpsGood) {
-           Log.println("Good flight GPS lock");
-           LogScreenPrintln("Flight GPS good");         
+           Log.println("GPS good");
+           LogScreenPrintln("GPS good");         
          } else {
-          Log.println("Flight GPS timeout");
-          LogScreenPrintln("Flight GPS timeout");         
+          Log.println("GPS timeout");
+          LogScreenPrintln("GPS timeout");         
          }
        }
-       
-       #if (Heading_Source == 4)
-         if (boxgpsGood != boxgpsPrev) {  
-           boxgpsPrev = boxgpsGood;
-           if (boxgpsGood) {
-             Log.println("Good box GPS lock");
-             LogScreenPrintln("Box GPS good");         
-           } else {
-            Log.println("No box GPS lock!");
-            LogScreenPrintln("No box GPS lock!");         
-           }
-         }     
-       #endif    
        
     } 
 
@@ -917,9 +808,12 @@ uint32_t epochNow() {
 return (epochSync + (millis() - millisSync) / 1E3);
 }
 //=================================================================================================  
-void LostPowerCheckAndRestore(uint32_t epoch_now) { // only ever called if active time supporting protocol 
-  if ((!timeGood) || (epoch_now == 0)) return;
+void LostPowerCheckAndRestore(uint32_t epochSyn) {  // this function only ever called by a time enabled protocol
+  if ((!timeGood) || (epochSyn == 0)) return;
   
+  epochSync = epochSyn;
+  millisSync = millis();
+ 
   if (lostPowerCheckDone) return;
 
   #if defined Debug_All || defined Debug_Time || defined Debug_Home
@@ -928,16 +822,11 @@ void LostPowerCheckAndRestore(uint32_t epoch_now) { // only ever called if activ
     Log.print("  epochNow="); Log.println(TimeString(epochNow()));
   #endif 
 
-  #if (headingSource != 4)  // If NOT (Tracker GPS + Compass). Home could move constantly.
-    uint16_t decay_secs = epoch_now -  epochHome();  
-    if (decay_secs <= home_decay_secs) {  //  restore home if restart within decay seconds
-      RestoreHomeFromFlash();
-      Log.printf("Home data restored from NVM, decay %d secs is within limit of %d secs\n", decay_secs, home_decay_secs); 
-      LogScreenPrintln("Home data restored");
-      LogScreenPrintln("from Flash. Go Fly!");  
-      homeInitialised=1;           
-    }
-  #endif
+  
+  if ((epochNow() -  epochHome()) < 300) {  //  within 5 minutes
+    RestoreHomeFromFlash();
+    homeInitialised=1;           
+  }
   
   lostPowerCheckDone = true;
 }
@@ -995,6 +884,10 @@ void RestoreHomeFromFlash() {
   hom.lat = EEPROMReadlong(2) / 1E6;
   hom.alt = EEPROMReadlong(3) / 10;
   hom.hdg = EEPROMReadlong(4) / 10;
+  
+  Log.println("Home data restored from Flash"); 
+  LogScreenPrintln("Home data restored");
+  LogScreenPrintln("from Flash. Go Fly!");
   
   #if defined Debug_All || defined Debug_EEPROM || defined Debug_Time || defined Debug_Home
     Log.print("  home.lon="); Log.print(hom.lon, 6);
@@ -1222,16 +1115,4 @@ uint32_t Get_Current_Average1(uint16_t cA)  {   // in 100*milliamperes (1 = 100 
       return (num ^ 0xffffffff) + 1;
     else
       return num;  
-  } 
-//=================================================================================================  
-float RadToDeg (float _Rad) {
-  return _Rad * 180 / PI;  
-} 
-//=================================================================================================  
-//Add two bearing in degrees and correct for 360 boundary
-int16_t Add360(int16_t arg1, int16_t arg2) {  
-  int16_t ret = arg1 + arg2;
-  if (ret < 0) ret += 360;
-  if (ret > 359) ret -= 360;
-  return ret; 
-}  
+  }  

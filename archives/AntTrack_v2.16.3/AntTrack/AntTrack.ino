@@ -28,7 +28,7 @@
    *****************************************************************************
    Boards supported:
    
-   ESP32 boards - variety of variants
+   ESP32 Dev Board
    STM32 Blue Pill 
    STM32 Black Pill STM32F104
    Maple Mini
@@ -38,17 +38,17 @@
     Mavlink 1
     Mavlink 2
     FrSky D legacy
-    FrSky X, S and F.Port
+    FrSky X S.Port
     FrSky Passthrough (through Mavlink)
     LTM
     NMEA GPS
-    UDP Mavlink and FrSky
+
     MSP remains outstanding.
     
    The code is written from scratch, but I've taken ideas from Jalves' OpenDIY-AT and others. 
    Information and ideas on other protocols was obtained from GhettoProxy by Guillaume S.
    
-   The application reads serial telemetry sent from a flight controller or Flight_GPS. It 
+   The application reads serial telemetry sent from a flight controller or GPS. It 
    calculates where an airbourne craft is in three-dimensional space, relative to the home 
    position. From this it calculates the azimuth and elevation of the craft, and then positions 
    azimuth and elevation PWM controlled servos to point a directional high-gain antenna for 
@@ -63,14 +63,14 @@
 
    Now, in order to establish the home position, push the Set_Home button. The LED goes on 
    solid and an appropriate message is displayed on the OLED display.(If your craft has no 
-   FC and compass, see headingSource discussion below);
+   FC and compass, see Heading_Source discussion below);
 
    For the tracker to position the servos relative to the compass direction of the craft,
    it needs to know the compass direction in degrees where the tracker antenna is pointing 
-   at rest. For convenience we call this the headingSource. Three possible heading sources 
+   at rest. For convenience we call this the Heading_Source. Three possible heading sources 
    are available:
 
-    1) Flight_GPS - use this if your craft has a GPS, but no FC or compass
+    1) GPS - use this if your craft has a GPS, but no FC or compass
  
     Position the tracker box such that the antenna faces the field straight ahead. Power up
     the craft and tracker, and wait for a good GPS lock. The tracker's LED will flash fast. 
@@ -86,22 +86,18 @@
     antenna, and press the Set_Home button. The tracker will use the heading of the craft 
     obtained from the craft's Flight Computer via telemetry.
        
-    3) Tracker's Own Compass - use this if your craft has no compass sensor.
+    3) Tracker's Own Compass - use this if your craft has a GPS, but no FC or compass
  
     Fasten a suitable magnetometer anywhere on the tracker box, facing the direction of the 
     antenna at rest.
 
-    4) Trackers Own GPS and Compass - use this if you want to track a moving vehicle from a second
-    moving vehicle. This could also be used by a tracker on a 'plane to always point an antenna at home,
-    or a second vehicle.
-
   Note that tracking (movement of the antenna) will occur only when the craft is more than 
   minDist = 4 metres from home because accuracy increases sharply thereafter.   
     
-  Before you build/compile the tracker firmware, be sure to modify the value of the 
-  headingSource constant according to your choice of heading source:
+  Before you build/compile the tracker firmware, be sure to modify the avalue of the 
+  Heading_Source constant according to your choice of heading source:
 
-  #define headingSource   2  // 1=Flight_GPS, 2=Flight_Computer, 3=Tracker_Compass  4=Tracker_GPS_And_Compass 
+  const uint8_t Heading_Source =  1;  // 1=GPS, 2=Flight Computer, 3=Tracker_Compass   
 
   If your servo pair is of the 180 degree type, be sure to comment out line that looks like
   this:    //#define Az_Servo_360 
@@ -110,7 +106,7 @@
   you when the craft enters that space.
 
   If your servo pair comprises a 360 degree azimuth servo and 90 degree elevation servo, please
-  un-comment the line that looks like this:    #define Az_Servo_360. 360 degree code contributed by macfly1202
+  un-comment the line that looks like this:    #define Az_Servo_360 - 360 degree code contributed by macfly1202
   
   A small double bi-quad antenna has excellent gain, and works well with a vertically polarised antenna
   on the craft. Other antennas can be added for diversity, and some improvement in link resilience has 
@@ -194,8 +190,7 @@
    typedef enum polarity_set { idle_low = 0, idle_high = 1, no_traffic = 2 } pol_t;    
     
     // Protocol determination
-    uint32_t inBaud = 0;    // Includes flight GPS
-    uint32_t gpsBaud = 0;   // Tracker attached GPS, not flight GPS
+    uint32_t baud = 0;
     uint8_t  protocol = 0;
 
 
@@ -220,10 +215,10 @@
     uint32_t millisFcHheartbeat = 0;
     uint32_t serGood_millis = 0;
     uint32_t packetloss_millis = 0;
-    uint32_t box_loc_millis = 0;
     
     bool      hbGood = false; 
     bool      mavGood = false;   
+    bool      cpsGood = false;
     bool      timeGood = false;
     bool      frGood = false;
     bool      frPrev = false; 
@@ -232,15 +227,12 @@
     bool      gpsGood = false; 
     bool      gpsPrev = false;    
     bool      serGood = false;            
-    bool      boxgpsGood = false; 
-    bool      boxgpsPrev = false; 
-    bool      boxmagGood = false;
-        
+
     uint32_t  frGood_millis = 0;
     uint32_t  mavGood_millis = 0;   
     uint32_t  pwmGood_millis = 0;       
     uint32_t  gpsGood_millis = 0;
-    uint32_t  boxgpsGood_millis = 0;
+
     uint32_t  goodFrames = 0;
     uint32_t  badFrames = 0;
 
@@ -253,7 +245,6 @@
     bool  homSaved = false;    
     bool  homeInitialised = false;
     bool  new_GPS_data = false;
-    bool  new_boxGPS_data = false;   
     bool  ftgetBaud = true;
     bool  lostPowerCheckDone = false;
     bool  timeEnabled = false;
@@ -287,9 +278,6 @@
       0,0,0,0};   // home location
 
     struct Location cur      = {
-      0,0,0,0};   // current location
-
-    struct Location boxGPS      = {             // tracker box
       0,0,0,0};   // current location
   
     struct Vector {
@@ -385,18 +373,19 @@ void setup() {
   #if ((defined ESP32) || (defined ESP8266)) && (defined Debug_SRAM)
     Log.printf("Free Heap just after startup = %d\n", ESP.getFreeHeap());
   #endif  
-// ======================== Setup I2C ==============================
-  #if (( defined displaySupport) && (defined SSD1306_Display) )   // SSD1306 display
-    Wire.begin(SDA, SCL);  
-  #elif ( (Heading_Source == 3) || (Heading_Source == 4) )        // Compass
-    Wire.begin(SDA, SCL);  
-  #endif
-    
 //=================================================================================================   
 //                                   S E T U P   D I S P L A Y
 //=================================================================================================
   #if (defined displaySupport) 
-    #if (defined ESP32)   
+
+    #if (defined ESP32)
+    
+      if (Tinfo != 99)  {   // enable info touch pin-pair
+        touchAttachInterrupt(digitalPinToInterrupt(Tinfo), gotButtonInfo, threshold); 
+       } else
+      if (Pinfo != 99)  {   // enable info digital pin
+        pinMode(Pinfo, INPUT_PULLUP);   
+      }  
        
       if ( (Tup != 99) && (Tdn != 99) ) {   // enable touch pin-pair
         touchAttachInterrupt(digitalPinToInterrupt(Tup), gotButtonUp, threshold);
@@ -422,8 +411,10 @@ void setup() {
       #define SCR_BACKGROUND TFT_BLACK
       
     #elif (defined SSD1306_Display)            // all  boards with SSD1306 OLED display (128 x 64)
- 
-      display.begin(SSD1306_SWITCHCAPVCC, display_i2c_addr);  
+      #if not defined TEENSY3X                 // Teensy uses default SCA and SCL in teensy "pins_arduino.h"
+         Wire.begin(SDA, SCL);
+      #endif   
+      display.begin(SSD1306_SWITCHCAPVCC, i2cAddr);  
       #define SCR_BACKGROUND BLACK   
       
     #elif (defined SSD1331_Display)            // T2 board with SSD1331 colour TFT display (96 x 64)
@@ -456,7 +447,7 @@ void setup() {
       Log.print("  SCR_H_CH:"); Log.print(SCR_H_CH);  
       Log.print("  SCR_W_CH:"); Log.println(SCR_W_CH);                    
     #else
-      Log.printf("%dx%d  TEXT_SIZE:%d   CHAR_W_PX:%d  CHAR_H_PX:%d   SCR_H_CH:%d   SCR_W_CH:%d \n", SCR_H_PX, SCR_W_PX, TEXT_SIZE, CHAR_W_PX, CHAR_H_PX, SCR_H_CH, SCR_W_CH);
+      Log.printf("%dx%d  TEXT_SIZE:%d   CHAR_W_PX:%d  CHAR_H_PX:%d   SCR_H_CH:   SCR_W_CH:%d \n", SCR_H_PX, SCR_W_PX, TEXT_SIZE, CHAR_W_PX, CHAR_H_PX, SCR_H_CH, SCR_W_CH);
     #endif  
     
     LogScreenPrintln("Starting .... ");
@@ -494,11 +485,7 @@ void setup() {
     #if (ESP32_Variant == 6)
       Log.println("LILYGO® TTGO T2 ESP32 OLED SD");
       LogScreenPrintln("TTGO T2 ESP32 SD");
-    #endif 
-    #if (ESP32_Variant == 7)
-      Log.println("Dev Module with ILI9341 2.8in COLOUR TFT SPI");
-      LogScreenPrintln("Dev module + TFT");
-    #endif      
+    #endif     
   #elif (defined ESP8266) 
     Log.print("ESP8266 / Variant is ");
     LogScreenPrintln("ESP8266 / Variant is");  
@@ -509,8 +496,8 @@ void setup() {
   #endif
   
   #if (Telemetry_In == 0)  // Serial
-    Log.println("Serial Telemetry In");
-    LogScreenPrintln("Serial Telem In");
+    Log.println("Mavlink Serial In");
+    LogScreenPrintln("Mavlink Serial In");
   #endif  
 
   #if (Telemetry_In == 1)  // BT
@@ -543,66 +530,48 @@ void setup() {
     LogScreenPrintln("QLRS Mavlink expected");
   #endif  
   
-  if ( (headingSource == 3) || ( headingSource == 4) ) {  // Tracker_Compass or (GPS + Compass)
+  if (Heading_Source == 3)  {// Tracker_Compass
 
-    #if defined HMC5883L  
-      Log.println("Compass type HMC5883L expected"); 
-      LogScreenPrintln("Compass:HMC5883L");    
-    #elif  defined QMC5883L
-      Log.println("Compass type QMC5883L expected"); 
-      LogScreenPrintln("Compass:QMC5883L");    
-    #endif        
-
-    boxmagGood = initialiseCompass();  // Also checks if we have a compass on the Tracker 
-
-   /*
-    #if defined Debug_All || defined Debug_boxCompass
+    cpsGood = Initialise_Compass();  // Check if we have a compass on the Tracker
+    
+    if (!(cpsGood)) {
+      LogScreenPrintln("No compass found!");
+      
+      #if defined Debug_Minimum || defined Debug_All || defined Debug_Compass  
+        Log.println("Heading_Source = Tracker's Own Compass, but no compass found! Aborting."); 
+      #endif  
+      while (1) delay (1000);  // Wait here forever
+    }
+   
+    #if defined Debug_All || defined Debug_Compass
       Log.println("Display tracker heading for 20 seconds");
       for (int i=1; i<=20;i++) {
-        getTrackerboxHeading();
+        GetMagHeading();
         delay(1000);
       }
     #endif  
-    */
-    
   }
     
   //TestServos();   // Uncomment this code to observe how well your servos reach their specified limits
                     // Fine tune MaxPWM and MinPWM in Servos module
 
-// ======================== Setup Serial ==============================
-  #if (Heading_Source == 4)  // Tracker box  GPS on Serial2
-
-    #if ( (defined ESP8266) || (defined ESP32) )
-      gpsBaud = getBaud(gps_rxPin);
-      Log.print("Tracker box GPS baud rate detected is ");  Log.print(gpsBaud); Log.println(" b/s"); 
-      String s_baud=String(gpsBaud);   // integer to string. "String" overloaded
-      LogScreenPrintln("Box GPS at "+ s_baud);
-     
-      delay(100);
-      gpsSerial.begin(gpsBaud, SERIAL_8N1, gps_rxPin, gps_txPin); 
-      delay(10);
-    #else
-      gpsSerial.begin(gpsBaud);
-    #endif
-    
-  #endif
+// ************************ Setup Serial ******************************
 
   #if (Telemetry_In == 0)    //  Serial
 
-      pol_t pol = (pol_t)getPolarity(in_rxPin);
+      pol_t pol = (pol_t)getPolarity(rxPin);
       bool ftp = true;
       static int8_t cdown = 30; 
       bool polGood = true;    
       while ( (pol == no_traffic) && (cdown) ){
         if (ftp) {
-          Log.printf("No telem on rx pin:%d. Retrying ", in_rxPin);
-          String s_in_rxPin=String(in_rxPin);   // integer to string
-          LogScreenPrintln("No telem on rxpin:"+ s_in_rxPin); 
+          Log.printf("No telem on rx pin:%d. Retrying ", rxPin);
+          String s_rxPin=String(rxPin);   // integer to string
+          LogScreenPrintln("No telem on rxpin:"+ s_rxPin); 
           ftp = false;
         }
         Log.print(cdown); Log.print(" ");
-        pol = (pol_t)getPolarity(in_rxPin);
+        pol = (pol_t)getPolarity(rxPin);
         delay(500);      
         if (cdown-- == 1 ) {
           Log.println();
@@ -616,30 +585,31 @@ void setup() {
     if (polGood) {    // expect 57600 for Mavlink and FrSky, 2400 for LTM, 9600 for MSP & GPS
       if (pol == idle_low) {
         rxInvert = true;
-        Log.printf("Serial port rx pin %d is IDLE_LOW, inverting rx polarity\n", in_rxPin);
+        Log.printf("Serial port rx pin %d is IDLE_LOW, inverting rx polarity\n", rxPin);
       } else {
         rxInvert = false;
-        Log.printf("Serial port rx pin %d is IDLE_HIGH, regular rx polarity retained\n", in_rxPin);        
+        Log.printf("Serial port rx pin %d is IDLE_HIGH, regular rx polarity retained\n", rxPin);        
       }     
-      inBaud = getBaud(in_rxPin);
-      Log.print("Serial input baud rate detected is ");  Log.print(inBaud); Log.println(" b/s"); 
-      String s_baud=String(inBaud);   // integer to string. "String" overloaded
+      baud = getBaud(rxPin);
+      Log.print("Baud rate detected is ");  Log.print(baud); Log.println(" b/s"); 
+      String s_baud=String(baud);   // integer to string. "String" overloaded
       LogScreenPrintln("Telem at "+ s_baud);
-      protocol = detectProtocol(inBaud);
+      protocol = detectProtocol(baud);
     //Log.printf("Protocol:%d\n", protocol);
       
     } else {
       pol = idle_high;
-      inBaud = 57600;
+      baud = 57600;
       protocol = 2;  
     }
     
+
     #if ( (defined ESP8266) || (defined ESP32) ) 
       delay(100);
-      inSerial.begin(inBaud, SERIAL_8N1, in_rxPin, in_txPin, rxInvert); 
+      inSerial.begin(baud, SERIAL_8N1, rxPin, txPin, rxInvert); 
       delay(10);
     #elif (defined TEENSY3X) 
-      inSerial.begin(frBaud); // Teensy 3.x    tx pin hard wired
+      frSerial.begin(frBaud); // Teensy 3.x    tx pin hard wired
        if (rxInvert) {          // For S.Port not F.Port
          UART0_C3 = 0x10;       // Invert Serial1 Tx levels
          UART0_S2 = 0x10;       // Invert Serial1 Rx levels;       
@@ -648,8 +618,9 @@ void setup() {
          UART0_C1 = 0xA0;        // Switch Serial1 to single wire (half-duplex) mode  
        #endif    
     #else
-      inSerial.begin(inBaud);
+      inSerial.begin(baud);
     #endif   
+
 
     switch(protocol) {
     
@@ -686,15 +657,15 @@ void setup() {
       case 8:    // GPS NMEA protocol found 
         LogScreenPrintln("NMEA protocol found"); 
         Log.println("NMEA protocol found"); 
-        Setup_inGPS(); 
-        if (headingSource == 2) {  // Flight Computer !! If we have found the NMEA protol then FC is unlikely
+        set_up_GPS(); 
+        if (Heading_Source == 2) {  // Flight Computer !! If we have found the NMEA protol then FC is unlikely
           LogScreenPrintln("Check heading source!");
           LogScreenPrintln("Aborting...");
           Log.println("Check heading source! Aborting...");
           while (1) delay (1000);  // Wait here forever
         }
         timeEnabled = true;   
-        break;          
+        break;     
       default:   // Unknown protocol 
         LogScreenPrintln("Unknown protocol!");
         LogScreenPrintln("Aborting....");        
@@ -792,18 +763,6 @@ void loop() {
     }  
    #endif
 
-      //===============================      Service Tracker Box Compass and GPS if they exist
-      #if (Heading_Source == 4) 
-
-        if ( (hbGood) && ((millis() - box_loc_millis) > 500) ) {  // 2 Hz
-          box_loc_millis = millis();
-          if(boxmagGood) {
-            hom.hdg = getTrackerboxHeading();    // hdg
-          }
-          getTrackerboxLocation();               // lat, lon alt
-        }
-
-      #endif
       //===============================       C h e c k   F o r   N e w   A P   C o n n e c t s
    
       #if (Telemetry_In == 2)    // WiFi
@@ -843,96 +802,55 @@ void loop() {
      
       //===============================
 
-      CheckForTimeouts();          // and service status LED
- 
-    //===============================  H A N D L E   H O M E   L O C A T I O N
-
-    //       D Y N A M I C   H O M E   L O C A T I O N
-     
-    #if (Heading_Source == 4)        // moving home location
-        if (hbGood && gpsGood && boxgpsGood && PacketGood() && new_GPS_data && new_boxGPS_data) {  //  every time there is new GPS data 
-          static bool first_dynamic_home = true;
-          new_boxGPS_data = false; 
-          if (boxmagGood) {
-            if (first_dynamic_home) {
-              first_dynamic_home = false;
-              Log.println("Dynamic tracking (moving home) started");  // moving home tracking
-              LogScreenPrintln("Dynamic tracker ok!");
-            }        
-            getAzEl(hom, cur);   
-            if (hc_vector.dist >= minDist) PositionServos(hc_vector.az, hc_vector.el, hom.hdg);  // Relative to home heading
-            new_GPS_data = false;        // cur. location
-            new_boxGPS_data = false;     // moving hom. location          
-          } else {
-            if (first_dynamic_home) {
-              first_dynamic_home = false;
-              Log.println("Dynamic tracking (moving home) failed. No good tracker box compass!");  
-              LogScreenPrintln("Dynamic trackr bad!");
-            }       
-          }
-
-       }
-
-    //      S T A T I C   H O M E   L O C A T I O N
+      CheckForTimeouts();
+   
+      //===============================  
     
-    #else   // end of tracker box gps moving home location, start of static home location
-
-      if (timeGood) LostPowerCheckAndRestore(epochNow());  // only if active timeEnabled protocol
-       
-      if ( ((timeEnabled) && (lostPowerCheckDone)) || (!timeEnabled)  ) {
-        if (gpsGood==1 && ft) {
-
-          if (homeInitialised==0) {
-            if (headingSource == 1)  { // GPS
-              if (homSaved) {
-                ft=false;
-                Log.println("Flight GPS lock good! Walk straight ahead 10m then push home button");  
-                LogScreenPrintln("GPS lock good. Carry");
-                LogScreenPrintln("craft fwrd 10m. Place");
-                LogScreenPrintln("and push home button");
-              }
-            }
-           else {  // FC & own tracker compass
-              ft=false;
-              Log.printf("GPS lock good! Push set-home button (pin:%d) anytime to start tracking\n", SetHomePin);  
-              LogScreenPrintln("GPS lock good! Push");
-              LogScreenPrintln("home button");
-            }
+      ServiceTheStatusLed();  
+    
+    //=============================== 
+    if ( ((timeEnabled) && (lostPowerCheckDone)) || (!timeEnabled)  ) {
+      if (gpsGood==1 && ft) {
+        ft=false;
+        if (homeInitialised==0) {
+          if (Heading_Source == 1)  { // GPS
+            Log.println("GPS lock good! Walk straight ahead 10m then push home button");  
+            LogScreenPrintln("GPS lock good. Carry ");
+            LogScreenPrintln("craft fwrd 10m. Place");
+            LogScreenPrintln(" and push home button");
+          }
+         else {  // FC & own tracker compass
+            Log.println("GPS lock good! Push set-home button anytime to start tracking.");  
+            LogScreenPrintln("GPS lock good! Push");
+            LogScreenPrintln("home button");
           }
         }
       }
+    }
 
-      if (homeInitialised) {
-        if (hbGood && gpsGood && PacketGood() && new_GPS_data) {  //  every time there is new GPS data 
-          getAzEl(hom, cur);
-          if (hc_vector.dist >= minDist) PositionServos(hc_vector.az, hc_vector.el, hom.hdg);  // Relative to home heading
-          new_GPS_data = false;
-        }
+    if (homeInitialised) {
+      if (hbGood && gpsGood && PacketGood() && new_GPS_data) {  //  every time there is new GPS data 
+        getAzEl(hom, cur);
+        if (hc_vector.dist >= minDist) PositionServos(hc_vector.az, hc_vector.el, hom.hdg);  // Relative to home heading
+        new_GPS_data = false;
       }
-      uint8_t SetHomeState = digitalRead(SetHomePin);            // Check if home button is pushed = 0
-      if (headingSource==1) {
-        if (SetHomeState == 0 && gpsGood && homSaved && !homeInitialised){     // SetHomePin is pulled up - normally high
-          FinalStoreHome();  
-        }     
-      } else
-      if (headingSource==2) {      
-        if (SetHomeState == 0 && gpsGood && !homeInitialised){     // SetHomePin is pulled up - normally high
-          FinalStoreHome();
-        }
-      }
-      if ((lostPowerCheckDone) && (timeGood) && (millis() - millisStore) > 60000) {  // every 60 seconds
-        StoreEpochPeriodic();
-        millisStore = millis();
-      }
-      
-    #endif   // end of static home
+    }
+    uint8_t SetHomeState = digitalRead(SetHomePin);            // Check if home button is pushed = 0
+    if (SetHomeState == 0 && gpsGood && !homeInitialised){     // pin 5 is pulled up - normally high
+      FinalStoreHome();
+    }
 
-} // end of main loop
+    if ((lostPowerCheckDone) && (timeGood) && (millis() - millisStore) > 60000) {  // every 60 seconds
+      StoreEpochPeriodic();
+      millisStore = millis();
+    }
+
+    }
 //***************************************************
 //***************************************************
 void FinalStoreHome() {
 
-   switch(headingSource) {
+   switch(Heading_Source) {
     
       case 1:    // // GPS 
         if (homSaved) {            // Use home established when 3D+ lock established, homSaved = 1 
@@ -951,9 +869,8 @@ void FinalStoreHome() {
           a=atan2(sin(lo2-lo1)*cos(la2), cos(la1)*sin(la2)-sin(la1)*cos(la2)*cos(lo2-lo1));
           hom.hdg=a*180/PI;   // Radians to degrees
           if (hom.hdg<0) hom.hdg=360+hom.hdg;
-          Log.print("Heading calculated = "); Log.print(hom.hdg, 1);
-          LogScreenPrintln("Heading calculated");      
-          Log.println(" Tracking now active!");
+
+          LogScreenPrintln("Heading calculated");
           LogScreenPrintln("Tracking now active!");
         
           homeInitialised = true;
@@ -974,20 +891,14 @@ void FinalStoreHome() {
         hom.lat = cur.lat;
         hom.lon = cur.lon;
         hom.alt = cur.alt;
-        hom.hdg = getTrackerboxHeading(); // From own compass
+        hom.hdg = GetMagHeading(); // From own compass
            
         homeInitialised = true;
         DisplayHome();                  
         break;
-      case 4:    // Tracker's Own GPS/Compass     
-        Log.println("Tracker's Own GPS/Compass. Should never get here because home is dynamic!");
-        Log.println("Aborting. Check logic");       
-        LogScreenPrintln("Aborting");
-        while(1) delay(1000);  // wait here forever           
-        break;
+
       default:   // Unknown protocol 
-        Log.println("No headingSource!");
-        LogScreenPrintln("No headingSource!");
+        LogScreenPrintln("No Heading_Source!");
         LogScreenPrintln("Aborting");
         while(1) delay(1000);  // wait here forever                     
     }
@@ -995,7 +906,9 @@ void FinalStoreHome() {
  }
 //***************************************************
 void AutoStoreHome() {
-
+  #ifdef Debug_Status
+    Log.println("homSaved=true");  
+  #endif
   hom.lat = cur.lat;
   hom.lon = cur.lon;
   hom.alt = cur.alt;
@@ -1007,10 +920,10 @@ void AutoStoreHome() {
   LogScreenPrintln("Home loctn auto-stord"); 
 
   #if defined Debug_All || defined Debug_Status
-    Log.print("Static home location AUTO set to ");       
-    Log.print("Lat = ");  Log.print(hom.lat, 7);
-    Log.print(" Lon = "); Log.print(hom.lon, 7 );        
-    Log.print(" Alt = "); Log.println(hom.alt, 1);                 
+    Log.print("Home auto stored: ");       
+    Log.print("hom.lat=");  Log.print(hom.lat, 7);
+    Log.print(" hom.lon="); Log.print(hom.lon, 7 );        
+    Log.print(" hom.alt="); Log.println(hom.alt, 1);                 
  #endif 
    
 } 
@@ -1019,34 +932,29 @@ void DisplayHome() {
   LogScreenPrintln("Home location set");
   LogScreenPrintln("Tracking now active!");
   #if defined Debug_Minimum || defined Debug_All || defined Debug_AzEl
-    Log.print("Static home location set to Lat = "); Log.print(hom.lat,7);
+ //   Log.print("******************************************");
+    Log.print("Home location set to Lat = "); Log.print(hom.lat,7);
     Log.print(" Lon = "); Log.print(hom.lon,7);
     Log.print(" Alt = "); Log.print(hom.alt,0); 
-    Log.print(" Hdg = "); Log.println(hom.hdg,0); 
-    LogScreenPrintln("Home set success!");    
+    Log.print(" hom.hdg = "); Log.println(hom.hdg,0); 
  //   DisplayHeadingSource();
   #endif 
 }
 //***************************************************
 void DisplayHeadingSource() {
-#if defined Debug_Minimum || defined Debug_All || defined Debug_boxCompass  
-  if (headingSource == 1)  {
-      Log.println("headingSource = Craft's GPS"); 
+#if defined Debug_Minimum || defined Debug_All || defined Debug_Compass  
+  if (Heading_Source == 1)  {
+      Log.println("Heading_Source = Craft's GPS"); 
       LogScreenPrintln("HdgSrce=Craft's GPS");
   }
-  else if  (headingSource == 2) { 
-      Log.println("Heading source = Flight Computer");
-      LogScreenPrintln("Headg source = FC");
+  else if  (Heading_Source == 2) { 
+      Log.println("Heading_Source = Flight Computer");
+      LogScreenPrintln("Heading_Source = FC");
   }
-  else if (headingSource == 3)   {
-      Log.println("headingSource = Tracker's Own Compass"); 
-      LogScreenPrintln("HdgSrce=Trackr Cmpss");
+  else if (Heading_Source == 3)  {
+      Log.println("Heading_Source = Tracker's Own Compass"); 
+      LogScreenPrintln("HdgSrce=Tracker GPS");
   }
-  else if (headingSource == 4)  {
-      Log.println("Dynamic heading source = Tracker's Own Compass"); 
-      LogScreenPrintln("Dynamic HeadingSrce");
-  }  
-
 #endif  
 }
 
@@ -1074,16 +982,12 @@ void ServiceTheStatusLed() {
     Log.print(hbGood);
     Log.print("   gpsGood = ");
     Log.print(gpsGood);
-    Log.print("   boxgpsGood = ");
-    Log.print(boxgpsGood);   
-    Log.print("   boxmagGood = ");
-    Log.print(boxmagGood);       
     Log.print("   homeInitialised = ");
     Log.println(homeInitialised);
  #endif
 
   if (gpsGood) {
-    if ( (homeInitialised) || ( (boxgpsGood) && boxmagGood) )
+    if (homeInitialised) 
       ledState = HIGH;
     else 
       BlinkLed(500);

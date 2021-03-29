@@ -77,7 +77,7 @@ float getTrackerboxHeading() {
   if (getQMC5883L(&x, &y, &z) ) {
     float val = 180/M_PI * atan2((float)(x-offx),(float)(y-offy));
     val += DECLINATION;  // Add magnetic declination
-    fHeading = wrap360(val);
+    fHeading = Wrap_360(val);
   
     #if defined Debug_All || defined Debug_boxCompass
       // Display the results (magnetic vector values are in micro-Tesla (uT)) */
@@ -94,10 +94,10 @@ float getTrackerboxHeading() {
 }
 //====================================================
 
-float wrap360(float ang) {
-  if (ang < 0) ang += 360;
-  if (ang > 359) ang -= 360;
-  return ang;
+float Wrap_360(float arg) {
+  if (arg < 0) arg += 360;
+  if (arg > 359) arg -= 360;
+  return arg;
 }
 #if  defined QMC5883L
   //====================================================

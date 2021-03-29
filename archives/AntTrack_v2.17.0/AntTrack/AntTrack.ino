@@ -566,11 +566,9 @@ void setup() {
     */
     
   }
-  
-  #if defined Debug_Servos  
-    TestServos();   // Uncomment this code to observe how well your servos reach their specified limits
+    
+  //TestServos();   // Uncomment this code to observe how well your servos reach their specified limits
                     // Fine tune MaxPWM and MinPWM in Servos module
-  #endif                  
 
 // ======================== Setup Serial ==============================
   #if (Heading_Source == 4)  // Tracker box  GPS on Serial2
@@ -862,7 +860,7 @@ void loop() {
               LogScreenPrintln("Dynamic tracker ok!");
             }        
             getAzEl(hom, cur);   
-            if (hc_vector.dist >= minDist) PositionServos((uint16_t)hc_vector.az, (uint16_t)hc_vector.el, (uint16_t)hom.hdg);  // Relative to home heading
+            if (hc_vector.dist >= minDist) PositionServos(hc_vector.az, hc_vector.el, hom.hdg);  // Relative to home heading
             new_GPS_data = false;        // cur. location
             new_boxGPS_data = false;     // moving hom. location          
           } else {
@@ -907,7 +905,7 @@ void loop() {
       if (homeInitialised) {
         if (hbGood && gpsGood && PacketGood() && new_GPS_data) {  //  every time there is new GPS data 
           getAzEl(hom, cur);
-          if (hc_vector.dist >= minDist) PositionServos((uint16_t)hc_vector.az, (uint16_t)hc_vector.el, (uint16_t)hom.hdg);  // Relative to home heading
+          if (hc_vector.dist >= minDist) PositionServos(hc_vector.az, hc_vector.el, hom.hdg);  // Relative to home heading
           new_GPS_data = false;
         }
       }
@@ -1052,7 +1050,23 @@ void DisplayHeadingSource() {
 #endif  
 }
 
-//=====================================================
+//***************************************************
+void TestServos() {
+PositionServos(90, 0, 90); 
+  for (int i=1; i<=360; i++) {
+    delay(60);
+    PositionServos(i, 30, 90);   
+    }
+  for (int i=1; i<=170; i++) {
+    delay(60);
+    PositionServos(90, i, 90);   
+    }
+   PositionServos(90, 0, 90);   
+   }
+
+
+
+//***************************************************
 
 void ServiceTheStatusLed() {
   #ifdef Debug_LEDs

@@ -332,14 +332,11 @@ const uint32_t su_timeout = 5000; // uS !  Default timeout 1000mS!
     pol_t getPolarity(uint8_t pin) {
       const uint32_t su_timeout = 5000; // uS !  Default timeout 1000mS!
       uint32_t pw_hi = 0;
-      uint32_t pw_lo = 0; 
-        
-      //while(digitalRead(pin) == 0){ };
-       
+      uint32_t pw_lo = 0;   
       for (int i = 0; i < 20; i++) {
         pw_hi += pulseIn(pin,HIGH, su_timeout);
         pw_lo += pulseIn(pin,LOW, su_timeout); 
-        delayMicroseconds(10);
+        delayMicroseconds(20);
       }  
       //Log.printf("pw_hi:%d  pw_lo:%d\n", pw_hi, pw_lo);  
       if (pw_hi > pw_lo) {

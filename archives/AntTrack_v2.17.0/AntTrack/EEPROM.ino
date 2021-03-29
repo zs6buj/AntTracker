@@ -1,7 +1,7 @@
 
 //********************************** E S P 3 2 *********************************
 
-#if (defined ESP32) || (defined ESP8266)
+#if (Target_Board == 3) 
 
 #include <EEPROM.h>
 

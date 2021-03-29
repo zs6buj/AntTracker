@@ -1,71 +1,63 @@
-
-void  PositionServos(float Az, float El, float hmHdg) {
-
-  // Note my 180 degree servos have a PWM range of 700 through 2300 microseconds 
-  // Your's may differ 
-  // Uncomment TestServos() in setup() code to observe how well your servos reach their limits
-
-#ifdef Az_Servo_360           // Set the limits of the servos here
-  int16_t llAz = 0;           // Az lower limit in degrees
-  int16_t ulAz = 360;         // Az upper limit in degrees
-  int16_t llEl = 0;           // El lower limit in degrees
-  int16_t ulEl = 90;          // El upper limit in degrees
-  int16_t MinAzPWM = 650;     // Self explanatory
-  int16_t MaxAzPWM = 2400;
-  int16_t MinElPWM = 1125;
-  int16_t MaxElPWM = 1875;
+#if defined Az_Servo_360       // Set the degree range of the servos here
+  uint16_t minAz = 0;           // Az lower limit in degrees
+  uint16_t maxAz = 359;         // Az upper limit in degrees
+  uint16_t minEl = 0;           // El lower limit in degrees
+  uint16_t maxEl = 90;          // El upper limit in degrees
 #else
-  int16_t llAz = 0;     
-  int16_t ulAz = 180;    
-  int16_t llEl = 0;
-  int16_t ulEl = 180;
-  int16_t MaxAzPWM = 2400;
-  int16_t MinAzPWM = 600;
-  int16_t MaxElPWM = 2400;
-  int16_t MinElPWM = 600;
+  uint16_t minAz = 0;     
+  uint16_t maxAz = 180;    
+  uint16_t minEl = 0;
+  uint16_t maxEl = 90;
 #endif
+
+void  PositionServos(uint16_t worldAz, uint16_t ourEl, uint16_t boxHdg) {
+
+  //  Note 1: My 180 servos have a PWM range of 700 through 2300 microseconds 
+  //  Your's may differ 
+  //  Note 2: Preferably adjust the limits of movement of your servos with degree limits above, not here
+  
+  uint16_t maxAzPWM = 2400;  // Set the full PWM range of the servos here
+  uint16_t minAzPWM = 600;
+  uint16_t maxElPWM = 2400;
+  uint16_t minElPWM = 600;
+
+  if (worldAz == 360) worldAz = 0;   // our servo azimuth working range is 0 deg through 359 deg
+
   #if defined Debug_All || defined Debug_Servos
-  Log.print("Az = " );
-  Log.print(Az);
-  Log.print("\t El = ");
-  Log.print(El);
-  Log.print("\t hmHdg = " );
-  Log.println(hmHdg);
-#endif
-  int16_t pntAz = pointAz(Az, hmHdg);  // Remap Azimuth into a 180 degree window with home-heading centre, negative behind us
-
-  #ifndef Az_Servo_360            // Note if NOT. Do this for 180, not for 360 azimuth servo
-  if (pntAz<0) {        // Pointing direction is negative, so it needs to point behind us,
-    pntAz = 0 - pntAz;   // so flip the frame of reference over and mirror it (neg to pos)
-    El = 180 - El;        // and make the el servo reach over and behind
-  }
+    Log.print("worldAz = " );
+    Log.print(worldAz);
+    Log.print("\t ourEl = ");
+    Log.print(ourEl);
+    Log.print("\t boxHdg = " );
+    Log.println(boxHdg);
   #endif 
-   
-  // If the craft moves out of this restricted field of reference, servos should wait at the most recent in-field position
-  // This code is not neccessary with two 180 degree servos covering an entire hemisphere
+  const int16_t antOffset = 90;                     // degrees, antenna offset to box
+  // Remap tracker box azimuth to world compass azimuth
+  int16_t ourAz = worldAz - boxHdg - antOffset;    // here we compensate for offset of the box to worldview, and the 
+  ourAz = wrap360(ourAz);
 
-  if ((pntAz>=llAz) && (pntAz<=ulAz) && (El>=llEl) && (El<=ulEl)) {   // Our restricted FOV
-    LastGoodpntAz = pntAz;
-    LastGoodEl = El;
-  }
+  #if not defined Az_Servo_360                 // If 180 deg az servo
+    if ( (ourAz > 180) && (ourAz <= 360) ) {  // Pointing direction is behind us,
+       //Log.printf("before ourAz:%d ourEl:%d \n", ourAz, ourEl);
+      ourAz -= 180;                    // so flip the frame of reference over and mirror it 
+      ourEl = 180 - ourEl;                        // and make the el servo reach over and behind
+      //Log.printf("after ourAz:%d ourEl:%d \n", ourAz, ourEl);
+    }
+  #endif 
 
-  azPWM = map(LastGoodpntAz, ulAz, llAz, MinAzPWM, MaxAzPWM);  // Map the az / el to the servo PWMs
-  elPWM = map(LastGoodEl, ulEl, llEl, MinElPWM, MaxElPWM);     // Servos happen to be mounted such that action is reversed
+  azPWM = map(ourAz, minAz, maxAz, maxAzPWM, minAzPWM);     // Map the az / el to the servo PWMs
+  elPWM = map(ourEl, minEl, maxEl, maxElPWM, minElPWM);     // my servos happen to be mounted such that action is reversed
   
   azServo.writeMicroseconds(azPWM);
   elServo.writeMicroseconds(elPWM);
   
   #if defined Debug_All || defined Debug_Servos
-  Log.print("pntAz = " );
-  Log.print(pntAz);
-  Log.print(" El = ");
-  Log.print(El);
-  Log.print(" LastGoodpntAz = " );
-  Log.print(LastGoodpntAz);
-  Log.print(" LastGoodEl = ");
-  Log.print(LastGoodEl);
-  Log.print(" hmHdg = " );
-  Log.print(hmHdg);
+  Log.print("ourAz = " );
+  Log.print(ourAz);
+  Log.print(" ourEl = ");
+  Log.print(ourEl);
+  Log.print(" boxHdg = " );
+  Log.print(boxHdg);
   Log.print(" azPWM = " );
   Log.print(azPWM);
   Log.print(" elPWM = ");
@@ -73,45 +65,19 @@ void  PositionServos(float Az, float El, float hmHdg) {
   #endif
   
 }
- //*************************************************** 
-  int16_t pointAz(int16_t Azin, int16_t rhmHdg)  {
-  // Remap the craft's absolute Az from the home position to the 180 degree azimuth aperture facing us, and behind us
-  // 0 degrees on the left and 180 on the right, same but mirrored and negative behind us 180 on the right 0 on the left.
-  // Home (antenna) heading is at the centre (90 deg) of the 180 degree forward azimuth aperture
-  // pointAz is the heading to the craft from the home position, and thus where to point the antenna, 
-  //  RELATIVE to our frame of reference.
-  
-  int16_t pntAz= Azin;
 
-  #if defined Debug_All || defined Debug_Servos
-//  Log.print("pointAz = ");
-//  Log.print(pntAz);
-//  Log.print(" rhmHdg = ");
-//  Log.println(rhmHdg);
-  #endif
+//=====================================================
+void TestServos() {
 
-  pntAz = pntAz - rhmHdg + 90;    // Make heading relative to 90 degrees in front of us
-
-  #ifdef Az_Servo_360     // conditional patch by mric3412
-    if (pntAz < 0)  pntAz = 90 - pntAz;
-  #endif
-  
-  #ifndef Az_Servo_360            // Note if not. Do this for 180, not for 360 azimuth servo
-    if (pntAz < 0)                // Patch by mric3412 for 360 servos
-    {
-      if (rhmHdg <= 90) pntAz = 90 - pntAz;
-      if (rhmHdg > 90 and rhmHdg <= 180) pntAz = - 180 - pntAz;
-      if (rhmHdg > 180 and rhmHdg <= 270) pntAz = pntAz - 180;
-      if (rhmHdg > 270) pntAz = 360 + pntAz;
+  PositionServos(90, 0, 90); 
+  for (int i=minAz; i<=maxAz; i+=2) {  // 360 == 0 again
+    delay(60);
+    PositionServos(i, 30, 90);   
     }
-    if ((pntAz>180) && (pntAz<=360)) pntAz=180-pntAz;  // Mirror the hemisphere behind us, and make it negative
-    if ((pntAz<-180) && (pntAz>=-360)) pntAz=-360-pntAz;
-  #endif  
-    
-  if (pntAz>360) pntAz=pntAz-360;   // All the way round to positive territory again
-  if (pntAz<-360) pntAz=pntAz+360;  // patch by mric3412
-
-  
-  return pntAz;
+  for (int i=minEl; i<=maxEl; i+=2) {
+    delay(60);
+    PositionServos(90, i, 90);   
+    }
+   PositionServos(90, 0, 90);   
+   
 }
-//***************************************************

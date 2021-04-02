@@ -136,7 +136,12 @@
       }
       uint16_t lth = strlen(S.c_str());           // store the new line a char at a time
       if (lth > max_col-1) { 
-        Log.printf("Display width of %d exceeded for |%s|\n", SCR_W_CH, S.c_str());  // SCR_W_CH = max_col-1  
+        #if defined STM32F103C
+            Log.print("Display width of "); Log.print(SCR_W_CH);
+            Log.print(" exceeded for |"); Log.print(S); Log.println("|");  
+          #else
+            Log.printf("Display width of %d exceeded for |%s|\n", SCR_W_CH, S.c_str());  // SCR_W_CH = max_col-1
+          #endif            
         lth = max_col-1;  // prevent array overflow
       }
 
@@ -186,7 +191,12 @@
        
       uint8_t lth = strlen(S.c_str());          // store the line a char at a time
       if (lth > SCR_W_CH) {
-        Log.printf("Display width of %d exceeded for |%s|\n", SCR_W_CH, S.c_str());  // SCR_W_CH = max_col-1
+        #if defined STM32F103C
+          Log.print("Display width of "); Log.print(SCR_W_CH);
+          Log.print(" exceeded for |"); Log.print(S); Log.println("|");  
+        #else
+          Log.printf("Display width of %d exceeded for |%s|\n", SCR_W_CH, S.c_str());  // SCR_W_CH = max_col-1
+        #endif   
         lth = max_col-1;  // prevent array overflow
       }  
 
@@ -233,33 +243,33 @@
           xx = 0;
           yy = 0 ;          
           display.setCursor(xx, yy);  
-          snprintf(myline, snp_max, "Sats:%d", fr_numsats); 
+          snprintf(snprintf_buf, snp_max, "Sats:%d", fr_numsats); 
           display.fillRect(xx +(4*CHAR_W_PX), yy, 2 * CHAR_W_PX, CHAR_H_PX, ILI9341_BLUE); // clear the previous line               
-          display.println(myline);  
+          display.println(snprintf_buf);  
 
           // heading (yaw)
           xx = 9 * CHAR_W_PX;
           yy = 0 ;          
           display.setCursor(xx, yy);  
-          snprintf(myline, snp_max, "Hdg:%.0f%", fr_yaw / 10);
+          snprintf(snprintf_buf, snp_max, "Hdg:%.0f%", fr_yaw / 10);
           display.fillRect(xx+(4*CHAR_W_PX), yy, 4 * CHAR_W_PX, CHAR_H_PX, ILI9341_BLUE); // clear the previous line                                
-          display.println(myline);
+          display.println(snprintf_buf);
 
           // Radio RSSI
           xx = 17 * CHAR_W_PX;
           yy = 0 ;          
           display.setCursor(xx, yy);  
-          snprintf(myline, snp_max, "RSSI:%2d%%", ap_rssi); 
+          snprintf(snprintf_buf, snp_max, "RSSI:%2d%%", ap_rssi); 
           display.fillRect(xx+(5*CHAR_W_PX), yy, 4 * CHAR_W_PX, CHAR_H_PX, ILI9341_BLUE); // clear the previous line               
-          display.println(myline);
+          display.println(snprintf_buf);
               
           // distance to home
           xx = 0;
           yy = 13.5 * CHAR_H_PX;        
           display.setCursor(xx, yy); 
-          snprintf(myline, snp_max, "Home:%d", hc_vector.dist);    // m 
+          snprintf(snprintf_buf, snp_max, "Home:%d", hc_vector.dist);    // m 
           display.fillRect(xx+(5*CHAR_W_PX), yy, (4*CHAR_W_PX), CHAR_H_PX, ILI9341_BLUE); // clear the previous line   
-          display.println(myline); 
+          display.println(snprintf_buf); 
 
           // arrow to home
           xx = 14 * CHAR_W_PX;
@@ -271,48 +281,48 @@
           xx = 18 * CHAR_W_PX;
           yy = 14 * CHAR_W_PX;        
           display.setCursor(xx, yy); 
-          snprintf(myline, snp_max, "Alt:%d", cur.alt);    // mm => m 
+          snprintf(snprintf_buf, snp_max, "Alt:%d", cur.alt);    // mm => m 
           display.fillRect(xx+(4*CHAR_W_PX), yy, (4*CHAR_W_PX), CHAR_H_PX, ILI9341_BLUE); // clear the previous line   
-          display.println(myline); 
+          display.println(snprintf_buf); 
 
           // voltage
           xx = 0;
           yy = 16 * CHAR_W_PX;        
           display.setCursor(xx, yy); 
-          snprintf(myline, snp_max, "V:%.1fV", fr_bat1_volts  * 0.1F);     
+          snprintf(snprintf_buf, snp_max, "V:%.1fV", fr_bat1_volts  * 0.1F);     
           display.fillRect(xx+(2*CHAR_W_PX), yy, (6*CHAR_W_PX), CHAR_H_PX, ILI9341_BLUE); // clear the previous line   
-          display.println(myline); 
+          display.println(snprintf_buf); 
           
           // current
           xx = 9 * CHAR_W_PX;
           yy = 16 * CHAR_W_PX;        
           display.setCursor(xx, yy); 
-          snprintf(myline, snp_max, "A:%.0f", fr_bat1_amps * 0.1F);     
+          snprintf(snprintf_buf, snp_max, "A:%.0f", fr_bat1_amps * 0.1F);     
           display.fillRect(xx+(2*CHAR_W_PX), yy, (6*CHAR_W_PX), CHAR_H_PX, ILI9341_BLUE); // clear the previous line   
-          display.println(myline); 
+          display.println(snprintf_buf); 
           
           // Ah consumed
           xx = 18 * CHAR_W_PX;
           yy = 16 * CHAR_W_PX;        
           display.setCursor(xx, yy); 
-          snprintf(myline, snp_max, "Ah:%.1f", fr_bat1_mAh * 0.001F);     
+          snprintf(snprintf_buf, snp_max, "Ah:%.1f", fr_bat1_mAh * 0.001F);     
           display.fillRect(xx+(3*CHAR_W_PX), yy, (5*CHAR_W_PX), CHAR_H_PX, ILI9341_BLUE); // clear the previous line   
-          display.println(myline);           
+          display.println(snprintf_buf);           
           
           // latitude and logitude
           display.setTextSize(1);          
           xx = 0;
           yy = 18 * CHAR_H_PX;
           display.setCursor(xx,yy);       
-          snprintf(myline, snp_max, "Lat:%.7f", cur.lat);
+          snprintf(snprintf_buf, snp_max, "Lat:%.7f", cur.lat);
           display.fillRect(xx, yy, (15*CHAR_W_PX), CHAR_H_PX, ILI9341_BLUE); // clear the previous line        
-          display.println(myline);  
+          display.println(snprintf_buf);  
           xx = 18 * CHAR_W_PX;   
           yy = 18 * CHAR_H_PX;  
           display.setCursor(xx, yy);    
-          snprintf(myline, snp_max, "Lon:%.7f", cur.lon);
+          snprintf(snprintf_buf, snp_max, "Lon:%.7f", cur.lon);
           display.fillRect(xx, yy, 21 * CHAR_W_PX, CHAR_H_PX, ILI9341_BLUE); // clear the previous line            
-          display.println(myline);  
+          display.println(snprintf_buf);  
           display.setTextSize(2);    // 26 ch wide x 15 ch deep
           display_mode = flight_info;
         }
@@ -323,34 +333,34 @@
           xx = 0;
           yy = 0;
           display.setCursor(xx,yy);       
-          snprintf(myline, snp_max, "Lat %.7f", cur.lat);
+          snprintf(snprintf_buf, snp_max, "Lat %.7f", cur.lat);
           display.fillRect(xx+(4*CHAR_W_PX), yy, 11 * CHAR_W_PX, CHAR_H_PX, SCR_BACKGROUND); // clear the previous data           
-          display.println(myline);  
+          display.println(snprintf_buf);  
 
           // Longitude
           xx = 0;
           yy = 1.8 * CHAR_H_PX;    
           display.setCursor(xx, yy);                 
-          snprintf(myline, snp_max, "Lon %.7f", cur.lon);
+          snprintf(snprintf_buf, snp_max, "Lon %.7f", cur.lon);
           display.fillRect(xx+(4*CHAR_W_PX), yy, 11 * CHAR_W_PX, CHAR_H_PX, SCR_BACKGROUND);        
-          display.println(myline); 
+          display.println(snprintf_buf); 
 
           // Volts, Amps and Ah 
           xx = 0;
           yy = 3.6 * CHAR_H_PX;      
           display.setCursor(xx, yy);               
-          snprintf(myline, snp_max, "%.1fV %.0fA %.1fAh", fr_bat1_volts * 0.1F, fr_bat1_amps * 0.1F, fr_bat1_mAh * 0.001F);   
+          snprintf(snprintf_buf, snp_max, "%.1fV %.0fA %.1fAh", fr_bat1_volts * 0.1F, fr_bat1_amps * 0.1F, fr_bat1_mAh * 0.001F);   
           display.fillRect(xx, yy, SCR_W_PX, CHAR_H_PX, SCR_BACKGROUND); // clear the whole line  
-          display.println(myline); 
+          display.println(snprintf_buf); 
 
           // Number of Sats and RSSI
           xx = 0;
           yy = 5.4 * CHAR_H_PX;      
           display.setCursor(xx, yy);            
-          snprintf(myline, snp_max, "Sats %2d RSSI %2d%%", fr_numsats, fr_rssi); 
+          snprintf(snprintf_buf, snp_max, "Sats %2d RSSI %2d%%", fr_numsats, fr_rssi); 
           display.fillRect(xx+(5*CHAR_W_PX), yy, 3 * CHAR_W_PX, CHAR_H_PX, SCR_BACKGROUND);  
           display.fillRect(xx+(12*CHAR_W_PX), yy, 4 * CHAR_W_PX, CHAR_H_PX, SCR_BACKGROUND);   // blank rssi         
-          display.println(myline);       
+          display.println(snprintf_buf);       
 
            
           #if (defined SSD1306_Display)
@@ -527,7 +537,7 @@
     
       home_angle = (home_angle < 0) ? home_angle + 360 : home_angle;
       home_angle = (home_angle > 360) ? home_angle - 360 : home_angle;   
-      //Log.printf("home_angle=%d \n", pt_home_angle);  
+      //Log.printf("home_angle=%d \n", pt_home_angle);         
       hyp = al / 2;        
       opp = hyp * sin(home_angle * AngleToRad);
       adj = hyp * cos(home_angle * AngleToRad);
@@ -922,9 +932,7 @@ void LostPowerCheckAndRestore(uint32_t epoch_now) { // only ever called if activ
     uint16_t decay_secs = epoch_now -  epochHome();  
     if (decay_secs <= home_decay_secs) {  //  restore home if restart within decay seconds
       RestoreHomeFromFlash();
-      
-      //Log.printf("Home data restored from NVM, decay %d secs is within limit of %d secs\n", decay_secs, home_decay_secs); 
-      
+      Log.printf("Home data restored from NVM, decay %d secs is within limit of %d secs\n", decay_secs, home_decay_secs); 
       LogScreenPrintln("Home data restored");
       LogScreenPrintln("from Flash. Go Fly!");  
       homeInitialised=1;           
@@ -1070,14 +1078,24 @@ void RestoreHomeFromFlash() {
         #if (Telemetry_In == 2)                // Mavlink 
           #if (WiFi_Protocol == 2)         // Mav UDP 
             mav_udp_object.begin(UDP_localPort);
-            Log.printf("Mav UDP instance started, listening on IP %s, UDP port %d\n", localIP.toString().c_str(), UDP_localPort);
+            #if defined STM32F103C
+              Log.print("Mav UDP instance started, listening on IP "); Log.print(localIP.toString().c_str());
+              Log.print(", UDP port "); Log.println(UDP_localPort);  
+            #else
+              Log.printf("Mav UDP instance started, listening on IP %s, UDP port %d\n", localIP.toString().c_str(), UDP_localPort);
+            #endif   
             LogScreenPrint("UDP port = ");  LogScreenPrintln(String(UDP_localPort));
           #endif
         #endif
 
         #if (Telemetry_In == 3)               // FrSky
           frs_udp_object.begin(UDP_localPort+1);
-          Log.printf("Frs UDP instance started, listening on IP %s, UDP port %d\n", localIP.toString().c_str(), UDP_localPort+1);       
+          #if defined STM32F103C
+            Log.print("Frs UDP instance started, listening on IP "); Log.print(localIP.toString().c_str());
+            Log.print(", UDP port "); Log.println(UDP_localPort+1);  
+          #else
+            Log.printf("Frs UDP instance started, listening on IP %s, UDP port %d\n", localIP.toString().c_str(), UDP_localPort+1);
+          #endif           
           LogScreenPrint("UDP port = ");  LogScreenPrintln(String(UDP_localPort+1));       
         #endif
         
@@ -1155,7 +1173,9 @@ void RestoreHomeFromFlash() {
     Log.print(" remote Port:"); Log.println(TCP_remotePort);
     nbdelay(1000);
     LogScreenPrintln("Remote server IP =");
-    Log.printf("%d.%d.%d.%d", TCP_remoteIP[0], TCP_remoteIP[1], TCP_remoteIP[2], TCP_remoteIP[3] );        
+    snprintf(snprintf_buf, snp_max, "%d.%d.%d.%d", TCP_remoteIP[0], TCP_remoteIP[1], TCP_remoteIP[2], TCP_remoteIP[3] );        
+    LogScreenPrintln(snprintf_buf); 
+
     
  //   LogScreenPrintln(TCP_remoteIP.toString()); 
     return true;

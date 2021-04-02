@@ -1,5 +1,5 @@
   // GLOBALS
-       
+      
       // 0x800 GPS
     uint32_t fr_latlong;
     int32_t  fr_lat = 0;
@@ -153,8 +153,7 @@
       if (len == 0) return;
       for (int i = 0 ; i < len ; i++) {
         inBuf[i] = frs_udp_object.read();
-        //snprintf(myline, snp_max, "byte:%X  i:%d\n", inBuf[i], i);
-        //Log.print(myline);
+        //Log.printf("byte:%X  i:%d\n", inBuf[i], i);
       }
   
       //Log.print("A " );  PrintFrsBuffer(&inBuf[0], len-fr_offset); 
@@ -168,8 +167,7 @@
       if (len == 8) {  // F.Port frame
         fr_offset = 0;
       }
-      //snprintf(myline, snp_max, "B ");  PrintFrsBuffer(&inBuf[fr_offset], len-fr_offset);
-      //Log.print(myline);
+      //Log.printf("B ");  PrintFrsBuffer(&inBuf[fr_offset], len-fr_offset);
       bool mycrcGood = crcGood(&inBuf[fr_offset], len-fr_offset); 
 
       if (mycrcGood) {  
@@ -230,8 +228,7 @@
        if (millis() - packetloss_millis > period) {
          packetloss_millis = millis();
          float packetloss = float(float(badFrames * 100) / float(goodFrames + badFrames));
-         snprintf(myline, snp_max, "S.Port goodFrames:%d   badFrames:%d   frame loss:%.3f%%\n", goodFrames, badFrames, packetloss);
-         Log.print(myline);
+         Log.printf("S.Port goodFrames:%d   badFrames:%d   frame loss:%.3f%%\n", goodFrames, badFrames, packetloss);
        }      
       #endif  
   
@@ -243,8 +240,7 @@
           if (i == 3) {
             memset(&buf[2], 0x00, inMax-2); // clear the rest
           }
-          //snprintf(myline, snp_max, "0x7E found  i:%d  ", i);   PrintFrsBuffer(buf, 10);
-          //Log.print(myline);
+          //Log.printf("0x7E found  i:%d  ", i);   PrintFrsBuffer(buf, 10);
           buf[0] = b;
           i = 1;  
 
@@ -264,8 +260,7 @@
         }  // end of b == 0x7E
          
         b = SafeRead();
-        //Printbyte(b, true, ','); snprintf(myline, snp_max, ":i[%d] ", i); 
-        //Log.print(myline);
+        //Printbyte(b, true, ','); Log.printf(":i[%d] ", i);
         if (b != 0x7E) {  // if next start/stop don't put it in the buffer
           if ((i > 1) && (i < 9))  crcStepIn(b);           
         }
@@ -287,8 +282,7 @@
       lth=inSerial.available();  
       if (lth < 10) {
         if (lth > 0) {
-          //snprintf(myline, snp_max, "lth=%d\n", lth); 
-          //Log.print(myline);
+          //Log.printf("lth=%d\n", lth); 
         }
         return false;       // prevent 'wait-on-read' blocking
       }
@@ -298,7 +292,7 @@
         if (millis() - packetloss_millis > period) {
           packetloss_millis = millis();
           float packetloss = float(float(badFrames * 100) / float(goodFrames + badFrames));
-          snprintf(myline, snp_max, "F.Port goodFrames:%d   badFrames:%d   frame loss:%.3f%%\n", goodFrames, badFrames, packetloss);
+          Log.printf("F.Port goodFrames:%d   badFrames:%d   frame loss:%.3f%%\n", goodFrames, badFrames, packetloss);
         }
       #endif
 
@@ -359,13 +353,12 @@
               return false;
                     
             default: 
-              //   snprintf(myline, snp_max, "Unknown frame type = %X\n", fr_type);  
+              //   Log.printf("Unknown frame type = %X\n", fr_type);  
               return false;     
           }       // end of switch   
         } else {  // end of length ok
           badFrames++; // frame length error due to fail length test
-          //snprintf(myline, snp_max, "Bad FPort frame length = %X\n", fr_lth); 
-          //Log.print(myline);
+          //Log.printf("Bad FPort frame length = %X\n", fr_lth); 
           return false; 
         }     
       }          // end of FPort1
@@ -391,8 +384,7 @@
         if ((fr_lth == 0x08) || (fr_lth == 0x0d) || (fr_lth == 0x18) || (fr_lth == 0x20) ) {  // 
           frGood = true;            
           frGood_millis = millis();  
-          //snprintf(myline, snp_max, "fr_lth:%d   fr_type:%X\n", fr_lth, fr_type);  
-          //Log.print(myline); 
+          //Log.printf("fr_lth:%d   fr_type:%X\n", fr_lth, fr_type);   
     
           switch(fr_type){
             
@@ -442,15 +434,13 @@
             case 0xf2:      // OTA end frame
               return false;    
             default: 
-           //   snprintf(myline, snp_max, "Unknown frame type = %X\n", fr_type);  
-           //Log.print(myline);
+           //   Log.printf("Unknown frame type = %X\n", fr_type);  
               break;           
           }       // end of switch   
         } else {  // end of length ok
           badFrames++; // due to fail length test
           return false;
-          // snprintf(myline, snp_max, "Bad FPort frame length = %X\n", fr_lth);  
-          //Log.print(myline);
+          // Log.printf("Bad FPort frame length = %X\n", fr_lth);  
         }     
       }          // end of FPort2
 
@@ -461,15 +451,13 @@
     //===================================================================   
  
     bool ParseFrame(uint8_t *buf, frport_t  frport_type, uint16_t lth) {
-      //Log.printf("buf[0]:%X  buf[1]:%X  buf[2]:%X\n", buf[0], buf[1], buf[2]); 
+      //Log.printf("buf[0]:%X  buf[1]:%X  buf[2]:%X\n", buf[0], buf[1], buf[2]);
       uint8_t crc_lo, crc_hi;
          
       int i = 0;
       for (i = 3 ; i < lth+2 ; i++) {        
         chr = SafeRead();          // f_port2 ignores start byte[0]
-        //if (*(buf+2) == 0x1b) {
-        //  Log.printf("i:%d  chr:%X\n", i, chr);
-        //}
+        //if (*(buf+2) == 0x1b) Log.printf("i:%d  chr:%X\n", i, chr);
         *(buf+i) = chr;
       }
       
@@ -486,7 +474,7 @@
       } else
       if (frport_type == f_port2) {
         mycrcGood =  crcGood(buf+2, lth);  // CRC range set here, exclude len
-      //    Log.printf("mycrcGood:%d\n", mycrcGood);      
+      //    Log.printf("mycrcGood:%d\n", mycrcGood);       
       }
       
       if (mycrcGood) {

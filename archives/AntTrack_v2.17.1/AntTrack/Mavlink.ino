@@ -630,7 +630,11 @@ void Write_To_FC(uint32_t msg_id) {
          
     #if defined  Debug_FC_Write
       if (msg_id) {    //  dont print heartbeat - too much info
-        Log.printf("Write to FC Serial: len=%d\n", len);
+        #if defined STM32F103C
+          Log.print(Write to FC Serial: len="); Log.println(len);
+        #else
+          Log.printf("Write to FC Serial: len=%d\n", len);
+        #endif
         PrintMavBuffer(&msg);
       }  
     #endif    
@@ -730,9 +734,7 @@ void Write_To_FC(uint32_t msg_id) {
     }
 
     bool endOK = mav_udp_object.endPacket();
- //   if (!endOK) {
- //       Log.printf("msgSent=%d   endOK=%d\n", msgSent, endOK);
-  }
+ //   if (!endOK) Log.printf("msgSent=%d   endOK=%d\n", msgSent, endOK);
     return msgSent;
   }
   #endif

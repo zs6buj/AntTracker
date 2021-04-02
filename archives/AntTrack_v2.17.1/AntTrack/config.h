@@ -5,7 +5,7 @@
 
 #define MAJOR_VERSION      2
 #define MINOR_VERSION      17
-#define PATCH_LEVEL        0
+#define PATCH_LEVEL        1
 
 /*
 =================================================================================================== 
@@ -19,8 +19,9 @@ GitHub Tag
 V2.17.0   2021-03-16 Add "GPS on the Tracker" option, aka movable tracker.  
           2021-03-17 Use ap33_alt_ag instead of ap33_amsl. Still calcs relative alt above field.   
           2021-03-24 Beta. Support dynamic (moving) tracker with mag and GPS on the box. 
-                     Bug fixes.                           
-`                    
+                     Bug fixes.  
+V2.17.1   2021-03-29 Rationalise patches and simplify servo code                                   
+                    
 */
 // ******************************* Please select your options here before compiling *******************************
 #define Device_sysid     251                     // Our Mavlink Identity - APM FC is 1, Mission Planner is 255, QGC default is 0 
@@ -35,11 +36,14 @@ V2.17.0   2021-03-16 Add "GPS on the Tracker" option, aka movable tracker.
 //#define Telemetry_In  3    // FrSky UDP - ESP32 only
 
 
+
 // Select a heading source. We need this to relate the external world of co-ordinates to the internal tracker co_ordinates.
 #define Heading_Source  2     // 1=Flight_GPS, 2=Flight_Computer, 3=Trackerbox_Compass  4=Trackerbox_GPS_And_Compass
 
 //#define HMC5883L            // Select compass type
 #define QMC5883L
+
+
 
 // If the tracker box has a GPS AND a compass attached, we support a moving tracker. For example,
 // the tracker could be on one moving vehicle and track a second moving vehicle, or a 'plane could 
@@ -58,7 +62,7 @@ const char* BT_Slave_Name   =   "Crossfire 0277";  // Example
 
 
 // Un-comment or select the options below:
-//#define Az_Servo_360   // Means the azimuth servo can point in a 360 deg circle, elevation servo 90 deg
+#define Az_Servo_360   // Means the azimuth servo can point in a 360 deg circle, elevation servo 90 deg
                          // Default (comment out #define above) is 180 deg azimuth and 180 deg elevation 
                          
  
@@ -740,14 +744,15 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort  FrSky +1
 
 #define Debug_Minimum    //  Leave this as is unless you need the serial port for something else
 #define Debug_Status
+
 //#define Debug_All
 
 //#define Debug_Protocol
-
 //#define Debug_Baud
 
 //#define Debug_AzEl
 //#define Debug_Servos 
+
 //#define Debug_LEDs
 //#define Debug_boxCompass    
                         

@@ -5,7 +5,7 @@
 
 #define MAJOR_VERSION      2
 #define MINOR_VERSION      17
-#define PATCH_LEVEL        1
+#define PATCH_LEVEL        2
 
 /*
 =================================================================================================== 
@@ -20,7 +20,8 @@ V2.17.0   2021-03-16 Add "GPS on the Tracker" option, aka movable tracker.
           2021-03-17 Use ap33_alt_ag instead of ap33_amsl. Still calcs relative alt above field.   
           2021-03-24 Beta. Support dynamic (moving) tracker with mag and GPS on the box. 
                      Bug fixes.  
-V2.17.1   2021-03-29 Rationalise patches and simplify servo code                                   
+V2.17.1   2021-03-29 Rationalise patches and simplify servo code  
+V2.17.2   2021-04-02 Clean build of STM32F103, Maple Mini and Teensy 3.x code.                                 
                     
 */
 // ******************************* Please select your options here before compiling *******************************
@@ -61,22 +62,43 @@ V2.17.1   2021-03-29 Rationalise patches and simplify servo code
 const char* BT_Slave_Name   =   "Crossfire 0277";  // Example
 
 
-// Un-comment or select the options below:
-#define Az_Servo_360   // Means the azimuth servo can point in a 360 deg circle, elevation servo 90 deg
-                         // Default (comment out #define above) is 180 deg azimuth and 180 deg elevation 
+// Un-comment or adjust the Servo options below:
+
+//#define Az_Servo_360         // Means the azimuth servo can point in a 360 deg circle, elevation servo 90 deg
+                               // Default (comment out #define above) is 180 deg azimuth and 180 deg elevation 
                          
- 
+#if defined Az_Servo_360       // Set the degree range of the servos here
+  uint16_t minAz = 0;           // Az lower limit in degrees
+  uint16_t maxAz = 359;         // Az upper limit in degrees
+  uint16_t minEl = 0;           // El lower limit in degrees
+  uint16_t maxEl = 90;          // El upper limit in degrees
+#else
+  uint16_t minAz = 0;     
+  uint16_t maxAz = 180;    
+  uint16_t minEl = 0;
+  uint16_t maxEl = 90;
+#endif 
+
+  //  Note 1: My 180 servos have a PWM range of 700 through 2300 microseconds 
+  //  Your's may differ 
+  //  Note 2: Preferably adjust the limits of movement of your servos with degree limits above, not PWM
+  
+  uint16_t maxAzPWM = 2400;  // Set the full PWM range of the servos here
+  uint16_t minAzPWM = 600;
+  uint16_t maxElPWM = 2400;
+  uint16_t minElPWM = 600;  
+
                      
 //#define QLRS           // Un-comment if you use the QLRS variant of Mavlink 
 
 //*********************************************************************************************
 //**********************   S E L E C T   E S P   B O A R D   V A R I A N T   ******************
 
-//#define ESP32_Variant     1    //  ESP32 Dev Module - there are several sub-variants that work
+#define ESP32_Variant     1    //  ESP32 Dev Module - there are several sub-variants that work
 //#define ESP32_Variant     4    //  Heltec Wifi Kit 32 
 //#define ESP32_Variant     5    //  LILYGO® TTGO T-Display ESP32 1.14" ST7789 Colour LCD
 //#define ESP32_Variant     6    // LILYGO® TTGO T2 ESP32 OLED Arduino IDE board = "ESP32 Dev Module"
-#define ESP32_Variant     7    // ESP32 Dev Module with ILI9341 2.8" colour TFT SPI 240x320
+//#define ESP32_Variant     7    // ESP32 Dev Module with ILI9341 2.8" colour TFT SPI 240x320
 //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -113,10 +135,9 @@ uint16_t  TCP_localPort = 5760;
 uint16_t  TCP_remotePort = 5760;    
 uint16_t  UDP_localPort = 14550;    // Mav readPort  Frsky +1
 uint16_t  UDP_remotePort = 14555;   // Mav sendPort  FrSky +1
-//=================================================================================================
 
 
-// ****************************************** Auto Determine Target Platform **************************************
+//=========================== Auto Determine Target Platform =====================================
 //
 //                Don't change anything here
 //
@@ -165,7 +186,7 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort  FrSky +1
   #endif
 
   #if (Target_Board == 0) 
-    #error Teensy 3.x not yet supported
+    //#error Teensy 3.x not yet supported. 
   #endif  
 
   #if (Target_Board == 1) 
@@ -213,51 +234,58 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort  FrSky +1
       #error Please define WiFi_Protocol
     #endif
   #endif 
-// ************************* P L A T F O R M   D E P E N D E N T   S E T U P S **********************************
-//********************************************* LEDS, OLED SSD1306, rx pin **************************************
+//================================= P L A T F O R M   D E P E N D E N T   S E T U P S =============================
+
+//=======================================* LEDS, OLED SSD1306, rx pin =====================================
 
   
-#if (Target_Board == 0)           // Teensy3x NOT YET IMPLEMENTED !
-  #define in_rxPin        9  
-  #define in_txPin       10
-  uint8_t gps_rxPin =    0;     // uart2 for tracker box GPS if applicable
-  #define gps_txPin      1  
+#if (Target_Board == 0)           //   (TEENSY3X) 
+  #include <PWMServo.h>     
+  #define in_rxPin        0       // rx1 tx1 - Serial1
+  #define in_txPin        1
+  uint8_t gps_rxPin =     9;      // rx2 tx2 - Serial2 for tracker box GPS if applicable
+  #define gps_txPin      10  
   bool rxInvert = true;           // ONLY FOR FrSky S.Port, NOT F.Port, NOT MAVLINK     
-  #define frOneWire         true
-  #define SetHomePin 
-  #define StatusLed   14
-  #define SetHomePin  
-  #define azPWM_Pin 
-  #define elPWM_Pin 
-  #define BuiltinLed  13
+  #define frOneWire     true      // ONLY FOR FrSky S.Port
+  #define SetHomePin     11
+  #define StatusLed      14
+  #define azPWM_Pin       5
+  #define elPWM_Pin       6
+  #define BuiltinLed     13
   #undef  displaySupport 
-  
+  #define SDA            17  // I2C OLED board and/or Compass - default must be changed in Wire.h 
+  #define SCL            16  // I2C OLED board and/or Compass - default must be changed in Wire.h 
   //=========================================================================   
 #elif (Target_Board == 1)         // Blue Pill
-
   #include <Servo.h>  
-  uint8_t in_rxPin =        PA03;  // rx2
-  #define in_txPin          PA02   // tx2
-  uint8_t gps_rxPin =       PA11;  // rx3  
-  #define gps_txPin         PA10   // tx3
+  uint8_t in_rxPin =        PA03;  // rx2 Serial1
+  #define in_txPin          PA02   // tx2 Serial1
+  uint8_t gps_rxPin =       PA10;  // rx3 Serial2
+  #define gps_txPin         PA09   // tx3 Serial2
+  bool rxInvert = true;           // ONLY FOR FrSky S.Port, NOT F.Port, NOT MAVLINK    
   #define SetHomePin        PA0;    
   #define StatusLed         PA06  // Off=No good GPS yet, flashing=good GPS but home not set yet, solid = ready to track
   #define azPWM_Pin         PA07  // azimuth servo 
   #define elPWM_Pin         PA08  // elevation servo
   #define BuiltinLed        PC13  
+  #define SDA               PB07  // I2C OLED board and/or Compass - default must be changed in Wire.h 
+  #define SCL               PB06  // I2C OLED board and/or Compass - default must be changed in Wire.h 
   //=========================================================================   
 #elif (Target_Board == 2)         // Maple Mini
 
   #include <Servo.h>  
-  uint8_t in_rxPin =       26;  // rx1
-  #define in_txPin         25   // tx1
-  uint8_t gps_rxPin =       0;  // rx3  
-  #define gps_txPin         1   // tx3  
+  uint8_t in_rxPin =       26;  // rx1 Serial1
+  #define in_txPin         25   // tx1 Serial1
+  uint8_t gps_rxPin =       8;  // rx2 Serial2
+  #define gps_txPin         9   // tx2 Serial2
+   bool rxInvert = true;        // ONLY FOR FrSky S.Port, NOT F.Port, NOT MAVLINK    
   #define SetHomePin        5    
   #define StatusLed         6   // Off=No good GPS yet, flashing=good GPS but home not set yet, solid = ready to track
-  #define azPWM_Pin         7   // azimuth servo 
-  #define elPWM_Pin         8   // elevation servo  consider pin 10  this pin=rx2 (9=tx2)
-  #define BuiltinLed        33  // PB1   
+  #define azPWM_Pin         4   // azimuth servo 
+  #define elPWM_Pin         5   // elevation servo  consider pin 10  this pin=rx2 (9=tx2)
+  #define BuiltinLed       33   // PB1   
+  #define SDA              15   // I2C OLED board and/or Compass - default must be changed in Wire.h 
+  #define SCL              16   // I2C OLED board and/or Compass - default must be changed in Wire.h 
   
 #elif (Target_Board == 3)         // ESP32 Platform
 // For info: Avoid SPI pins - generally   CS=5    MOSI=23   MISO=19   SCK=18  

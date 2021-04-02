@@ -16,12 +16,7 @@
 
 //=========================================================================
 bool initialiseCompass() {
-  #if ( (defined ESP32) || (defined ESP8266) )
-    Wire.begin(SDA, SCL);
-  #else
-    Wire.begin();   // default pins must be changed in Wire.h 
-  #endif
-  
+  Wire.begin(SDA, SCL);
   #if defined HMC5883L  
     if(!mag.begin()) {
       Log.println("No HMC5883 compass found!");
@@ -56,8 +51,7 @@ bool initialiseCompass() {
     }
     uint8_t retry = 20;
     while ((!QMC5883L_Ready()) && (retry) ) {   
-      snprintf(myline, snp_max, " %d", retry);
-      Log.print(myline);
+      Log.printf(" %d", retry);
       retry--;
       delay(100);
     }
@@ -78,8 +72,7 @@ bool initialiseCompass() {
 float getTrackerboxHeading() {
   float fHeading = 0.0;
   int16_t x,y,z;           // Raw compass output values.
-  int16_t offx = 0;   //calibration offsets (future)
-  int16_t offy = 0;  
+  int16_t offx, offy = 0;  //calibration offsets (future)
   
   if (getQMC5883L(&x, &y, &z) ) {
     float val = 180/M_PI * atan2((float)(x-offx),(float)(y-offy));
@@ -121,8 +114,7 @@ float wrap360(float ang) {
      ovfl    = stat & 0x02;
      skipped = stat & 0x04;
      bool rdy = (stat & 0x01) == 1;
-     snprintf(myline, snp_max, "num:%d  stat:%d  rdy:%d \n", num, stat, rdy);
-     Log.print(myline);
+     //Log.printf("num:%d  stat:%d  rdy:%d \n", num, stat, rdy);
      return rdy; 
   }
 

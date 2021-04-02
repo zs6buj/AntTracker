@@ -116,55 +116,38 @@ void EEPROM_Setup() {
 
 //***************************************************
 
-void EEPROMWritelong(uint16_t idx, int32_t val)  {  
+void EEPROMWritelong(uint16_t idx, int32_t value)  {  
+uint16_t addr=idx*2;
 
-  #if defined TEENSY3X
-    byte b1 = (val & 0xFF);
-    byte b2 = ((val >> 8) & 0xFF);
-    byte b3 = ((val >> 16) & 0xFF);
-    byte b4 = ((val >> 24) & 0xFF);
-    EEPROM.write(idx, b4);
-    EEPROM.write(idx+1, b3);  
-    EEPROM.write(idx+2, b2);
-    EEPROM.write(idx+3, b1);       
-  #else
-    uint16_t addr=idx*2;
-    uint16_t two = (val & 0xFFFF);
-    uint16_t one = ((val >> 16) & 0xFFFF);
-    EEPROM.write(addr, two);
-    EEPROM.write(addr+1, one);
-  #endif
+      //One = Most significant -> Two = Least significant word
+      uint16_t two = (value & 0xFFFF);
+      uint16_t one = ((value >> 16) & 0xFFFF);
 
+      //Write the 2 words into the eeprom memory.
+      EEPROM.write(addr, two);
+      EEPROM.write(addr+1, one);
 }
 
 //*****************************************************  
     
 int32_t EEPROMReadlong(uint16_t idx)  {
+uint16_t addr=idx*2;
+uint16_t two;
+uint16_t one;
   
-  uint32_t val = 0;
- 
-  #if defined TEENSY3X
-    byte b1 = EEPROM.read(idx);
-    byte b2 = EEPROM.read(idx+1);
-    byte b3 = EEPROM.read(idx+2);
-    byte b4 = EEPROM.read(idx+3);  
-    val = b4  + (b3 << 8) + (b2 << 16) + (b1 << 24);  
-  #else
-    uint16_t addr=idx*2;
-    uint16_t two = 0;
-    uint16_t one = 0;
+      //Read the 2 words from the eeprom memory.
+
     EEPROM.read(addr, &two);
     EEPROM.read(addr+1, &one);
-    val = two  + (one << 16);
-  #endif
-    
   #if defined Debug_All || defined Debug_EEPROM
      Serial.print("EEPROMReadLong():"); 
      Serial.print("  one="); Serial.print(one, HEX);
      Serial.print("  two="); Serial.println(two, HEX);
   #endif
-  
-  return val;
-}
+      //Return the recomposed long by using bitshift.
+      return two  + (one << 16);
+  }
      
+
+
 #endif

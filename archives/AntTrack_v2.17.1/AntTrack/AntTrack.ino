@@ -117,11 +117,66 @@
   been observed despite the possibly lower gain of the other links. Of course it is possible to stack 
   double bi-quad antennas on the tracker, but more robust mechanicals will be called for.
 
-  Pin connections are defined in config.h
+    Connections to Blue Pill STM32F103C  are:
    
+    0) USB/TTL Serial   -->TX1 Pin A9   Flashing and serial monitor for debug
+    0) USB/TTL Serial   -->RX1 Pin A10 
+    
+    1) Serial1          -->TX2 Pin A2   Telemetry-in 
+    2) Serial1          <--RX2 Pin A3   Telemetry-in 
+    
+    3) i2C bus             SCL Pin B6   OLED and (optional)Compass
+    4) i2C bus             SDA Pin B7   OLED and (optional)Compass 
+     
+    5) Azimuth Servo           Pin A7  
+    6) Elevation Servo         Pin A8 
+
+    7) SetHome button          Pin A5
+    8) StatusLed               Pin A6 - Off=No good GPS yet, flashing=good GPS but home not set yet, solid = ready to track
+    
+    9) Vcc 3.3V !   IMPORTANT!
+    8) GND
+
+    Connections to Maple Mini STM32F103C are:
+   
+    0) USB/TTL                               Flashing and Debugging
+    
+    1) Serial1          -->TX1 Pin A9 (26)   Serial telemetry in
+    2) Serial1          <--RX1 Pin A10(25)   Serial telemetry in
+    
+    3) i2C bus             SCL Pin B6 (16)  OLED and (optional)Compass
+    4) i2C bus             SDA Pin B7 (15)  OLED and (optional)Compass 
+     
+    5) Azimuth Servo           Pin A7  
+    6) Elevation Servo         Pin A8 
+
+    7) SetHome button          Pin A5
+    8) StatusLed               Pin A6 - Off=No good GPS yet, flashing=good GPS but home not set yet, solid = ready to track
+    
+    9) Vcc 3.3V !   IMPORTANT!
+    8) GND                             
+
+   Connections to ESP32 Dev Board are: 
+  
+    0) USB           UART0                    Flashing and serial monitor for debug
+    1)               UART1   <--rx1 pin d12   Flexible
+    2)               UART1   -->tx1 pin d14   Flexible
+    3) Mavlink       UART2   <--rx2 pin d9    Mavlink source to ESP32
+    4)               UART2   -->tx2 pin d10   Mavlink source from ESP32     
+    3) i2C bus                  SCL pin B6 (16)  OLED and (optional)Compass
+    4) i2C bus                  SDA pin B7 (15)  OLED and (optional)Compass 
+     
+    5) Azimuth Servo                Pin A7  
+    6) Elevation Servo              Pin A8 
+
+    7) SetHome button               Pin A5
+    8) StatusLed                    Pin 13 - Off=No good GPS yet, flashing=good GPS but home not set yet, solid = ready to track
+               
+    3) Vcc 3.3V !
+    4) GN                           
 
 */
-//#include <stdio.h>
+
 #include <mavlink_types.h>
 #include "config.h"                      // ESP_IDF libs included here
 #include <ardupilotmega/mavlink.h>
@@ -143,8 +198,9 @@
     uint32_t gpsBaud = 0;   // Tracker attached GPS, not flight GPS
     uint8_t  protocol = 0;
 
-    const uint8_t snp_max = 70;
-    char          myline[snp_max];       // for use with snprintf() formatting of display line
+
+    const uint8_t snp_max = 32;
+    char          snprintf_buf[snp_max];       // for use with snprintf() formatting of display line
 
     // ************************************
 
@@ -264,15 +320,9 @@
   struct Battery bat2     = {
     0, 0, 0, 0, 0, 0, 0, true};   
 
-  // Create Servo objects
-  
-    #if (defined TEENSY3X)     // Teensy 3.2
-      PWMServo azServo;        // Azimuth
-      PWMServo elServo;        // Elevation    
-    #else
-      Servo azServo;            // Azimuth
-      Servo elServo;            // Elevation
-    #endif
+    // Create Servo objects
+    Servo azServo;            // Azimuth
+    Servo elServo;            // Elevation
 
     // Create Bluetooth object
     #if (Telemetry_In == 1) 
@@ -321,9 +371,13 @@ void setup() {
   pgm_name = pgm_path.substring(pgm_path.lastIndexOf("\\")+1);  
   pgm_name = pgm_name.substring(0, pgm_name.lastIndexOf('.'));  // remove the extension
   Log.print("Starting "); Log.print(pgm_name);
-  snprintf(myline, snp_max, " version:%d.%02d.%02d\n", MAJOR_VERSION,  MINOR_VERSION, PATCH_LEVEL);
-  Log.print(myline);
-
+  #if defined STM32F103C
+    Log.print(" version:"); Log.print(MAJOR_VERSION);
+    Log.print("."); Log.print(MINOR_VERSION); 
+    Log.print("."); Log.println(PATCH_LEVEL);      
+  #else
+    Log.printf(" version:%d.%02d.%02d\n", MAJOR_VERSION,  MINOR_VERSION, PATCH_LEVEL);
+  #endif     
   #if ((defined ESP32) || (defined ESP8266)) && (defined Debug_WiFi)
    WiFi.onEvent(WiFiEventHandler);   
   #endif  
@@ -394,7 +448,17 @@ void setup() {
       clear_line[eol] = ' ';
     }
     clear_line[eol] = 0x00;
-    Log.printf("%dx%d  TEXT_SIZE:%d   CHAR_W_PX:%d  CHAR_H_PX:%d   SCR_H_CH:%d   SCR_W_CH:%d \n", SCR_H_PX, SCR_W_PX, TEXT_SIZE, CHAR_W_PX, CHAR_H_PX, SCR_H_CH, SCR_W_CH);
+    #if defined STM32F103C
+      Log.print(SCR_H_PX); Log.print("x"); Log.print(SCR_W_PX);
+      Log.print("  TEXT_SIZE:"); Log.print(TEXT_SIZE); 
+      Log.print("  CHAR_W_PX:"); Log.print(CHAR_W_PX);  
+      Log.print("  CHAR_H_PX:"); Log.print(CHAR_H_PX); 
+      Log.print("  SCR_H_CH:"); Log.print(SCR_H_CH);  
+      Log.print("  SCR_W_CH:"); Log.println(SCR_W_CH);                    
+    #else
+      Log.printf("%dx%d  TEXT_SIZE:%d   CHAR_W_PX:%d  CHAR_H_PX:%d   SCR_H_CH:%d   SCR_W_CH:%d \n", SCR_H_PX, SCR_W_PX, TEXT_SIZE, CHAR_W_PX, CHAR_H_PX, SCR_H_CH, SCR_W_CH);
+    #endif  
+    
     LogScreenPrintln("Starting .... ");
   #endif
   /*
@@ -468,6 +532,10 @@ void setup() {
   pinMode(BuiltinLed, OUTPUT);     // Board LED mimics status led
   digitalWrite(BuiltinLed, LOW);  // Logic is NOT reversed! Initialse off    
 
+  azServo.attach(azPWM_Pin);
+  elServo.attach(elPWM_Pin);
+  PositionServos(90, 0, 90);   // Intialise servos to az=90, el=0, hom.hdg = 90;
+
   DisplayHeadingSource();
 
   #ifdef QLRS
@@ -498,31 +566,18 @@ void setup() {
     */
     
   }
-
-  // =============================== Setup SERVOS  ==================================
   
-  #if (defined TEENSY3X)      // NOTE: myservo.attach(pin, 1000, 2000);
-    azServo.attach(azPWM_Pin, minAz, maxAz); 
-    elServo.attach(elPWM_Pin, minEl, maxEl);     
-  #else
-    azServo.attach(azPWM_Pin);
-    elServo.attach(elPWM_Pin);
-  #endif
-  PositionServos(90, 0, 90);   // Intialise servos to az=90, el=0, hom.hdg = 90;
-
   #if defined Debug_Servos  
     TestServos();   // Uncomment this code to observe how well your servos reach their specified limits
                     // Fine tune MaxPWM and MinPWM in Servos module
-  #endif  
-                 
+  #endif                  
 
 // ======================== Setup Serial ==============================
   #if (Heading_Source == 4)  // Tracker box  GPS on Serial2
 
     #if ( (defined ESP8266) || (defined ESP32) )
       gpsBaud = getBaud(gps_rxPin);
-      //Log.print("Tracker box GPS baud rate detected is ");  Log.print(gpsBaud); Log.println(" b/s"); 
-      Log.printf("Tracker box GPS baud rate detected is %db/s\n", gpsBaud); 
+      Log.print("Tracker box GPS baud rate detected is ");  Log.print(gpsBaud); Log.println(" b/s"); 
       String s_baud=String(gpsBaud);   // integer to string. "String" overloaded
       LogScreenPrintln("Box GPS at "+ s_baud);
      
@@ -535,17 +590,15 @@ void setup() {
     
   #endif
 
-  #if (Telemetry_In == 0)    //  Serial telemetry in
-  
-      // determine polarity of the telemetry - idle high (normal) or idel low (like sport)
+  #if (Telemetry_In == 0)    //  Serial
+
       pol_t pol = (pol_t)getPolarity(in_rxPin);
       bool ftp = true;
       static int8_t cdown = 30; 
       bool polGood = true;    
       while ( (pol == no_traffic) && (cdown) ){
         if (ftp) {
-          snprintf(myline, snp_max, "No telem on rx pin:%d. Retrying ", in_rxPin);
-          Log.print(myline);
+          Log.printf("No telem on rx pin:%d. Retrying ", in_rxPin);
           String s_in_rxPin=String(in_rxPin);   // integer to string
           LogScreenPrintln("No telem on rxpin:"+ s_in_rxPin); 
           ftp = false;
@@ -565,20 +618,17 @@ void setup() {
     if (polGood) {    // expect 57600 for Mavlink and FrSky, 2400 for LTM, 9600 for MSP & GPS
       if (pol == idle_low) {
         rxInvert = true;
-        snprintf(myline, snp_max, "Serial port rx pin %d is IDLE_LOW, inverting rx polarity\n", in_rxPin);
-        Log.print(myline);
+        Log.printf("Serial port rx pin %d is IDLE_LOW, inverting rx polarity\n", in_rxPin);
       } else {
         rxInvert = false;
-        snprintf(myline, snp_max, "Serial port rx pin %d is IDLE_HIGH, regular rx polarity retained\n", in_rxPin);     
-        Log.print(myline);   
+        Log.printf("Serial port rx pin %d is IDLE_HIGH, regular rx polarity retained\n", in_rxPin);        
       }     
       inBaud = getBaud(in_rxPin);
       Log.print("Serial input baud rate detected is ");  Log.print(inBaud); Log.println(" b/s"); 
       String s_baud=String(inBaud);   // integer to string. "String" overloaded
       LogScreenPrintln("Telem at "+ s_baud);
       protocol = detectProtocol(inBaud);
-    //snprintf(myline, snp_max, "Protocol:%d\n", protocol);
-    //Log.print(myline);
+    //Log.printf("Protocol:%d\n", protocol);
       
     } else {
       pol = idle_high;
@@ -591,7 +641,7 @@ void setup() {
       inSerial.begin(inBaud, SERIAL_8N1, in_rxPin, in_txPin, rxInvert); 
       delay(10);
     #elif (defined TEENSY3X) 
-      inSerial.begin(inBaud); // Teensy 3.x    rx tx pins hard wired
+      inSerial.begin(frBaud); // Teensy 3.x    tx pin hard wired
        if (rxInvert) {          // For S.Port not F.Port
          UART0_C3 = 0x10;       // Invert Serial1 Tx levels
          UART0_S2 = 0x10;       // Invert Serial1 Rx levels;       
@@ -673,7 +723,7 @@ void setup() {
       
   #endif 
   
-  // ================================  Setup WiFi  ====================================
+  // ************************* Setup WiFi **************************** 
   #if (defined ESP32)  || (defined ESP8266)
 
    #if (Telemetry_In == 2) || (Telemetry_In == 3)  //  WiFi Mavlink or FrSky
@@ -684,7 +734,8 @@ void setup() {
       
 }
 
-// ==================================================================================
+
+// *******************************************************************************************
 
 void loop() {            
   
@@ -762,10 +813,9 @@ void loop() {
       AP_sta_count = WiFi.softAPgetStationNum();
       if (AP_sta_count > AP_prev_sta_count) {  // a STA device has connected to the AP
         AP_prev_sta_count = AP_sta_count;
-        snprintf(myline, snp_max, "Remote STA %d connected to our AP\n", AP_sta_count);  
-        Log.print(myline);
-        snprintf(myline, snp_max, "New STA, total=%d", AP_sta_count);        
-        LogScreenPrintln(myline); 
+        Log.printf("Remote STA %d connected to our AP\n", AP_sta_count);  
+        snprintf(snprintf_buf, snp_max, "New STA, total=%d", AP_sta_count);        
+        LogScreenPrintln(snprintf_buf); 
         #if (WiFi_Protocol == 1)  // TCP
           if (!outbound_clientGood) {// if we don't have an active tcp session, start one
             outbound_clientGood = NewOutboundTCPClient();
@@ -846,8 +896,7 @@ void loop() {
             }
            else {  // FC & own tracker compass
               ft=false;
-              snprintf(myline, snp_max, "GPS lock good! Push set-home button (pin:%d) anytime to start tracking\n", SetHomePin);  
-              Log.print(myline);
+              Log.printf("GPS lock good! Push set-home button (pin:%d) anytime to start tracking\n", SetHomePin);  
               LogScreenPrintln("GPS lock good! Push");
               LogScreenPrintln("home button");
             }

@@ -26,7 +26,7 @@ uint16_t detectProtocol(uint32_t baud) {
       delay(100);
       inSerial.begin(baud, SERIAL_8N1, in_rxPin, in_txPin, rxInvert); 
     #elif (defined TEENSY3X) 
-      inSerial.begin(baud); // Teensy 3.x    tx pin hard wired
+      frSerial.begin(frBaud); // Teensy 3.x    tx pin hard wired
        if (rxInvert) {          // For S.Port not F.Port
          UART0_C3 = 0x10;       // Invert Serial1 Tx levels
          UART0_S2 = 0x10;       // Invert Serial1 Rx levels;       
@@ -269,15 +269,15 @@ const uint32_t su_timeout = 5000; // uS !  Default timeout 1000mS!
 
   for (int i = 0; i < 10; i++) {
 
-    if (rxInvert) {               
-      pw = pulseIn(pin,HIGH, su_timeout);     //  Returns the length of the pulse in uS
+    if (rxInvert) {               //  Returns the length of the pulse in uS
+      pw = pulseIn(pin,HIGH, su_timeout);     
     } else {
       pw = pulseIn(pin,LOW, su_timeout);    
     }    
 
     if (pw !=0) {
       min_pw = (pw < min_pw) ? pw : min_pw;  // Choose the lowest
-      //Log.printf("i:%d  pw:%d  min_pw:%d\n", i, pw, min_pw);    
+      //Log.printf("i:%d  pw:%d  min_pw:%d\n", i, pw, min_pw);      
     } 
   } 
   #if defined Debug_All || defined Debug_Baud
@@ -341,7 +341,7 @@ const uint32_t su_timeout = 5000; // uS !  Default timeout 1000mS!
         pw_lo += pulseIn(pin,LOW, su_timeout); 
         delayMicroseconds(10);
       }  
-      //Log.printf("pw_hi:%d  pw_lo:%d\n", pw_hi, pw_lo);
+      //Log.printf("pw_hi:%d  pw_lo:%d\n", pw_hi, pw_lo);  
       if (pw_hi > pw_lo) {
         return idle_low;
       } else {

@@ -26,13 +26,8 @@
     #endif  
   
     inSerial.end();
-    
-    #if ( (defined ESP32) || (defined ESP8266) )
-      inSerial.begin(inBaud, SERIAL_8N1, in_rxPin, in_txPin);  // likely 9600 for NMEA
-    #else
-      inSerial.begin(inBaud);  // Serial1 default pins - rx2 tx2 on STM32F103C
-    #endif
 
+    inSerial.begin(inBaud, SERIAL_8N1, in_rxPin, in_txPin);  // likely 9600 for NMEA
   }
   // **********************************************************
   void GPS_Receive() {

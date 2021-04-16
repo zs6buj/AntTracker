@@ -5,7 +5,7 @@
 
 #define MAJOR_VERSION      2
 #define MINOR_VERSION      17
-#define PATCH_LEVEL        4
+#define PATCH_LEVEL        3
 
 /*
 =================================================================================================== 
@@ -23,8 +23,7 @@ V2.17.0   2021-03-16 Add "GPS on the Tracker" option, aka movable tracker.
 V2.17.1   2021-03-29 Rationalise patches and simplify servo code  
 V2.17.2   2021-04-02 Clean build of STM32F103, Maple Mini and Teensy 3.x code.   
 V2.17.3   2021-04-07 Clean compile and test - WiFi UDP in    
-          2021-04-09 ESP Servo lib, degrees not PWM like STM32
-V2.17.4   2021-04-16 Clean compile BT input option                                         
+          2021-04-09 ESP Servo lib, degrees not PWM like STM32                           
                     
 */
 //================================== Please select your options below before compiling ==================================
@@ -35,8 +34,8 @@ V2.17.4   2021-04-16 Clean compile BT input option
 
 // Choose one only of these input channels 
 // How does telemetry enter the tracker?
-//#define Telemetry_In  0    // Serial Port (default) - all protocols        
-#define Telemetry_In  1    // BlueTooth Classic - ESP32 and Mavlink only
+#define Telemetry_In  0    // Serial Port (default) - all protocols        
+//#define Telemetry_In  1    // BlueTooth Classic - ESP32 and Mavlink only
 //#define Telemetry_In  2    // Mavlink WiFi - ESP32 only
 //#define Telemetry_In  3    // FrSky UDP - ESP32 only
 
@@ -677,7 +676,7 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort,  FrSky +1
 
 #if (Telemetry_In == 1)     // Bluetooth
 
-  #if (defined ESP32) 
+  #if (defined ESP323) 
 
     #define BT_Setup   // so that WiFi setup does not defien these shared variables again
     // Define link variables

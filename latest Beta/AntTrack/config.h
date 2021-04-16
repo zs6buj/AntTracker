@@ -5,7 +5,7 @@
 
 #define MAJOR_VERSION      2
 #define MINOR_VERSION      17
-#define PATCH_LEVEL        3
+#define PATCH_LEVEL        4
 
 /*
 =================================================================================================== 
@@ -23,7 +23,8 @@ V2.17.0   2021-03-16 Add "GPS on the Tracker" option, aka movable tracker.
 V2.17.1   2021-03-29 Rationalise patches and simplify servo code  
 V2.17.2   2021-04-02 Clean build of STM32F103, Maple Mini and Teensy 3.x code.   
 V2.17.3   2021-04-07 Clean compile and test - WiFi UDP in    
-          2021-04-09 ESP Servo lib, degrees not PWM like STM32                           
+          2021-04-09 ESP Servo lib, degrees not PWM like STM32
+V2.17.4   2021-04-16 Clean compile BT input option                                         
                     
 */
 //================================== Please select your options below before compiling ==================================
@@ -34,8 +35,8 @@ V2.17.3   2021-04-07 Clean compile and test - WiFi UDP in
 
 // Choose one only of these input channels 
 // How does telemetry enter the tracker?
-#define Telemetry_In  0    // Serial Port (default) - all protocols        
-//#define Telemetry_In  1    // BlueTooth Classic - ESP32 and Mavlink only
+//#define Telemetry_In  0    // Serial Port (default) - all protocols        
+#define Telemetry_In  1    // BlueTooth Classic - ESP32 and Mavlink only
 //#define Telemetry_In  2    // Mavlink WiFi - ESP32 only
 //#define Telemetry_In  3    // FrSky UDP - ESP32 only
 
@@ -108,8 +109,8 @@ const char* BT_Slave_Name   =   "Crossfire 0277";  // Example
 //=====================   S E L E C T   E S P   B O A R D   V A R I A N T   ===================
 
 //#define ESP32_Variant     1    //  ESP32 Dev Module - there are several sub-variants that work
-//#define ESP32_Variant     4    //  Heltec Wifi Kit 32 
-#define ESP32_Variant     5    //  LILYGO® TTGO T-Display ESP32 1.14" ST7789 Colour LCD
+#define ESP32_Variant     4    //  Heltec Wifi Kit 32 
+//#define ESP32_Variant     5    //  LILYGO® TTGO T-Display ESP32 1.14" ST7789 Colour LCD
 //#define ESP32_Variant     6    // LILYGO® TTGO T2 ESP32 OLED Arduino IDE board = "ESP32 Dev Module"
 //#define ESP32_Variant     7    // ESP32 Dev Module with ILI9341 2.8" colour TFT SPI 240x320
 //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -342,17 +343,17 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort,  FrSky +1
     */
   #endif
   //=========================================================================   
-  #if (ESP32_Variant == 4)          // Heltec Wifi Kit 32 (NOTE! 8MB) 
-  uint8_t in_rxPin =        27;  // uart1
+  #if (ESP32_Variant == 4)       // Heltec Wifi Kit 32 (NOTE! 8MB) 
+  uint8_t in_rxPin =        18;  // uart1
   #define in_txPin          17 
   uint8_t gps_rxPin =       13;  // uart2 for tracker box GPS if applicable
   #define gps_txPin         14    
-  bool rxInvert = true;            // ONLY FOR FrSky S.Port, NOT F.Port, NOT MAVLINK
-  #define SetHomePin        18    
-  #define StatusLed         13  // Off=No good GPS yet, flashing=good GPS but home not set yet, solid = ready to track
+  bool rxInvert = true;          // ONLY FOR FrSky S.Port, NOT F.Port, NOT MAVLINK
+  #define SetHomePin        23    
+  #define StatusLed         19   // Off=No good GPS yet, flashing=good GPS but home not set yet, solid = ready to track
   #define BuiltinLed        99 
-  #define azPWM_Pin         32  // azimuth servo (can't be 34,35,36,39 because input only !!)
-  #define elPWM_Pin         33  // elevation servo(can't be 34,35,36,39 because input only !!)
+  #define azPWM_Pin         32   // azimuth servo (can't be 34,35,36,39 because input only !!)
+  #define elPWM_Pin         33   // elevation servo(can't be 34,35,36,39 because input only !!)
 
     #if !defined displaySupport       // I2C OLED board is built into Heltec WiFi Kit 32
       #define displaySupport
@@ -365,8 +366,8 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort,  FrSky +1
     #define Pup           99        // Board Button to scroll the display up
     #define Pdn           99        // Board Button to scroll the display down
     #define Pinfo         99        // 02 Digital pin to toggle information/log page
-    #define Tup           33        // 33 Touch pin to scroll the display up
-    #define Tdn           32        // 32 Touch pin to scroll the display down 
+    #define Tup           12        // 33 Touch pin to scroll the display up
+    #define Tdn           11        // 32 Touch pin to scroll the display down 
     #define Tinfo         02        // 02 Touch pin to toggle information/log page
     
     #define SDA           04        // I2C OLED board and/or Compass
@@ -676,7 +677,7 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort,  FrSky +1
 
 #if (Telemetry_In == 1)     // Bluetooth
 
-  #if (defined ESP323) 
+  #if (defined ESP32) 
 
     #define BT_Setup   // so that WiFi setup does not defien these shared variables again
     // Define link variables
@@ -791,8 +792,8 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort,  FrSky +1
 //#define Debug_Protocol
 //#define Debug_Baud
 
-#define Debug_AzEl
-#define Debug_Servos 
+//#define Debug_AzEl
+//#define Debug_Servos 
 
 //#define Debug_LEDs
 //#define Debug_boxCompass    
@@ -816,7 +817,6 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort,  FrSky +1
 //#define Debug_CRC
 //#define Debug_FrSky_Messages_UDP
 //#define Debug_FrSky_Messages
-//#define Debug_FrSky
 //#define Debug_FrPort_Stream
 //#define Debug_FPort_Buffer
 //#define Debug_boxGPS             // the GPS on the tracker box

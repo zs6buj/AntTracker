@@ -1,4 +1,4 @@
-/*  *****************************************************************************
+/*================================================================================================= 
 
     ZS6BUJ's Antenna Tracker
 
@@ -25,7 +25,7 @@
 
   By downloading this software you are agreeing to the terms specified in this page and the spirit of thereof.
     
-   *****************************************************************************
+   ========================================================================
    Boards supported:
    
    ESP32 boards - variety of variants
@@ -143,7 +143,7 @@
     uint32_t gpsBaud = 0;   // Tracker attached GPS, not flight GPS
     uint8_t  protocol = 0;
 
-    const uint8_t snp_max = 70;
+    const uint8_t snp_max = 74;
     char          myline[snp_max];       // for use with snprintf() formatting of display line
 
     // ************************************
@@ -519,6 +519,7 @@ void setup() {
   moveServos(90, 0);   // Intialise servos to az=90 (straight ahead) , el=0 (horizontal)
 
   #if defined Debug_Servos  
+    Log.println("Testing Servos");
     TestServos();    // Fine tune MaxPWM and MinPWM in Config tab
   #endif  
                  
@@ -544,7 +545,7 @@ void setup() {
 
   #if (Telemetry_In == 0)    //  Serial telemetry in
   
-      // determine polarity of the telemetry - idle high (normal) or idel low (like sport)
+      // determine polarity of the telemetry - idle high (normal) or idle low (like S.Port)
       pol_t pol = (pol_t)getPolarity(in_rxPin);
       bool ftp = true;
       static int8_t cdown = 30; 
@@ -578,11 +579,15 @@ void setup() {
         rxInvert = false;
         snprintf(myline, snp_max, "Serial port rx pin %d is IDLE_HIGH, regular rx polarity retained\n", in_rxPin);     
         Log.print(myline);   
-      }     
+      }  
+
+       // Determine Baud
       inBaud = getBaud(in_rxPin);
       Log.print("Serial input baud rate detected is ");  Log.print(inBaud); Log.println(" b/s"); 
       String s_baud=String(inBaud);   // integer to string. "String" overloaded
       LogScreenPrintln("Telem at "+ s_baud);
+
+      
       protocol = detectProtocol(inBaud);
     //snprintf(myline, snp_max, "Protocol:%d\n", protocol);
     //Log.print(myline);
@@ -854,7 +859,7 @@ void loop() {
             }
            else {  // FC & own tracker compass
               ft=false;
-              snprintf(myline, snp_max, "GPS lock good! Push set-home button (pin:%d) anytime to start tracking\n", SetHomePin);  
+              snprintf(myline, snp_max, "GPS lock good! Push set-home button (pin:%d) anytime to start tracking \n", SetHomePin);  
               //Log.printf("GPS lock good! Push set-home button (pin:%d) anytime to start tracking\n", SetHomePin); 
               Log.print(myline);
               LogScreenPrintln("GPS lock good! Push");

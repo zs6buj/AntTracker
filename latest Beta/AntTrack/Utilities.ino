@@ -921,10 +921,8 @@ void LostPowerCheckAndRestore(uint32_t epoch_now) { // only ever called if activ
   #if (headingSource != 4)  // If NOT (Tracker GPS + Compass). Home could move constantly.
     uint16_t decay_secs = epoch_now -  epochHome();  
     if (decay_secs <= home_decay_secs) {  //  restore home if restart within decay seconds
-      RestoreHomeFromFlash();
-      
-      //Log.printf("Home data restored from NVM, decay %d secs is within limit of %d secs\n", decay_secs, home_decay_secs); 
-      
+      RestoreHomeFromFlash();     
+      Log.printf("Home data restored from NVM, decay %d secs is within limit of %d secs\n", decay_secs, home_decay_secs);     
       LogScreenPrintln("Home data restored");
       LogScreenPrintln("from Flash. Go Fly!");  
       homeInitialised=1;           

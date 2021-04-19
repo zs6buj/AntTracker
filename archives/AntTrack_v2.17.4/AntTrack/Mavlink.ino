@@ -744,7 +744,7 @@ void Write_To_FC(uint32_t msg_id) {
   #endif
 #endif  
 //********************************************************************************
-#if (Telemetry_In == 1)  ||  (Telemetry_In == 2) || (Telemetry_In == 4)        // Bluetooth or WiFi
+#if (Telemetry_In == 1)  ||  (Telemetry_In == 2)         // Bluetooth or WiFi
 void checkLinkErrors(mavlink_message_t* msgptr)   {
 
     //-- Don't bother if we have not heard from the link (and it's the proper sys/comp ids)

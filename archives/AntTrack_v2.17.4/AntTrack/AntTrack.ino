@@ -191,7 +191,6 @@
     //====================
     bool  wifiSuDone = false;
     bool  wifiSuGood = false;
-    bool  btSuGood = false;
     bool  outbound_clientGood = false;
     bool  rxFT = true;
     bool  gotRecord = false; 
@@ -276,7 +275,7 @@
     #endif
 
     // Create Bluetooth object
-    #if (Telemetry_In == 1) || (Telemetry_In == 4) 
+    #if (Telemetry_In == 1) 
       BluetoothSerial SerialBT;
     #endif
 
@@ -318,8 +317,7 @@
  uint32_t Get_Current_Average1(uint16_t);
  uint32_t epochNow(); 
  float RadToDeg(float);
- 
-// void FrSky_Receive(uint8_t);
+
  
 //***************************************************
 void setup() {
@@ -670,24 +668,20 @@ void setup() {
   #endif
   
 // ************************ Setup Bluetooth ***************************  
-  #if (defined ESP32)  && ( (Telemetry_In == 1) || (Telemetry_In == 4) )
+  #if (defined ESP32)  && (Telemetry_In == 1) 
     #ifdef BT_Master_Mode
       SerialBT.begin("AntTrack", true);            
     #else
         SerialBT.begin("AntTrack");   
     #endif 
       
-    bool bt_connected;
+      bool bt_connected;
 
-    bt_connected = SerialBT.connect(BT_Slave_Name);
-    if(bt_connected) {
-      btSuGood = true;
-      Log.println("Bluetooth connected!");
-      LogScreenPrintln("Bluetooth connected!");
-    } else {
-      Log.println("Bluetooth NOT connected!");
-      LogScreenPrintln("BT NOT connected!");    
-    }
+      bt_connected = SerialBT.connect(BT_Slave_Name);
+     if(bt_connected) {
+          Log.println("Bluetooth connected!");
+          LogScreenPrintln("Bluetooth connected!");
+      }    
       
   #endif 
   
@@ -727,14 +721,8 @@ void loop() {
       if (wifiSuGood) {     
         FrSky_Receive(9);
       }
-  #endif
-
-  #if (Telemetry_In == 4)         //   FrSky BT
-      if (btSuGood) {     
-        FrSky_Receive(9);
-      }
-  #endif
-
+    #endif
+  
   #if (Telemetry_In == 0)      // Serial according to detected protocol
     switch(protocol) {
     

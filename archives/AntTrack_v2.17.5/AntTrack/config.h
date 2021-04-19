@@ -5,7 +5,7 @@
 
 #define MAJOR_VERSION      2
 #define MINOR_VERSION      17
-#define PATCH_LEVEL        6
+#define PATCH_LEVEL        5
 
 /*
 =================================================================================================== 
@@ -25,8 +25,7 @@ V2.17.2   2021-04-02 Clean build of STM32F103, Maple Mini and Teensy 3.x code.
 V2.17.3   2021-04-07 Clean compile and test - WiFi UDP in    
           2021-04-09 ESP Servo lib, degrees not PWM like STM32
 V2.17.4   2021-04-16 Clean compile Mavlink BT input option    
-V2.17.5   2021-04-17 Alpha code - not tested:  Add FrSky BT input option       
-V2.17.6   2021-04-19 For Frsky input only, hbGood = gpsGood                              
+V2.17.5   2021-04-17 Alpha code - not tested:  Add FrSky BT input option                                     
                     
 */
 //================================== Please select your options below before compiling ==================================

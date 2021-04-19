@@ -53,7 +53,7 @@
     uint32_t fr_rssi; 
 
 
-#if (Telemetry_In == 0) || (Telemetry_In == 3)   //  FrSky Serial or UDP
+#if (Telemetry_In == 0) || (Telemetry_In == 3) ||  (Telemetry_In == 4)    //  FrSky (Serial, UDP or BT)
 
   bool lonGood = false;
   bool latGood = false;
@@ -141,18 +141,60 @@
         Frs_Receive_Serial(proto);
       #endif
    
-      #if (Telemetry_In == 3)         //   FrSky UDP 
+      #if (defined wifiBuiltin) &&  (Telemetry_In == 3)  //   FrSky UDP 
         Frs_Receive_UDP();
       #endif
+      
+      #if (defined btBuiltin) &&  (Telemetry_In == 4)   //   FrSky BT 
+        Frs_Receive_BT();
+      #endif
+      
     }
     //=======================================================================
-    #if (Telemetry_In == 3)          // UDP
+    #if (defined wifiBuiltin) &&  (Telemetry_In == 3)          // UDP
     void Frs_Receive_UDP() {  
 
       uint16_t len = frs_udp_object.parsePacket();   // packet to in buffer
       if (len == 0) return;
       for (int i = 0 ; i < len ; i++) {
         inBuf[i] = frs_udp_object.read();
+        //snprintf(myline, snp_max, "byte:%X  i:%d\n", inBuf[i], i);
+        //Log.print(myline);
+      }
+  
+      //Log.print("A " );  PrintFrsBuffer(&inBuf[0], len-fr_offset); 
+    
+      if (len == 12) { // S.Port (0x7E + 0x1B) + (0x7E + 0x1B) + frame
+        fr_offset = 4;
+      } else
+      if (len == 10) {  // S.Port 0x7E + 0x1B) + frame
+        fr_offset = 2;
+      } else
+      if (len == 8) {  // F.Port frame
+        fr_offset = 0;
+      }
+      //snprintf(myline, snp_max, "B ");  PrintFrsBuffer(&inBuf[fr_offset], len-fr_offset);
+      //Log.print(myline);
+      bool mycrcGood = crcGood(&inBuf[fr_offset], len-fr_offset); 
+
+      if (mycrcGood) {  
+        frGood = true;
+        frGood_millis = millis();  
+        #if defined Debug_All || defined Debug_FrSky_Messages_UDP
+          Log.print("CRC Good C "); PrintFrsBuffer(&inBuf[fr_offset], len-fr_offset);
+        #endif 
+        Frs_Decode(&inBuf[fr_offset]);   
+      }
+    }
+    #endif
+    //======================================================================= 
+    #if (defined btBuiltin) &&  (Telemetry_In == 4)          // BT Classic
+    void Frs_Receive_BT() {  
+
+      uint16_t len = SerialBT.available();    // packet to in buffer
+      if (len == 0) return;
+      for (int i = 0 ; i < len ; i++) {
+        inBuf[i] = SerialBT.read();
         //snprintf(myline, snp_max, "byte:%X  i:%d\n", inBuf[i], i);
         //Log.print(myline);
       }
@@ -939,7 +981,7 @@
                    
         }
 
-        gpsGood = hdopGood & lonGood & latGood & altGood & hdgGood ; 
+        gpsGood = hbGood = hdopGood & lonGood & latGood & altGood & hdgGood ; 
         if (headingSource==1 && (gpsGood) && (!homeInitialised) && (!homSaved)) AutoStoreHome();  // Only need this when headingSource is GPS    
 
     }

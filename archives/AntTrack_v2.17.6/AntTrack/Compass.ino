@@ -9,6 +9,8 @@
   Adafruit_HMC5883_Unified mag = Adafruit_HMC5883_Unified(12345);
  #elif  defined QMC5883L  
   // no libs - we do it the long way 
+  // Datasheet suggests this for chip startup.
+
  #endif
 
 
@@ -75,39 +77,27 @@ bool initialiseCompass() {
 //====================================================
 float getTrackerboxHeading() {
   float fHeading = 0.0;
-
-  #if defined HMC5883L
-    sensors_event_t event; 
-    mag.getEvent(&event);
-    float val = 180/M_PI * atan2(event.magnetic.y, event.magnetic.x);  // Degrees   
-    
-  #elif defined QMC5883L 
-    int16_t x,y,z;           // Raw compass output values
-    int16_t offx = 0;        //calibration offsets (future)
-    int16_t offy = 0;  
-    if (getQMC5883L(&x, &y, &z) ) {
-      float val = 180/M_PI * atan2((float)(x-offx),(float)(y-offy));  // Degrees    
-  #endif
-      
-      val += DECLINATION;  // Add magnetic declination
-      fHeading = wrap360(val);
+  int16_t x,y,z;           // Raw compass output values.
+  int16_t offx = 0;   //calibration offsets (future)
+  int16_t offy = 0;  
   
-      #if defined Debug_All || defined Debug_boxCompass
-        // Display the results (magnetic vector values are in micro-Tesla (uT)) */
-        // Log.print("x: "); Log.print(x); Log.print("  ");
-        // Log.print("y: "); Log.print(y); Log.print("  ");
-        // Log.print("z: "); Log.print(z); Log.print("  ");Log.println("uT");
-        Log.print("Heading = "); Log.println(fHeading,0); 
-      #endif 
-        
-      return fHeading;   
-
-  #if defined QMC5883L     
-    } else {
-      Log.println("Compass not ready ");
-      return 0.0;
-    }
-  #endif    
+  if (getQMC5883L(&x, &y, &z) ) {
+    float val = 180/M_PI * atan2((float)(x-offx),(float)(y-offy));
+    val += DECLINATION;  // Add magnetic declination
+    fHeading = wrap360(val);
+  
+    #if defined Debug_All || defined Debug_boxCompass
+      // Display the results (magnetic vector values are in micro-Tesla (uT)) */
+      // Log.print("x: "); Log.print(x); Log.print("  ");
+      // Log.print("y: "); Log.print(y); Log.print("  ");
+      // Log.print("z: "); Log.print(z); Log.print("  ");Log.println("uT");
+      Log.print("Heading = "); Log.println(fHeading,0); 
+    #endif   
+    return fHeading;   
+  } else {
+    Log.println("Compass not ready ");
+    return 0.0;
+  }
 }
 //====================================================
 

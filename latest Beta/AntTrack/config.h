@@ -5,7 +5,7 @@
 
 #define MAJOR_VERSION      2
 #define MINOR_VERSION      17
-#define PATCH_LEVEL        2
+#define PATCH_LEVEL        3
 
 /*
 =================================================================================================== 
@@ -21,7 +21,8 @@ V2.17.0   2021-03-16 Add "GPS on the Tracker" option, aka movable tracker.
           2021-03-24 Beta. Support dynamic (moving) tracker with mag and GPS on the box. 
                      Bug fixes.  
 V2.17.1   2021-03-29 Rationalise patches and simplify servo code  
-V2.17.2   2021-04-02 Clean build of STM32F103, Maple Mini and Teensy 3.x code.                                 
+V2.17.2   2021-04-02 Clean build of STM32F103, Maple Mini and Teensy 3.x code.   
+V2.17.3   2021-05-10 Declare WiFi.onEvent() only when WiFi input option selected                           
                     
 */
 // ******************************* Please select your options here before compiling *******************************
@@ -213,7 +214,7 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort  FrSky +1
   uint8_t headingSource = Heading_Source;
  
   #if (Target_Board == 4) 
-    #error ESP8266 might work but you need to work out the detail yourself
+    #error ESP8266 should work but you need to work out the library details yourself
   #endif 
  
   #if (Target_Board != 3) 

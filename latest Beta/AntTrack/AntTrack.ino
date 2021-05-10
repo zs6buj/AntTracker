@@ -324,8 +324,8 @@ void setup() {
   snprintf(myline, snp_max, " version:%d.%02d.%02d\n", MAJOR_VERSION,  MINOR_VERSION, PATCH_LEVEL);
   Log.print(myline);
 
-  #if (defined ESP32)   && ( (Telemetry_In == 2) || (Telemetry_In == 3)) && (defined Debug_WiFi)
-    WiFi.onEvent(WiFiEventHandler);
+  #if ((defined ESP32) || (defined ESP8266)) && (defined Debug_WiFi)
+   WiFi.onEvent(WiFiEventHandler);   
   #endif  
  
   #if ((defined ESP32) || (defined ESP8266)) && (defined Debug_SRAM)

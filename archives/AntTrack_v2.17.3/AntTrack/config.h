@@ -5,7 +5,7 @@
 
 #define MAJOR_VERSION      2
 #define MINOR_VERSION      17
-#define PATCH_LEVEL        7
+#define PATCH_LEVEL        3
 
 /*
 =================================================================================================== 
@@ -23,12 +23,7 @@ V2.17.0   2021-03-16 Add "GPS on the Tracker" option, aka movable tracker.
 V2.17.1   2021-03-29 Rationalise patches and simplify servo code  
 V2.17.2   2021-04-02 Clean build of STM32F103, Maple Mini and Teensy 3.x code.   
 V2.17.3   2021-04-07 Clean compile and test - WiFi UDP in    
-          2021-04-09 ESP Servo lib, degrees not PWM like STM32
-V2.17.4   2021-04-16 Clean compile Mavlink BT input option    
-V2.17.5   2021-04-17 Alpha code - not tested:  Add FrSky BT input option       
-V2.17.6   2021-04-19 For Frsky input only, hbGood = gpsGood    
-V2.17.7   2021-04-19 pan-sattan : #ReverseElevation typo 
-                     Complete coding for HMC5883L magnetometer  
+          2021-04-09 ESP Servo lib, degrees not PWM like STM32                           
                     
 */
 //================================== Please select your options below before compiling ==================================
@@ -40,10 +35,9 @@ V2.17.7   2021-04-19 pan-sattan : #ReverseElevation typo
 // Choose one only of these input channels 
 // How does telemetry enter the tracker?
 #define Telemetry_In  0    // Serial Port (default) - all protocols        
-//#define Telemetry_In  1    // Mavlink BlueTooth Classic- ESP32 
-//#define Telemetry_In  2    // Mavlink WiFi - ESP only
-//#define Telemetry_In  3    // FrSky UDP - ESP only
-//#define Telemetry_In  4    // FrSky BT - ESP32 only
+//#define Telemetry_In  1    // BlueTooth Classic - ESP32 and Mavlink only
+//#define Telemetry_In  2    // Mavlink WiFi - ESP32 only
+//#define Telemetry_In  3    // FrSky UDP - ESP32 only
 
 
 
@@ -114,8 +108,8 @@ const char* BT_Slave_Name   =   "Crossfire 0277";  // Example
 //=====================   S E L E C T   E S P   B O A R D   V A R I A N T   ===================
 
 //#define ESP32_Variant     1    //  ESP32 Dev Module - there are several sub-variants that work
-//#define ESP32_Variant     4    //  Heltec Wifi Kit 32 
-#define ESP32_Variant     5    //  LILYGO® TTGO T-Display ESP32 1.14" ST7789 Colour LCD
+#define ESP32_Variant     4    //  Heltec Wifi Kit 32 
+//#define ESP32_Variant     5    //  LILYGO® TTGO T-Display ESP32 1.14" ST7789 Colour LCD
 //#define ESP32_Variant     6    // LILYGO® TTGO T2 ESP32 OLED Arduino IDE board = "ESP32 Dev Module"
 //#define ESP32_Variant     7    // ESP32 Dev Module with ILI9341 2.8" colour TFT SPI 240x320
 //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -193,7 +187,7 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort,  FrSky +1
     #define wifiBuiltin   //  for this feature we need wifi support compiled in
   #endif    
 
-   #if (defined ESP32 || defined ESP8266) && ( (Telemetry_In == 1) || (Telemetry_In == 4) )
+   #if (defined ESP32 || defined ESP8266) && (Telemetry_In == 1)
     #define btBuiltin   //  for this feature we need bluetooth support compiled in
   #endif
 
@@ -680,9 +674,9 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort,  FrSky +1
   //                     B L U E T O O T H   S U P P O R T -  E S P 3 2  O n l y
   //================================================================================================= 
 
-#if (Telemetry_In == 1) || (Telemetry_In == 4)     // Bluetooth
+#if (Telemetry_In == 1)     // Bluetooth
 
-  #if (defined ESP32) 
+  #if (defined ESP323) 
 
     #define BT_Setup   // so that WiFi setup does not defien these shared variables again
     // Define link variables

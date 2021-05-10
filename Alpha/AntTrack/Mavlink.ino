@@ -121,13 +121,19 @@ bool      rssiGood = false;
 bool      rssi35 = false;
 bool      rssi65 = false;
 bool      rssi109 = false;
-//***************************************************
+
+//=====================Forward declarations =================
+
+ void PrintRemoteIP();
+ void checkLinkErrors(mavlink_message_t* msgptr);
+ 
+//===========================================================
+
 uint16_t len;
 void Mavlink_Receive() { 
 
   mavlink_status_t status;
   gotRecord = false;
-  
   #if (Telemetry_In == 0)              // Serial    
     while(inSerial.available()) {
       uint8_t c = inSerial.read();
@@ -365,13 +371,13 @@ void Mavlink_Receive() {
           
           ap33_lat = mavlink_msg_global_position_int_get_lat(&msg);             // Latitude, expressed as degrees * 1E7
           ap33_lon = mavlink_msg_global_position_int_get_lon(&msg);             // Pitch angle (rad, -pi..+pi)
-          ap33_amsl = mavlink_msg_global_position_int_get_alt(&msg);          // x Supposedly altitude above mean sea level (millimeters)
+          ap33_amsl = mavlink_msg_global_position_int_get_alt(&msg);            // x Supposedly altitude above mean sea level (millimeters)
           ap33_alt_ag = mavlink_msg_global_position_int_get_relative_alt(&msg); // Altitude above ground (millimeters)
           ap33_vx = mavlink_msg_global_position_int_get_vx(&msg);               //  Ground X Speed (Latitude, positive north), expressed as m/s * 100
           ap33_vy = mavlink_msg_global_position_int_get_vy(&msg);               //  Ground Y Speed (Longitude, positive east), expressed as m/s * 100
           ap33_vz = mavlink_msg_global_position_int_get_vz(&msg);               // Ground Z Speed (Altitude, positive down), expressed as m/s * 100
           ap33_hdg = mavlink_msg_global_position_int_get_hdg(&msg);             // Vehicle heading (yaw angle) in degrees * 100, 0.0..359.99 degrees          ap_ap_amsl = mavlink_msg_attitude_get_yaw(&msg);                // Yaw angle (rad, -pi..+pi)
-          gpsGood_millis = millis();                                               // Time of last good GPS packet
+          gpsGood_millis = millis();                                            // Time of last good GPS packet
           #ifdef QLRS
             ap33_hdg = ap33_hdg * 100;  //  Compensate for QLRS heading already divided by 100
           #endif
@@ -732,13 +738,13 @@ void Write_To_FC(uint32_t msg_id) {
     bool endOK = mav_udp_object.endPacket();
  //   if (!endOK) {
  //       Log.printf("msgSent=%d   endOK=%d\n", msgSent, endOK);
-  }
+ // }
     return msgSent;
   }
   #endif
 #endif  
 //********************************************************************************
- #if (Telemetry_In == 1)  ||  (Telemetry_In == 2)         // Bluetooth or WiFi
+#if (Telemetry_In == 1)  ||  (Telemetry_In == 2) || (Telemetry_In == 4)        // Bluetooth or WiFi
 void checkLinkErrors(mavlink_message_t* msgptr)   {
 
     //-- Don't bother if we have not heard from the link (and it's the proper sys/comp ids)

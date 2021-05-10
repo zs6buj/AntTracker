@@ -981,7 +981,7 @@
                    
         }
 
-        gpsGood = hbGood = hdopGood & lonGood & latGood & altGood & hdgGood ; 
+        gpsGood = hdopGood & lonGood & latGood & altGood & hdgGood ; 
         if (headingSource==1 && (gpsGood) && (!homeInitialised) && (!homSaved)) AutoStoreHome();  // Only need this when headingSource is GPS    
 
     }

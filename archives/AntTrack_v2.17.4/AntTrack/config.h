@@ -5,7 +5,7 @@
 
 #define MAJOR_VERSION      2
 #define MINOR_VERSION      17
-#define PATCH_LEVEL        2
+#define PATCH_LEVEL        4
 
 /*
 =================================================================================================== 
@@ -21,18 +21,22 @@ V2.17.0   2021-03-16 Add "GPS on the Tracker" option, aka movable tracker.
           2021-03-24 Beta. Support dynamic (moving) tracker with mag and GPS on the box. 
                      Bug fixes.  
 V2.17.1   2021-03-29 Rationalise patches and simplify servo code  
-V2.17.2   2021-04-02 Clean build of STM32F103, Maple Mini and Teensy 3.x code.                                 
+V2.17.2   2021-04-02 Clean build of STM32F103, Maple Mini and Teensy 3.x code.   
+V2.17.3   2021-04-07 Clean compile and test - WiFi UDP in    
+          2021-04-09 ESP Servo lib, degrees not PWM like STM32
+V2.17.4   2021-04-16 Clean compile BT input option                                         
                     
 */
-// ******************************* Please select your options here before compiling *******************************
+//================================== Please select your options below before compiling ==================================
+
 #define Device_sysid     251                     // Our Mavlink Identity - APM FC is 1, Mission Planner is 255, QGC default is 0 
 #define Device_compid    MAV_COMP_ID_PERIPHERAL  // 158 Generic autopilot peripheral - APM FC is 1, MP is 190, QGC is  https://mavlink.io/en/messages/common.html
 
 
 // Choose one only of these input channels 
 // How does telemetry enter the tracker?
-#define Telemetry_In  0    // Serial Port (default) - all protocols        
-//#define Telemetry_In  1    // BlueTooth Classic - ESP32 and Mavlink only
+//#define Telemetry_In  0    // Serial Port (default) - all protocols        
+#define Telemetry_In  1    // BlueTooth Classic - ESP32 and Mavlink only
 //#define Telemetry_In  2    // Mavlink WiFi - ESP32 only
 //#define Telemetry_In  3    // FrSky UDP - ESP32 only
 
@@ -62,50 +66,60 @@ V2.17.2   2021-04-02 Clean build of STM32F103, Maple Mini and Teensy 3.x code.
 const char* BT_Slave_Name   =   "Crossfire 0277";  // Example
 
 
-// Un-comment or adjust the Servo options below:
-
-//#define Az_Servo_360         // Means the azimuth servo can point in a 360 deg circle, elevation servo 90 deg
-                               // Default (comment out #define above) is 180 deg azimuth and 180 deg elevation 
-                         
-#if defined Az_Servo_360       // Set the degree range of the servos here
-  uint16_t minAz = 0;           // Az lower limit in degrees
-  uint16_t maxAz = 359;         // Az upper limit in degrees
-  uint16_t minEl = 0;           // El lower limit in degrees
-  uint16_t maxEl = 90;          // El upper limit in degrees
-#else
-  uint16_t minAz = 0;     
-  uint16_t maxAz = 180;    
-  uint16_t minEl = 0;
-  uint16_t maxEl = 90;
-#endif 
-
-  //  Note 1: My 180 servos have a PWM range of 700 through 2300 microseconds 
-  //  Your's may differ 
-  //  Note 2: Preferably adjust the limits of movement of your servos with degree limits above, not PWM
-  
-  uint16_t maxAzPWM = 2400;  // Set the full PWM range of the servos here
-  uint16_t minAzPWM = 600;
-  uint16_t maxElPWM = 2400;
-  uint16_t minElPWM = 600;  
-
-                     
 //#define QLRS           // Un-comment if you use the QLRS variant of Mavlink 
 
-//*********************************************************************************************
-//**********************   S E L E C T   E S P   B O A R D   V A R I A N T   ******************
 
-#define ESP32_Variant     1    //  ESP32 Dev Module - there are several sub-variants that work
-//#define ESP32_Variant     4    //  Heltec Wifi Kit 32 
+//=========================================================================================================
+//                                    S E R V O   S E T T I N G S
+//=========================================================================================================
+
+  //#define Az_Servo_360         // Means the azimuth servo can point in a 360 deg circle, elevation servo 90 deg
+                                 // Default (comment out #define above) is 180 deg azimuth and flip over 180 deg elevation 
+
+  // Set the degree range of the servos here. Do not adjust servo mechanical limits here.                         
+  #if defined Az_Servo_360   // 1 x 360, 1 x 90 (or 180) servos  
+    int16_t minAz = 0;          // Az lower limit in degrees, left of tracker facing flying field
+    int16_t maxAz = 359;        // Az upper limit in degrees
+    int16_t minEl = 0;          // El lower limit in degrees, horizontal 
+    int16_t maxEl = 90;         // El upper limit in degrees, straight up
+  #else                      // 2 x 180 deg servos
+    int16_t minAz = 0;          // Az lower limit in degrees, left of tracker facing flying field
+    int16_t maxAz = 180;        // Az upper limit in degrees, right of tracker facing flying field
+    int16_t minEl = 0;          // El lower limit in degrees, horizontal and forward
+    int16_t maxEl = 180;        // El upper limit in degrees, horizontal and rearward
+  #endif 
+
+  // Sometimes the mechanical movement of a servo is reversed due to the orientation of its mounting
+  // Its movement may be reversed here to compensate
+  #define ReverseAzimuth          // my azimuth servo has a reversed action
+  //#define ReverseElevation
+
+
+  // Default values for SG90 servos; 500 and 2400
+  // My 180 deg servos have a PWM range of 700 through 2300 microseconds. Your's may differ. 
+  // ADJUST THE MECHANICAL LIMITS OF MOVEMENT OF YOUR SERVOS HERE BELOW
+
+  uint16_t minAzPWM = 625;   // right (because mine is reversed)
+  uint16_t maxAzPWM = 2265;  // left 
+  uint16_t minElPWM = 565;   // front
+  uint16_t maxElPWM = 2257;  // back
+
+
+//=============================================================================================
+//=====================   S E L E C T   E S P   B O A R D   V A R I A N T   ===================
+
+//#define ESP32_Variant     1    //  ESP32 Dev Module - there are several sub-variants that work
+#define ESP32_Variant     4    //  Heltec Wifi Kit 32 
 //#define ESP32_Variant     5    //  LILYGO® TTGO T-Display ESP32 1.14" ST7789 Colour LCD
 //#define ESP32_Variant     6    // LILYGO® TTGO T2 ESP32 OLED Arduino IDE board = "ESP32 Dev Module"
 //#define ESP32_Variant     7    // ESP32 Dev Module with ILI9341 2.8" colour TFT SPI 240x320
-//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-//=================================================================================================
+//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//=============================================================================================
 //                            D E F A U L T   W I F I   S E T T I N G S   
-//=================================================================================================
+//=============================================================================================
 
 #define Start_WiFi                              // Start WiFi at startup, override startWiFi pin
 
@@ -113,13 +127,13 @@ const char* BT_Slave_Name   =   "Crossfire 0277";  // Example
 #define APssid               "MavToPassthru"    // The AP SSID that we advertise         ====>
 #define APpw                 "password"         // Change me! Must be >= 8 chars
 #define APchannel            9                  // The wifi channel to use for our AP
-#define STAssid              "OmegaOffice"      // Target AP to connect to (in STA mode) <====
+#define STAssid              "MavToPassthru"      // Target AP to connect to (in STA mode) <====
 #define STApw                "password"         // Target AP password (in STA mode). Must be >= 8 chars      
 
 // Choose one default mode for ESP only - AP means advertise as an access point (hotspot). STA means connect to a known host
 //#define WiFi_Mode   1  //AP            
-//#define WiFi_Mode   2  // STA
-#define WiFi_Mode   3  // (STA>AP) STA failover to AP 
+#define WiFi_Mode   2  // STA
+//#define WiFi_Mode   3  // (STA>AP) STA failover to AP 
 
 // Choose one default protocol - for ESP only
 //#define WiFi_Protocol 1    // TCP/IP
@@ -133,8 +147,8 @@ const char* BT_Slave_Name   =   "Crossfire 0277";  // Example
 
 uint16_t  TCP_localPort = 5760;     
 uint16_t  TCP_remotePort = 5760;    
-uint16_t  UDP_localPort = 14550;    // Mav readPort  Frsky +1
-uint16_t  UDP_remotePort = 14555;   // Mav sendPort  FrSky +1
+uint16_t  UDP_localPort = 14550;    // Mav readPort,  Frsky +1
+uint16_t  UDP_remotePort = 14555;   // Mav sendPort,  FrSky +1
 
 
 //=========================== Auto Determine Target Platform =====================================
@@ -154,11 +168,11 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort  FrSky +1
 #elif defined (_BOARD_MAPLE_MINI_H_)
   // LeafLabs high density
   #define Target_Board   2      // Maple_Mini 
-  #define STM32F103C
+  #define MAPLE_MINI
 #elif defined STM32_HIGH_DENSITY
   // LeafLabs high density
   #define Target_Board   2      // Maple_Mini 
-  #define STM32F103C
+  #define MAPLE_MINI
 #elif defined ESP32
   #define Target_Board   3      // Espressif ESP32 Dev Module
 
@@ -213,12 +227,12 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort  FrSky +1
   uint8_t headingSource = Heading_Source;
  
   #if (Target_Board == 4) 
-    #error ESP8266 might work but you need to work out the detail yourself
+    #error ESP8266 should work but you need to work out the detail yourself
   #endif 
  
   #if (Target_Board != 3) 
      #if (Telemetry_In  == 1) || (Telemetry_In  == 2) 
-       #error WiFi or Bluetooth works only on an ESP32 board
+       #error WiFi or Bluetooth works only on an ESP32 board, rather select serial in
      #endif  
   #endif
 
@@ -236,7 +250,7 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort  FrSky +1
   #endif 
 //================================= P L A T F O R M   D E P E N D E N T   S E T U P S =============================
 
-//=======================================* LEDS, OLED SSD1306, rx pin =====================================
+//======================================= LEDS, OLED SSD1306, rx pin =====================================
 
   
 #if (Target_Board == 0)           //   (TEENSY3X) 
@@ -329,17 +343,17 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort  FrSky +1
     */
   #endif
   //=========================================================================   
-  #if (ESP32_Variant == 4)          // Heltec Wifi Kit 32 (NOTE! 8MB) 
-  uint8_t in_rxPin =        27;  // uart1
+  #if (ESP32_Variant == 4)       // Heltec Wifi Kit 32 (NOTE! 8MB) 
+  uint8_t in_rxPin =        18;  // uart1
   #define in_txPin          17 
   uint8_t gps_rxPin =       13;  // uart2 for tracker box GPS if applicable
   #define gps_txPin         14    
-  bool rxInvert = true;            // ONLY FOR FrSky S.Port, NOT F.Port, NOT MAVLINK
-  #define SetHomePin        18    
-  #define StatusLed         13  // Off=No good GPS yet, flashing=good GPS but home not set yet, solid = ready to track
+  bool rxInvert = true;          // ONLY FOR FrSky S.Port, NOT F.Port, NOT MAVLINK
+  #define SetHomePin        23    
+  #define StatusLed         19   // Off=No good GPS yet, flashing=good GPS but home not set yet, solid = ready to track
   #define BuiltinLed        99 
-  #define azPWM_Pin         32  // azimuth servo (can't be 34,35,36,39 because input only !!)
-  #define elPWM_Pin         33  // elevation servo(can't be 34,35,36,39 because input only !!)
+  #define azPWM_Pin         32   // azimuth servo (can't be 34,35,36,39 because input only !!)
+  #define elPWM_Pin         33   // elevation servo(can't be 34,35,36,39 because input only !!)
 
     #if !defined displaySupport       // I2C OLED board is built into Heltec WiFi Kit 32
       #define displaySupport
@@ -352,8 +366,8 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort  FrSky +1
     #define Pup           99        // Board Button to scroll the display up
     #define Pdn           99        // Board Button to scroll the display down
     #define Pinfo         99        // 02 Digital pin to toggle information/log page
-    #define Tup           33        // 33 Touch pin to scroll the display up
-    #define Tdn           32        // 32 Touch pin to scroll the display down 
+    #define Tup           12        // 33 Touch pin to scroll the display up
+    #define Tdn           11        // 32 Touch pin to scroll the display down 
     #define Tinfo         02        // 02 Touch pin to toggle information/log page
     
     #define SDA           04        // I2C OLED board and/or Compass
@@ -401,8 +415,8 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort  FrSky +1
     
     #define SCR_ORIENT     1        // 1 Landscape or 0 Portrait
  
-    #define SDA           21        // I2C TFT board and/or Compass
-    #define SCL           22        
+    #define SDA           21        // I2C TFT board and/or Compass (grey wire)
+    #define SCL           22        // I2C TFT board and/or Compass (brown wire)
     #define display_i2c_addr      0x3C     
     #define compass_i2c_addr      0x1E   // 0x1E for HMC5883L   0x0D for QMC5883
   #endif
@@ -480,7 +494,7 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort  FrSky +1
 #endif
 
   //=================================================================================================   
-  //                      D I S P L A Y   S U P P O R T    E S P  O N L Y - for now
+  //                                D I S P L A Y   S U P P O R T   
   //=================================================================================================  
 
   #if defined displaySupport
@@ -663,7 +677,7 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort  FrSky +1
 
 #if (Telemetry_In == 1)     // Bluetooth
 
-  #if (defined ESP323) 
+  #if (defined ESP32) 
 
     #define BT_Setup   // so that WiFi setup does not defien these shared variables again
     // Define link variables
@@ -785,6 +799,7 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort  FrSky +1
 //#define Debug_boxCompass    
                         
 //#define Debug_Input
+
 //#define Debug_Mav_Heartbeat  
 //#define Debug_Mav_GPS   
 //#define Debug_Mav_Buffer  
@@ -802,7 +817,6 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort  FrSky +1
 //#define Debug_CRC
 //#define Debug_FrSky_Messages_UDP
 //#define Debug_FrSky_Messages
-//#define Debug_FrSky
 //#define Debug_FrPort_Stream
 //#define Debug_FPort_Buffer
 //#define Debug_boxGPS             // the GPS on the tracker box
@@ -810,6 +824,7 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort  FrSky +1
 
 #define Report_Packetloss   2     // F.Port packet loss every n minutes
 
+//#define Debug_Our_FC_Heartbeat
 // *****************************************************************************************************************
 
 /*
@@ -838,7 +853,7 @@ v2.15 2020-10-12 Proper TCP client added for outgoing (to telemetry source) conn
                  Display scrolling added
                  TCP in tests good.     
 v2.15.3 2020-11-08 Fix 10 to power calc for FrSky X.  
-v2.15.4 2020-11-12 Patch by mric3412 (PositionServos bug in some home heading cases) properly included. 
+v2.15.4 2020-11-12 Patch by mric3412 (pointServos bug in some home heading cases) properly included. 
 v2.15.5 2021-02-01 Add hardware signal inversion for S.Port input. Notified by @mello73.   
 v2.16.0   2021-02-22 Adopt GitHub Tags
           2021-02-27 Add HUD display. Add FrSky UDP telemetry in

@@ -78,7 +78,7 @@ void moveServos(uint16_t az, uint16_t el) {
       az = 180 - az;
     #endif 
     #if defined ReverseElevation    
-      el = 180 - el;
+      elt = 180 - el;
     #endif     
   #endif
   

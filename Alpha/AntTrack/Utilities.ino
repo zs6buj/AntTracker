@@ -13,7 +13,7 @@
   #if defined displaySupport  
     void HandleDisplayButtons() {      
 
-      if (millis() - last_log_millis > 15000) { // after 15 seconds default to flight info screen
+      if (millis() - last_log_millis > 30000) { // after 30 seconds default to flight info screen
         last_log_millis = millis();             // and enable toggle button again
         show_log = false;
       }
@@ -921,10 +921,10 @@ void LostPowerCheckAndRestore(uint32_t epoch_now) { // only ever called if activ
   #if (headingSource != 4)  // If NOT (Tracker GPS + Compass). Home could move constantly.
     uint16_t decay_secs = epoch_now -  epochHome();  
     if (decay_secs <= home_decay_secs) {  //  restore home if restart within decay seconds
-      RestoreHomeFromFlash();
-      
-      //Log.printf("Home data restored from NVM, decay %d secs is within limit of %d secs\n", decay_secs, home_decay_secs); 
-      
+      RestoreHomeFromFlash();     
+      snprintf(myline, snp_max, "Home data restored from NVM, decay %d secs is within limit of %d secs\n", decay_secs, home_decay_secs); 
+      Log.print(myline);     
+      //Log.printf("Home data restored from NVM, decay %d secs is within limit of %d secs\n", decay_secs, home_decay_secs);     
       LogScreenPrintln("Home data restored");
       LogScreenPrintln("from Flash. Go Fly!");  
       homeInitialised=1;           
@@ -1070,7 +1070,7 @@ void RestoreHomeFromFlash() {
         #if (Telemetry_In == 2)                // Mavlink 
           #if (WiFi_Protocol == 2)         // Mav UDP 
             mav_udp_object.begin(UDP_localPort);
-            Log.printf("Mav UDP instance started, listening on IP %s, UDP port %d\n", localIP.toString().c_str(), UDP_localPort);
+            Log.printf("Mav UDP instance started, listening on IP %s, UDP local port %d\n", localIP.toString().c_str(), UDP_localPort);
             LogScreenPrint("UDP port = ");  LogScreenPrintln(String(UDP_localPort));
           #endif
         #endif
@@ -1102,20 +1102,20 @@ void RestoreHomeFromFlash() {
       LogScreenPrintln("WiFi AP SSID =");
       LogScreenPrintln(String(APssid));
 
-        #if (WiFi_Protocol == 1)   // TCP                                                
-          #if (Telemetry_In  == 2)     // We are a client and need to connect to a server
+        #if (WiFi_Protocol == 1)              // TCP                                                
+          #if (Telemetry_In  == 2)            // We are a client and need to connect to a server
              outbound_clientGood = NewOutboundTCPClient();
           #endif
         #endif
         #if (Telemetry_In == 2)                // Mavlink 
-          #if (WiFi_Protocol == 2)         // Mav UDP 
+          #if (WiFi_Protocol == 2)             // Mav UDP 
             mav_udp_object.begin(UDP_localPort);
             Log.printf("Mav UDP instance started, listening on IP %s, UDP port %d\n", localIP.toString().c_str(), UDP_localPort);
             LogScreenPrint("UDP port = ");  LogScreenPrintln(String(UDP_localPort));
           #endif
         #endif
 
-        #if (Telemetry_In == 3)               // FrSky
+        #if (Telemetry_In == 3)                // FrSky
           frs_udp_object.begin(UDP_localPort);
           Log.printf("Frs UDP instance started, listening on IP %s, UDP port %d\n", localIP.toString().c_str(), UDP_localPort);
           LogScreenPrint("UDP port = ");  LogScreenPrintln(String(UDP_localPort));       
@@ -1204,7 +1204,7 @@ uint32_t Get_Current_Average1(uint16_t cA)  {   // in 100*milliamperes (1 = 100 
       return num;  
   } 
 //=================================================================================================  
-float RadToDeg (float _Rad) {
+float RadToDeg(float _Rad) {
   return _Rad * 180 / PI;  
 } 
 //=================================================================================================  

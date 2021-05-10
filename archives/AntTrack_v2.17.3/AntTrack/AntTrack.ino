@@ -143,7 +143,7 @@
     uint32_t gpsBaud = 0;   // Tracker attached GPS, not flight GPS
     uint8_t  protocol = 0;
 
-    const uint8_t snp_max = 70;
+    const uint8_t snp_max = 74;
     char          myline[snp_max];       // for use with snprintf() formatting of display line
 
     // ************************************
@@ -279,20 +279,22 @@
       BluetoothSerial SerialBT;
     #endif
 
+
 //=================================================================================================   
 //                     F O R W A R D    D E C L A R A T I O N S
 //=================================================================================================
 
-
-
- #if (defined ESP32) || (defined ESP8266)
    #if (defined displaySupport)
      void PaintDisplay(uint8_t, last_row_t);
      void Scroll_Display(scroll_t);
-     void SetupLogDisplayStyle();     
+     void SetupLogDisplayStyle();    
+     void LogScreenPrintln(String S);   
+     void LogScreenPrint(String S);     
      void DisplayFlightInfo();
-         
+     void HandleDisplayButtons();         
    #endif  
+   
+ #if (defined ESP32) || (defined ESP8266)   
    void IRAM_ATTR gotButtonDn();
    void IRAM_ATTR gotButtonUp();
    void IRAM_ATTR gotWifiButton();
@@ -301,6 +303,8 @@
    bool NewOutboundTCPClient();  
  #endif
 
+ void pointServos(uint16_t, uint16_t, uint16_t);
+ void Send_FC_Heartbeat();
  bool PacketGood();
  void StoreEpochPeriodic();
  void SaveHomeToFlash();
@@ -311,7 +315,10 @@
  void LostPowerCheckAndRestore(uint32_t);
  uint32_t Get_Volt_Average1(uint16_t);  
  uint32_t Get_Current_Average1(uint16_t);
+ uint32_t epochNow(); 
+ float RadToDeg(float);
 
+ 
 //***************************************************
 void setup() {
   Log.begin(115200);
@@ -501,18 +508,19 @@ void setup() {
 
   // =============================== Setup SERVOS  ==================================
   
-  #if (defined TEENSY3X)      // NOTE: myservo.attach(pin, 1000, 2000);
-    azServo.attach(azPWM_Pin, minAz, maxAz); 
-    elServo.attach(elPWM_Pin, minEl, maxEl);     
+  #if (defined TEENSY3X) || (defined ESP32) || (defined ESP8266)     // NOTE: myservo.attach(pin, 1000, 2000);
+    azServo.attach(azPWM_Pin, minAzPWM, maxAzPWM); 
+    elServo.attach(elPWM_Pin, minElPWM, maxElPWM);     
   #else
     azServo.attach(azPWM_Pin);
     elServo.attach(elPWM_Pin);
   #endif
-  PositionServos(90, 0, 90);   // Intialise servos to az=90, el=0, hom.hdg = 90;
+  
+  moveServos(90, 0);   // Intialise servos to az=90 (straight ahead) , el=0 (horizontal)
 
   #if defined Debug_Servos  
-    TestServos();   // Uncomment this code to observe how well your servos reach their specified limits
-                    // Fine tune MaxPWM and MinPWM in Servos module
+    Log.println("Testing Servos");
+    TestServos();    // Fine tune MaxPWM and MinPWM in Config tab
   #endif  
                  
 
@@ -537,7 +545,7 @@ void setup() {
 
   #if (Telemetry_In == 0)    //  Serial telemetry in
   
-      // determine polarity of the telemetry - idle high (normal) or idel low (like sport)
+      // determine polarity of the telemetry - idle high (normal) or idle low (like S.Port)
       pol_t pol = (pol_t)getPolarity(in_rxPin);
       bool ftp = true;
       static int8_t cdown = 30; 
@@ -571,11 +579,15 @@ void setup() {
         rxInvert = false;
         snprintf(myline, snp_max, "Serial port rx pin %d is IDLE_HIGH, regular rx polarity retained\n", in_rxPin);     
         Log.print(myline);   
-      }     
+      }  
+
+       // Determine Baud
       inBaud = getBaud(in_rxPin);
       Log.print("Serial input baud rate detected is ");  Log.print(inBaud); Log.println(" b/s"); 
       String s_baud=String(inBaud);   // integer to string. "String" overloaded
       LogScreenPrintln("Telem at "+ s_baud);
+
+      
       protocol = detectProtocol(inBaud);
     //snprintf(myline, snp_max, "Protocol:%d\n", protocol);
     //Log.print(myline);
@@ -678,6 +690,7 @@ void setup() {
 
    #if (Telemetry_In == 2) || (Telemetry_In == 3)  //  WiFi Mavlink or FrSky
      SetupWiFi();  
+     
    #endif
    
  #endif  
@@ -759,8 +772,8 @@ void loop() {
    
       #if (Telemetry_In == 2)    // WiFi
   
-      AP_sta_count = WiFi.softAPgetStationNum();
-      if (AP_sta_count > AP_prev_sta_count) {  // a STA device has connected to the AP
+        AP_sta_count = WiFi.softAPgetStationNum();
+        if (AP_sta_count > AP_prev_sta_count) {  // a STA device has connected to the AP
         AP_prev_sta_count = AP_sta_count;
         snprintf(myline, snp_max, "Remote STA %d connected to our AP\n", AP_sta_count);  
         Log.print(myline);
@@ -812,7 +825,7 @@ void loop() {
               LogScreenPrintln("Dynamic tracker ok!");
             }        
             getAzEl(hom, cur);   
-            if (hc_vector.dist >= minDist) PositionServos((uint16_t)hc_vector.az, (uint16_t)hc_vector.el, (uint16_t)hom.hdg);  // Relative to home heading
+            if (hc_vector.dist >= minDist) pointServos((uint16_t)hc_vector.az, (uint16_t)hc_vector.el, (uint16_t)hom.hdg);  // Relative to home heading
             new_GPS_data = false;        // cur. location
             new_boxGPS_data = false;     // moving hom. location          
           } else {
@@ -846,7 +859,8 @@ void loop() {
             }
            else {  // FC & own tracker compass
               ft=false;
-              snprintf(myline, snp_max, "GPS lock good! Push set-home button (pin:%d) anytime to start tracking\n", SetHomePin);  
+              snprintf(myline, snp_max, "GPS lock good! Push set-home button (pin:%d) anytime to start tracking \n", SetHomePin);  
+              //Log.printf("GPS lock good! Push set-home button (pin:%d) anytime to start tracking\n", SetHomePin); 
               Log.print(myline);
               LogScreenPrintln("GPS lock good! Push");
               LogScreenPrintln("home button");
@@ -858,7 +872,7 @@ void loop() {
       if (homeInitialised) {
         if (hbGood && gpsGood && PacketGood() && new_GPS_data) {  //  every time there is new GPS data 
           getAzEl(hom, cur);
-          if (hc_vector.dist >= minDist) PositionServos((uint16_t)hc_vector.az, (uint16_t)hc_vector.el, (uint16_t)hom.hdg);  // Relative to home heading
+          if (hc_vector.dist >= minDist) pointServos((uint16_t)hc_vector.az, (uint16_t)hc_vector.el, (uint16_t)hom.hdg);  // Relative to home heading
           new_GPS_data = false;
         }
       }

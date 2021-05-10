@@ -5,7 +5,7 @@
 
 #define MAJOR_VERSION      2
 #define MINOR_VERSION      17
-#define PATCH_LEVEL        7
+#define PATCH_LEVEL        8
 
 /*
 =================================================================================================== 
@@ -15,20 +15,8 @@
   
 GitHub Tag
 ----------                
-
-V2.17.0   2021-03-16 Add "GPS on the Tracker" option, aka movable tracker.  
-          2021-03-17 Use ap33_alt_ag instead of ap33_amsl. Still calcs relative alt above field.   
-          2021-03-24 Beta. Support dynamic (moving) tracker with mag and GPS on the box. 
-                     Bug fixes.  
-V2.17.1   2021-03-29 Rationalise patches and simplify servo code  
-V2.17.2   2021-04-02 Clean build of STM32F103, Maple Mini and Teensy 3.x code.   
-V2.17.3   2021-04-07 Clean compile and test - WiFi UDP in    
-          2021-04-09 ESP Servo lib, degrees not PWM like STM32
-V2.17.4   2021-04-16 Clean compile Mavlink BT input option    
-V2.17.5   2021-04-17 Alpha code - not tested:  Add FrSky BT input option       
-V2.17.6   2021-04-19 For Frsky input only, hbGood = gpsGood    
-V2.17.7   2021-04-19 pan-sattan : #ReverseElevation typo 
-                     Complete coding for HMC5883L magnetometer  
+ 
+V2.17.8   2021-05-10 Declare WiFi.onEvent() only when WiFi input option selected       
                     
 */
 //================================== Please select your options below before compiling ==================================
@@ -867,5 +855,18 @@ V2.16.2   2021-03-04 Debug FrSky frame decode (fix offset)
                      Fix HUD RSSI blank    
 V2.16.3   2021-03-04 Always auto detect serial speed. Always sense polarity, autobaud and detect protocol
           2021-03-09 Include sport, fport1 and fport2. 
-          2021-03-09 Tidy up.               
+          2021-03-09 Tidy up.           
+V2.17.0   2021-03-16 Add "GPS on the Tracker" option, aka movable tracker.  
+          2021-03-17 Use ap33_alt_ag instead of ap33_amsl. Still calcs relative alt above field.   
+          2021-03-24 Beta. Support dynamic (moving) tracker with mag and GPS on the box. 
+                     Bug fixes.  
+V2.17.1   2021-03-29 Rationalise patches and simplify servo code  
+V2.17.2   2021-04-02 Clean build of STM32F103, Maple Mini and Teensy 3.x code.   
+V2.17.3   2021-04-07 Clean compile and test - WiFi UDP in    
+          2021-04-09 ESP Servo lib, degrees not PWM like STM32
+V2.17.4   2021-04-16 Clean compile Mavlink BT input option    
+V2.17.5   2021-04-17 Alpha code - not tested:  Add FrSky BT input option       
+V2.17.6   2021-04-19 For Frsky input only, hbGood = gpsGood    
+V2.17.7   2021-04-19 pan-sattan : #ReverseElevation typo 
+                     Complete coding for HMC5883L magnetometer     
 */

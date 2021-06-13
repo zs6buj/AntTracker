@@ -311,7 +311,7 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort,  FrSky +1
   #define elPWM_Pin         33  // elevation servo(can't be 34,35,36,39 because input only !!)
   #define BuiltinLed        02  // PB1   
 
-    //#define displaySupport       // uncomment me if you have a SSD1306 display
+    #define displaySupport       // uncomment me if you have a SSD1306 display
     #if (defined displaySupport)   // Display type defined with # define displaySupport   
       #define SSD1306_Display         // OLED display type    
       /* Below please choose either Touch pin-pair or Digital pin-pair for display scrolling

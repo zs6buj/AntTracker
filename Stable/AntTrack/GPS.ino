@@ -1,13 +1,9 @@
   // 9600 NMEA
-#if ( (Telemetry_In == 0) || (Heading_source == 4) )  //  Serial in or have Trackerbox GPS  
+#if ( (Telemetry_In == 0) || (Heading_Source == 4) )  //  Serial in or have Trackerbox GPS  
   
   #include <TinyGPS++.h>
 
   #define inSerial             Serial1  
-
-#endif
-
-#if (Telemetry_In == 0) //  Serial in
 
   TinyGPSPlus inGPS;
 
@@ -18,6 +14,11 @@
 
   struct compdate dt = {
     0,0,0,0,0,0};
+
+#endif
+
+#if (Telemetry_In == 0) //  Serial in
+
 
   // **********************************************************
   void Setup_inGPS() {
@@ -88,8 +89,10 @@
   if (headingSource==1 && (gpsGood) && (!homeInitialised) && (!homSaved)) AutoStoreHome();  // Only need this when headingSource is flight GPS 
          
   }
-
+  
+#endif // end of inGPS
   //====================================================
+#if ( (Telemetry_In == 0) || (Heading_Source == 4) )  //  Serial in or have Trackerbox GPS    
   uint32_t getEpoch(struct compdate &dt) {
 
   uint32_t  epoch;
@@ -129,7 +132,7 @@
      return days;   
     }
  
-#endif // end of inGPS
+#endif // end of both
 
 //====================================================
 //====================================================

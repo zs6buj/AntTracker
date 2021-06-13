@@ -100,7 +100,7 @@ byte Adafruit_HMC5883_Unified::read8(byte address, byte reg) {
     @brief  Reads the raw data from the sensor
 */
 /**************************************************************************/
-bool Adafruit_HMC5883_Unified::read() {
+void Adafruit_HMC5883_Unified::read() {
   // Read the magnetometer
   Wire.beginTransmission((byte)HMC5883_ADDRESS_MAG);
 #if ARDUINO >= 100
@@ -112,14 +112,8 @@ bool Adafruit_HMC5883_Unified::read() {
   Wire.requestFrom((byte)HMC5883_ADDRESS_MAG, (byte)6);
 
   // Wait around until enough data is available
-
-  uint8_t tout = 0;
-  while (Wire.available() < 6) { // zs6buj 5s timeout added 2021-03-19
-    tout++;
-    delay (500);
-    if (tout >= 10) return false;
-  }
-
+  while (Wire.available() < 6)
+    ;
 
 // Note high before low (different than accel)
 #if ARDUINO >= 100
@@ -145,7 +139,6 @@ bool Adafruit_HMC5883_Unified::read() {
 
   // ToDo: Calculate orientation
   _magData.orientation = 0.0;
-  return true;
 }
 
 /***************************************************************************
@@ -235,8 +228,7 @@ bool Adafruit_HMC5883_Unified::getEvent(sensors_event_t *event) {
   memset(event, 0, sizeof(sensors_event_t));
 
   /* Read new data */
-
-  if (!(read())) return false;  // zs6buj added timeout 2021-03-19
+  read();
 
   event->version = sizeof(sensors_event_t);
   event->sensor_id = _sensorID;

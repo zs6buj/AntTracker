@@ -83,7 +83,8 @@ public:
 
   bool begin(void); //!< @return Returns whether connection was successful
   void setMagGain(hmc5883MagGain gain); //!< @param gain Desired magnetic gain
-  bool getEvent(sensors_event_t *); //!< @return Returns the most recent sensor event
+  bool
+  getEvent(sensors_event_t *); //!< @return Returns the most recent sensor event
   void getSensor(sensor_t *);
 
 private:
@@ -93,7 +94,7 @@ private:
 
   void write8(byte address, byte reg, byte value);
   byte read8(byte address, byte reg);
-  bool read(void);
+  void read(void);
 };
 
 #endif

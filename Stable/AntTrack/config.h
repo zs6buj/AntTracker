@@ -5,7 +5,7 @@
 
 #define MAJOR_VERSION      2
 #define MINOR_VERSION      17
-#define PATCH_LEVEL        8
+#define PATCH_LEVEL        9
 
 /*
 =================================================================================================== 
@@ -16,7 +16,8 @@
 GitHub Tag
 ----------                
  
-V2.17.8   2021-05-10 Declare WiFi.onEvent() only when WiFi input option selected       
+V2.17.8   2021-05-10 Declare WiFi.onEvent() only when WiFi input option selected 
+v2.17.9   2021-06-13 Fix syntax erros with some configurations      
                     
 */
 //================================== Please select your options below before compiling ==================================
@@ -27,19 +28,19 @@ V2.17.8   2021-05-10 Declare WiFi.onEvent() only when WiFi input option selected
 
 // Choose one only of these input channels 
 // How does telemetry enter the tracker?
-#define Telemetry_In  0    // Serial Port (default) - all protocols        
+//#define Telemetry_In  0    // Serial Port (default) - all protocols        
 //#define Telemetry_In  1    // Mavlink BlueTooth Classic- ESP32 
 //#define Telemetry_In  2    // Mavlink WiFi - ESP only
 //#define Telemetry_In  3    // FrSky UDP - ESP only
-//#define Telemetry_In  4    // FrSky BT - ESP32 only
+#define Telemetry_In  4    // FrSky BT - ESP32 only
 
 
 
 // Select a heading source. We need this to relate the external world of co-ordinates to the internal tracker co_ordinates.
-#define Heading_Source  2     // 1=Flight_GPS, 2=Flight_Computer, 3=Trackerbox_Compass  4=Trackerbox_GPS_And_Compass
+#define Heading_Source  4     // 1=Flight_GPS, 2=Flight_Computer, 3=Trackerbox_Compass  4=Trackerbox_GPS_And_Compass
 
-//#define HMC5883L            // Select compass type
-#define QMC5883L
+#define HMC5883L            // Select compass type
+//#define QMC5883L
 
 
 
@@ -55,8 +56,8 @@ V2.17.8   2021-05-10 Declare WiFi.onEvent() only when WiFi input option selected
 //  you may need to select Tools/Partition Scheme: "Minimal SPIFFS (1.9MB APP ...)
 
 
-//#define BT_Master_Mode true    // Master connects to BT_Slave_Name --- false for BT Slave Mode
-const char* BT_Slave_Name   =   "Crossfire 0277";  // Example
+#define BT_Master_Mode true    // Master connects to BT_Slave_Name --- false for BT Slave Mode
+const char* BT_Slave_Name   =   "TARANISEP";  // Example
 
 
 //#define QLRS           // Un-comment if you use the QLRS variant of Mavlink 
@@ -101,9 +102,9 @@ const char* BT_Slave_Name   =   "Crossfire 0277";  // Example
 //=============================================================================================
 //=====================   S E L E C T   E S P   B O A R D   V A R I A N T   ===================
 
-//#define ESP32_Variant     1    //  ESP32 Dev Module - there are several sub-variants that work
+#define ESP32_Variant     1    //  ESP32 Dev Module - there are several sub-variants that work
 //#define ESP32_Variant     4    //  Heltec Wifi Kit 32 
-#define ESP32_Variant     5    //  LILYGO® TTGO T-Display ESP32 1.14" ST7789 Colour LCD
+//#define ESP32_Variant     5    //  LILYGO® TTGO T-Display ESP32 1.14" ST7789 Colour LCD
 //#define ESP32_Variant     6    // LILYGO® TTGO T2 ESP32 OLED Arduino IDE board = "ESP32 Dev Module"
 //#define ESP32_Variant     7    // ESP32 Dev Module with ILI9341 2.8" colour TFT SPI 240x320
 //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -117,16 +118,16 @@ const char* BT_Slave_Name   =   "Crossfire 0277";  // Example
 #define Start_WiFi                              // Start WiFi at startup, override startWiFi pin
 
 #define HostName             "MavToPass"        // This translator's host name
-#define APssid               "MavToPassthru"    // The AP SSID that we advertise         ====>
-#define APpw                 "password"         // Change me! Must be >= 8 chars
+#define APssid               "AntTrackerEP"    // The AP SSID that we advertise         ====>
+#define APpw                 "12345678**"         // Change me! Must be >= 8 chars
 #define APchannel            9                  // The wifi channel to use for our AP
-#define STAssid              "MavToPassthru"      // Target AP to connect to (in STA mode) <====
-#define STApw                "password"         // Target AP password (in STA mode). Must be >= 8 chars      
+#define STAssid              "something"      // Target AP to connect to (in STA mode) <====
+#define STApw                "miralbali"         // Target AP password (in STA mode). Must be >= 8 chars      
 
 // Choose one default mode for ESP only - AP means advertise as an access point (hotspot). STA means connect to a known host
 //#define WiFi_Mode   1  //AP            
-#define WiFi_Mode   2  // STA
-//#define WiFi_Mode   3  // (STA>AP) STA failover to AP 
+//#define WiFi_Mode   2  // STA
+#define WiFi_Mode   3  // (STA>AP) STA failover to AP 
 
 // Choose one default protocol - for ESP only
 //#define WiFi_Protocol 1    // TCP/IP
@@ -311,7 +312,7 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort,  FrSky +1
   #define elPWM_Pin         33  // elevation servo(can't be 34,35,36,39 because input only !!)
   #define BuiltinLed        02  // PB1   
 
-    //#define displaySupport       // uncomment me if you have a SSD1306 display
+    #define displaySupport       // uncomment me if you have a SSD1306 display
     #if (defined displaySupport)   // Display type defined with # define displaySupport   
       #define SSD1306_Display         // OLED display type    
       /* Below please choose either Touch pin-pair or Digital pin-pair for display scrolling

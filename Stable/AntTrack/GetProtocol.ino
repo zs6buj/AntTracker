@@ -1,5 +1,5 @@
 // 9600 NMEA
-#if (Telemetry_In == 0)    //  Serial
+#if ( (Telemetry_In == 0) || (Heading_Source == 4) )  //  Serial in or have Trackerbox GPS  
 uint16_t Lth=0;
 
 uint8_t Mav1 = 0;

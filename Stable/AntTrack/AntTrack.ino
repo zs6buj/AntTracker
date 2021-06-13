@@ -318,8 +318,8 @@
  uint32_t Get_Current_Average1(uint16_t);
  uint32_t epochNow(); 
  float RadToDeg(float);
- 
-// void FrSky_Receive(uint8_t);
+ uint32_t getBaud(uint8_t);
+
  
 //***************************************************
 void setup() {

@@ -1,5 +1,5 @@
 // 9600 NMEA
-#if (Telemetry_In == 0)    //  Serial
+#if ( (Telemetry_In == 0) || (Heading_Source == 4) )  //  Serial in or have Trackerbox GPS  
 uint16_t Lth=0;
 
 uint8_t Mav1 = 0;
@@ -330,21 +330,23 @@ const uint32_t su_timeout = 5000; // uS !  Default timeout 1000mS!
 
     //======================================================
     pol_t getPolarity(uint8_t pin) {
-      const uint32_t su_timeout = 5000; // uS !  Default timeout 1000mS!
       uint32_t pw_hi = 0;
-      uint32_t pw_lo = 0; 
-        
-      //while(digitalRead(pin) == 0){ };
-       
-      for (int i = 0; i < 20; i++) {
-        pw_hi += pulseIn(pin,HIGH, su_timeout);
-        pw_lo += pulseIn(pin,LOW, su_timeout); 
-        delayMicroseconds(10);
+      uint32_t pw_lo = 0;   
+      
+      for (int i = 0; i < 1000; i++) {
+        pw_lo += (digitalRead(pin) == LOW); 
+        pw_hi += (digitalRead(pin) == HIGH);         
+        delayMicroseconds(500); // so test for 0.5 seconds
       }  
-      //Log.printf("pw_hi:%d  pw_lo:%d\n", pw_hi, pw_lo);
-      if (pw_hi > pw_lo) {
-        return idle_low;
-      } else {
-        return idle_high;        
+
+      //Log.printf("hi:%d  lo:%d\n", pw_hi, pw_lo);  
+      if ( ( (pw_lo == 1000) && (pw_hi == 0) ) || ((pw_lo == 0) && (pw_hi == 1000) ) ) 
+      {
+        return no_traffic;
       }
-    } 
+      if (pw_hi > pw_lo) {
+        return idle_high;
+      } else {
+        return idle_low;        
+      }
+    }   

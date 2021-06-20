@@ -5,7 +5,7 @@
 
 #define MAJOR_VERSION      2
 #define MINOR_VERSION      17
-#define PATCH_LEVEL        8
+#define PATCH_LEVEL        10
 
 /*
 =================================================================================================== 
@@ -16,7 +16,9 @@
 GitHub Tag
 ----------                
  
-V2.17.8   2021-05-10 Declare WiFi.onEvent() only when WiFi input option selected       
+V2.17.8   2021-05-10 Declare WiFi.onEvent() only when WiFi input option selected 
+v2.17.9   2021-06-13 Fix syntax erros with some configurations 
+v2.17.10  2021-06-20 Pre-select protocol option      
                     
 */
 //================================== Please select your options below before compiling ==================================
@@ -34,12 +36,23 @@ V2.17.8   2021-05-10 Declare WiFi.onEvent() only when WiFi input option selected
 //#define Telemetry_In  4    // FrSky BT - ESP32 only
 
 
+// Select only one telemetry PROTOCOL here
+//#define PROTOCOL 0     // AUTO detect protocol
+//#define PROTOCOL 1     // Mavlink 1
+#define PROTOCOL 2     // Mavlink 2
+//#define PROTOCOL 3     // FrSky S.Port
+//#define PROTOCOL 4     // FrSky F.Port 1
+//#define PROTOCOL 5     // FrSky F.Port 2
+//#define PROTOCOL 6     // LTM
+//#define PROTOCOL 7     // MSP
+//#define PROTOCOL 8     // GPS NMEA
+
 
 // Select a heading source. We need this to relate the external world of co-ordinates to the internal tracker co_ordinates.
-#define Heading_Source  2     // 1=Flight_GPS, 2=Flight_Computer, 3=Trackerbox_Compass  4=Trackerbox_GPS_And_Compass
+#define Heading_Source  4     // 1=Flight_GPS, 2=Flight_Computer, 3=Trackerbox_Compass  4=Trackerbox_GPS_And_Compass
 
-//#define HMC5883L            // Select compass type
-#define QMC5883L
+#define HMC5883L            // Select compass type
+//#define QMC5883L
 
 
 
@@ -55,8 +68,8 @@ V2.17.8   2021-05-10 Declare WiFi.onEvent() only when WiFi input option selected
 //  you may need to select Tools/Partition Scheme: "Minimal SPIFFS (1.9MB APP ...)
 
 
-//#define BT_Master_Mode true    // Master connects to BT_Slave_Name --- false for BT Slave Mode
-const char* BT_Slave_Name   =   "Crossfire 0277";  // Example
+#define BT_Master_Mode true    // Master connects to BT_Slave_Name --- false for BT Slave Mode
+const char* BT_Slave_Name   =   "TARANISEP";  // Example
 
 
 //#define QLRS           // Un-comment if you use the QLRS variant of Mavlink 
@@ -117,16 +130,16 @@ const char* BT_Slave_Name   =   "Crossfire 0277";  // Example
 #define Start_WiFi                              // Start WiFi at startup, override startWiFi pin
 
 #define HostName             "MavToPass"        // This translator's host name
-#define APssid               "MavToPassthru"    // The AP SSID that we advertise         ====>
-#define APpw                 "password"         // Change me! Must be >= 8 chars
+#define APssid               "AntTrackerEP"    // The AP SSID that we advertise         ====>
+#define APpw                 "12345678**"         // Change me! Must be >= 8 chars
 #define APchannel            9                  // The wifi channel to use for our AP
-#define STAssid              "MavToPassthru"      // Target AP to connect to (in STA mode) <====
-#define STApw                "password"         // Target AP password (in STA mode). Must be >= 8 chars      
+#define STAssid              "something"      // Target AP to connect to (in STA mode) <====
+#define STApw                "miralbali"         // Target AP password (in STA mode). Must be >= 8 chars      
 
 // Choose one default mode for ESP only - AP means advertise as an access point (hotspot). STA means connect to a known host
 //#define WiFi_Mode   1  //AP            
-#define WiFi_Mode   2  // STA
-//#define WiFi_Mode   3  // (STA>AP) STA failover to AP 
+//#define WiFi_Mode   2  // STA
+#define WiFi_Mode   3  // (STA>AP) STA failover to AP 
 
 // Choose one default protocol - for ESP only
 //#define WiFi_Protocol 1    // TCP/IP
@@ -239,7 +252,11 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort,  FrSky +1
     #endif  
     #ifndef WiFi_Protocol
       #error Please define WiFi_Protocol
-    #endif
+    #endif 
+  #endif
+
+  #if not defined PROTOCOL 
+     #error Please define a telemetry protocol  
   #endif 
 //================================= P L A T F O R M   D E P E N D E N T   S E T U P S =============================
 
@@ -311,7 +328,7 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort,  FrSky +1
   #define elPWM_Pin         33  // elevation servo(can't be 34,35,36,39 because input only !!)
   #define BuiltinLed        02  // PB1   
 
-    //#define displaySupport       // uncomment me if you have a SSD1306 display
+    #define displaySupport       // uncomment me if you have a SSD1306 display
     #if (defined displaySupport)   // Display type defined with # define displaySupport   
       #define SSD1306_Display         // OLED display type    
       /* Below please choose either Touch pin-pair or Digital pin-pair for display scrolling

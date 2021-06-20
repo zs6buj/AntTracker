@@ -318,8 +318,8 @@
  uint32_t Get_Current_Average1(uint16_t);
  uint32_t epochNow(); 
  float RadToDeg(float);
- 
-// void FrSky_Receive(uint8_t);
+ uint32_t getBaud(uint8_t);
+
  
 //***************************************************
 void setup() {
@@ -468,7 +468,27 @@ void setup() {
     LogScreenPrintln("Mavlink WiFi In");
   #endif  
 
-
+  Log.print("Selected protocol is ");
+  #if (PROTOCOL == 0)   // AUTO
+    Log.println("AUTO");  
+  #elif (PROTOCOL == 1)   // Mavlink 1
+    Log.println("Mavlink 1");
+  #elif (PROTOCOL == 2) // Mavlink 2
+    Log.println("Mavlink 2");
+  #elif (PROTOCOL == 3) // FrSky S.Port
+    Log.println("S.Port");
+  #elif (PROTOCOL == 4) // FrSky F.Port 1
+    Log.println("F.Port 1");
+  #elif (PROTOCOL == 5) // FrSky F.Port 2
+    Log.println("F.Port 2");
+  #elif (PROTOCOL == 6) // LTM
+    Log.println("LTM");
+  #elif (PROTOCOL == 7)  // MSP
+    Log.println("MSP");
+  #elif (PROTOCOL == 8)  // GPS NMEA
+    Log.println("GPS NMEA");
+  #endif
+  
   EEPROM_Setup();
   
   millisStartup = millis();
@@ -546,7 +566,38 @@ void setup() {
   #endif
 
   #if (Telemetry_In == 0)    //  Serial telemetry in
-  
+
+    protocol = PROTOCOL;
+    
+    #if (PROTOCOL == 1)   // Mavlink 1
+      rxInvert = false;
+      inBaud = 57600;
+      timeEnabled = true;  
+    #elif (PROTOCOL == 2) // Mavlink 2
+      rxInvert = false;
+      inBaud = 57600;
+      timeEnabled = true;         
+    #elif (PROTOCOL == 3) // FrSky S.Port
+      rxInvert = true;
+      inBaud = 57600;
+    #elif (PROTOCOL == 4) // FrSky F.Port 1
+      rxInvert = false;
+      inBaud = 115200; 
+    #elif (PROTOCOL == 5) // FrSky F.Port 2
+      rxInvert = false;
+      inBaud = 115200;   
+    #elif (PROTOCOL == 6) // LTM
+      rxInvert = false;
+      inBaud = 2400; 
+    #elif (PROTOCOL == 7)  // MSP
+      rxInvert = false;
+      inBaud = 9600; 
+    #elif (PROTOCOL == 8)  // GPS NMEA
+      rxInvert = false;
+      inBaud = 9600; 
+      timeEnabled = true;          
+    #elif (PROTOCOL == 0) // AUTO
+
       // determine polarity of the telemetry - idle high (normal) or idle low (like S.Port)
       pol_t pol = (pol_t)getPolarity(in_rxPin);
       bool ftp = true;
@@ -572,53 +623,33 @@ void setup() {
         }
       }
       
-    if (polGood) {    // expect 57600 for Mavlink and FrSky, 2400 for LTM, 9600 for MSP & GPS
-      if (pol == idle_low) {
-        rxInvert = true;
-        snprintf(myline, snp_max, "Serial port rx pin %d is IDLE_LOW, inverting rx polarity\n", in_rxPin);
-        Log.print(myline);
+      if (polGood) {    // expect 57600 for Mavlink and FrSky, 2400 for LTM, 9600 for MSP & GPS
+        if (pol == idle_low) {
+          rxInvert = true;
+          snprintf(myline, snp_max, "Serial port rx pin %d is IDLE_LOW, inverting rx polarity\n", in_rxPin);
+          Log.print(myline);
+        } else {
+          rxInvert = false;
+          snprintf(myline, snp_max, "Serial port rx pin %d is IDLE_HIGH, regular rx polarity retained\n", in_rxPin);     
+          Log.print(myline);   
+        }  
+
+         // Determine Baud
+        inBaud = getBaud(in_rxPin);
+        Log.print("Serial input baud rate detected is ");  Log.print(inBaud); Log.println(" b/s"); 
+        String s_baud=String(inBaud);   // integer to string. "String" overloaded
+        LogScreenPrintln("Telem at "+ s_baud);
+   
+        protocol = detectProtocol(inBaud);
+      //snprintf(myline, snp_max, "Protocol:%d\n", protocol);
+      //Log.print(myline);
+      
       } else {
-        rxInvert = false;
-        snprintf(myline, snp_max, "Serial port rx pin %d is IDLE_HIGH, regular rx polarity retained\n", in_rxPin);     
-        Log.print(myline);   
-      }  
-
-       // Determine Baud
-      inBaud = getBaud(in_rxPin);
-      Log.print("Serial input baud rate detected is ");  Log.print(inBaud); Log.println(" b/s"); 
-      String s_baud=String(inBaud);   // integer to string. "String" overloaded
-      LogScreenPrintln("Telem at "+ s_baud);
-
-      
-      protocol = detectProtocol(inBaud);
-    //snprintf(myline, snp_max, "Protocol:%d\n", protocol);
-    //Log.print(myline);
-      
-    } else {
-      pol = idle_high;
-      inBaud = 57600;
-      protocol = 2;  
-    }
-    
-    #if ( (defined ESP8266) || (defined ESP32) ) 
-      delay(100);
-      inSerial.begin(inBaud, SERIAL_8N1, in_rxPin, in_txPin, rxInvert); 
-      delay(10);
-    #elif (defined TEENSY3X) 
-      inSerial.begin(inBaud); // Teensy 3.x    rx tx pins hard wired
-       if (rxInvert) {          // For S.Port not F.Port
-         UART0_C3 = 0x10;       // Invert Serial1 Tx levels
-         UART0_S2 = 0x10;       // Invert Serial1 Rx levels;       
-       }
-       #if (defined frOneWire )  // default
-         UART0_C1 = 0xA0;        // Switch Serial1 to single wire (half-duplex) mode  
-       #endif    
-    #else
-      inSerial.begin(inBaud);
-    #endif   
-
-    switch(protocol) {
-    
+        pol = idle_high;
+        inBaud = 57600;
+        protocol = 2;  
+      }
+      switch(protocol) { 
       case 1:    // Mavlink 1
         LogScreenPrintln("Mavlink 1 found");
         Log.println("Mavlink 1 found"); 
@@ -665,8 +696,28 @@ void setup() {
         LogScreenPrintln("Unknown protocol!");
         LogScreenPrintln("Aborting....");        
         while(1) delay(1000);  // wait here forever                        
-    }
-   
+      }
+
+    #endif // end of protocol selection
+
+    
+    #if ( (defined ESP8266) || (defined ESP32) ) 
+      delay(100);
+      inSerial.begin(inBaud, SERIAL_8N1, in_rxPin, in_txPin, rxInvert); 
+      delay(50);
+    #elif (defined TEENSY3X) 
+      inSerial.begin(inBaud); // Teensy 3.x    rx tx pins hard wired
+       if (rxInvert) {          // For S.Port not F.Port
+         UART0_C3 = 0x10;       // Invert Serial1 Tx levels
+         UART0_S2 = 0x10;       // Invert Serial1 Rx levels;       
+       }
+       #if (defined frOneWire )  // default
+         UART0_C1 = 0xA0;        // Switch Serial1 to single wire (half-duplex) mode  
+       #endif    
+    #else
+      inSerial.begin(inBaud);
+    #endif   
+  
   #endif
   
 // ************************ Setup Bluetooth ***************************  

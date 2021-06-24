@@ -390,7 +390,7 @@ void setup() {
       #if not defined TEENSY3X                 // Teensy uses default SCA and SCL in teensy "pins_arduino.h"
          Wire.begin(SDA, SCL);  
       #endif   
-      display.begin(SSD1306_SWITCHCAPVCC, i2cAddr);         
+      display.begin(SSD1306_SWITCHCAPVCC, display_i2c_addr);         
       #define SCR_BACKGROUND BLACK   
       
     #elif (defined SSD1331_Display)            // T2 board with SSD1331 colour TFT display (96 x 64)

@@ -591,19 +591,19 @@ bool Read_UDP(mavlink_message_t* msgptr)  {
 }
 #endif
 //********************************************************************************
-#if (Telemetry_In == 1)           // Bluetooth
+#if (Telemetry_In == 1)           // Mavlink Bluetooth
 
 bool Read_Bluetooth(mavlink_message_t* msgptr)  {
     
     bool msgRcvd = false;
     mavlink_status_t _status;
     
-    len = SerialBT.available();
+    len = mavSerialBT.available();
     uint16_t bt_count = len;
     if(bt_count > 0) {
 
         while(bt_count--)  {
-            int result = SerialBT.read();
+            int result = mavSerialBT.read();
             if (result >= 0)  {
 
                 msgRcvd = mavlink_parse_char(MAVLINK_COMM_2, result, msgptr, &_status);
@@ -686,7 +686,7 @@ void Send_To_FC(uint32_t msg_id) {
      
     uint16_t len = mavlink_msg_to_send_buffer(sendbuf, msgptr);
   
-    size_t sent = SerialBT.write(sendbuf,len);
+    size_t sent = mavSerialBT.write(sendbuf,len);
 
     if (sent == len) {
       msgSent = true;

@@ -278,8 +278,10 @@
     #endif
 
     // Create Bluetooth object
-    #if (Telemetry_In == 1) || (Telemetry_In == 4) 
-      BluetoothSerial SerialBT;
+    #if (Telemetry_In == 1) 
+      BluetoothSerial mavSerialBT;
+    #elif (Telemetry_In == 4)   
+      BluetoothSerial frsSerialBT;
     #endif
 
 
@@ -750,26 +752,53 @@ void setup() {
   #endif
   
 // ************************ Setup Bluetooth ***************************  
-  #if (defined ESP32)  && ( (Telemetry_In == 1) || (Telemetry_In == 4) )
-    #ifdef BT_Master_Mode
-      SerialBT.begin("AntTrack", true);            
-    #else
-        SerialBT.begin("AntTrack");   
-    #endif 
+  #if defined ESP32
+  
+    #if (Telemetry_In == 1)  // Mavlink BT
+      #if (mavBT_Mode == 1)     // 1 master mode, connect to slave name
+        Log.printf("Mavlink bluetooth master mode looking for slave name %s\n", mavBT_Slave_Name);
+        SerialBT.begin(mavBT_Slave_Name, true);            
+      #else                  // 2 slave mode, advertise slave name
+          Log.printf("Mavlink bluetooth slave mode advertising mablink slave name %s\n", mavBT_Slave_Name);
+          mavSerialBT.begin(mavBT_Slave_Name);   
+      #endif 
       
-    bool bt_connected;
+      bool mav_bt_connected;
 
-    bt_connected = SerialBT.connect(BT_Slave_Name);
-    if(bt_connected) {
-      btSuGood = true;
-      Log.println("Bluetooth connected!");
-      LogScreenPrintln("Bluetooth connected!");
-    } else {
-      Log.println("Bluetooth NOT connected!");
-      LogScreenPrintln("BT NOT connected!");    
-    }
+      mav_bt_connected = mavSerialBT.connect(BT_Slave_Name);
+      if(mav_bt_connected) {
+        btSuGood = true;
+        Log.println("Mavlink Bluetooth connected!");
+        LogScreenPrintln("Mav BT connected!");
+      } else {
+        Log.println("Mav Bluetooth NOT connected!");
+        LogScreenPrintln("Mav BT NOT cnncted");    
+      }
+     #endif // end mavBT
+           
+     #if (Telemetry_In == 4) // FrSky BT
+      #if (frsBT_Mode == 1)     // 1 master mode, connect to slave name
+        Log.printf("Frs bluetooth master mode looking for slave name %s\n", frsBT_Slave_Name);
+        frsSerialBT.begin(frsBT_Slave_Name, true);            
+      #else                  // 2 slave mode, advertise slave name
+          Log.printf("Frs bluetooth slave mode advertising slave name %s\n", frsBT_Slave_Name);
+          frsSerialBT.begin(frsBT_Slave_Name);   
+      #endif 
       
-  #endif 
+      bool frs_bt_connected;
+
+      frs_bt_connected = frsSerialBT.connect(frsBT_Slave_Name);
+      if(frs_bt_connected) {
+        btSuGood = true;
+        Log.println("Frs bluetooth connected!");
+        LogScreenPrintln("Frs BT connected!");
+      } else {
+        Log.println("Frs Bluetooth NOT connected!");
+        LogScreenPrintln("Frs BT NOT cnncted");    
+      }  
+     #endif // end frsBT
+         
+  #endif // ESP32
   
   // ================================  Setup WiFi  ====================================
   #if (defined ESP32)  || (defined ESP8266)

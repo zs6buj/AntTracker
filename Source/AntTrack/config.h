@@ -5,7 +5,7 @@
 
 #define MAJOR_VERSION      2
 #define MINOR_VERSION      18
-#define PATCH_LEVEL        03
+#define PATCH_LEVEL        04
 
 /*
 =================================================================================================== 
@@ -24,6 +24,7 @@ v2.18.00  2021-06-24 S.Port input tested good
 v2.18.01 2021-06-25  Fix S.Port altitude. Use 0x5004.
 v2.18.02 2021-07-27  Tidy up FrSky UDP telemetry input.
 v2.18.03 2021-08-02  BT option syntax
+v2.18.04 2021-08-05  Set up with FrSky BT options 
                     
 */
 //================================== Please select your options below before compiling ==================================
@@ -38,14 +39,14 @@ v2.18.03 2021-08-02  BT option syntax
 //#define Telemetry_In  1    // Mavlink BlueTooth Classic- ESP32 
 //#define Telemetry_In  2    // Mavlink WiFi - ESP only
 //#define Telemetry_In  3    // FrSky UDP - ESP only
-#define Telemetry_In  4    // FrSky BT - ESP32 only
+#define Telemetry_In  4    // FrSky BT classic - ESP32 only
 
 
 // Select only one telemetry PROTOCOL here
 //#define PROTOCOL 0     // AUTO detect protocol
 //#define PROTOCOL 1     // Mavlink 1
-#define PROTOCOL 2     // Mavlink 2
-//#define PROTOCOL 3     // FrSky S.Port
+//#define PROTOCOL 2     // Mavlink 2
+#define PROTOCOL 3     // FrSky S.Port
 //#define PROTOCOL 4     // FrSky F.Port 1
 //#define PROTOCOL 5     // FrSky F.Port 2
 //#define PROTOCOL 6     // LTM
@@ -75,11 +76,19 @@ v2.18.03 2021-08-02  BT option syntax
 // NOTE: The Bluetooth class library uses a lot of application memory. During Compile/Flash
 //  you may need to select Tools/Partition Scheme: "Minimal SPIFFS (1.9MB APP ...)
 
+//=================================================================================================
+//                      D E F A U L T   B L U E T O O T H   S E T T I N G S   
+//=================================================================================================
+#define mavBT_Mode  1           // Master Mode - active, initiate connection with slave (name)
+//#define mavBT_Mode  2           // Slave Mode - passive, advertise our hostname & wait for master to connect to us
+const char* mavBT_Slave_Name   =   "FMavlinkBT"; //  "TARANISEP";  // Example
 
-#define BT_Master_Mode true    // Master connects to BT_Slave_Name --- false for BT Slave Mode
-const char* BT_Slave_Name   =   "TARANISEP";  // Example
-
-
+#define frsBT_Mode  1           // Master Mode - active, initiate connection with slave (name)
+//#define frsBT_Mode  2           // Slave Mode - passive, advertise our hostname & wait for master to connect to us
+const char* frsBT_Slave_Name   =   "Frs2BT"; 
+//=========================================================================================================
+//                                    O T H E R   S E T T I N G S
+//=========================================================================================================
 //#define QLRS           // Un-comment if you use the QLRS variant of Mavlink 
 
 #define Data_Streams_Enabled        // Requests data streams from FC. Requires both rx and tx lines to FC. Rather set SRn in Mission Planner
@@ -124,9 +133,9 @@ const char* BT_Slave_Name   =   "TARANISEP";  // Example
 //=============================================================================================
 //=====================   S E L E C T   E S P   B O A R D   V A R I A N T   ===================
 
-#define ESP32_Variant     1    //  ESP32 Dev Module - there are several sub-variants that work
+//#define ESP32_Variant     1    //  ESP32 Dev Module - there are several sub-variants that work
 //#define ESP32_Variant     4    //  Heltec Wifi Kit 32 
-//#define ESP32_Variant     5    //  LILYGO® TTGO T-Display ESP32 1.14" ST7789 Colour LCD
+#define ESP32_Variant     5    //  LILYGO® TTGO T-Display ESP32 1.14" ST7789 Colour LCD
 //#define ESP32_Variant     6    // LILYGO® TTGO T2 ESP32 OLED Arduino IDE board = "ESP32 Dev Module"
 //#define ESP32_Variant     7    // ESP32 Dev Module with ILI9341 2.8" colour TFT SPI 240x320
 //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -139,11 +148,11 @@ const char* BT_Slave_Name   =   "TARANISEP";  // Example
 
 #define Start_WiFi                              // Start WiFi at startup, override startWiFi pin
 
-#define HostName             "MavToPass"        // This translator's host name
-#define APssid               "AntTrackerAP"     // The AP SSID that we advertise         ====>
+#define HostName             "Frs2BT"        // This translator's host name
+#define APssid               "AntTrackAP"     // The AP SSID that we advertise         ====>
 #define APpw                 "12345678"         // Change me! Must be >= 8 chars
 #define APchannel            9                  // The wifi channel to use for our AP
-#define STAssid              "MavToPassthru"    // Target AP to connect to (in STA mode) <====
+#define STAssid              "FrSkyToWiFi"    // Target AP to connect to (in STA mode) <====
 #define STApw                "password"         // Target AP password (in STA mode). Must be >= 8 chars      
 
 // Choose one default mode for ESP only - AP means advertise as an access point (hotspot). STA means connect to a known host
@@ -208,8 +217,17 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort,  FrSky +1
     #define btBuiltin   //  for this feature we need bluetooth support compiled in
   #endif
 
-
-
+ #if ( (defined ESP32) && (Telemetry_In  == 1) )
+   #if ( (mavBT_Mode != 1) && (mavBT_Mode != 2) )
+       #error "Please define a Mavlink bluetooth mode"
+   #endif
+ #endif  
+ #if ( (defined ESP32) && (Telemetry_In  == 4) )
+   #if ( (frsBT_Mode != 1) && (frsBT_Mode != 2) )
+       #error "Please define a Frs bluetooth mode"
+   #endif
+ #endif  
+ 
 //************************************** Macro Logic Checks ************************************* 
   #ifndef Target_Board
     #error Please choose at least one target board
@@ -684,7 +702,7 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort,  FrSky +1
 
   #if (defined ESP32) 
 
-    #define BT_Setup   // so that WiFi setup does not defien these shared variables again
+    #define BT_Setup   // so that WiFi setup does not define these shared variables again
     // Define link variables
     struct linkStatus {
       uint32_t    packets_received;
@@ -826,7 +844,7 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort,  FrSky +1
 //#define Debug_FrSky_GPS           // 0x5002
 //#define Debug_FrSky_Home          // 0x5004
 
-//#define Debug_FrSky_Messages
+#define Debug_FrSky_Messages
 
 //#define Debug_FrPort_Stream
 //#define Debug_FPort_Buffer

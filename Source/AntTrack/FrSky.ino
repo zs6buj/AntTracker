@@ -136,17 +136,14 @@
      
     //=======================================================================
     void FrSky_Receive(uint8_t proto) {
-      #if (Telemetry_In == 0)         //   FrSky Serial
-        Frs_Receive_Serial(proto);
+      #if (Telemetry_In == 0) ||  ((defined btBuiltin) &&  (Telemetry_In == 4))       //   FrSky Serial or BT
+        Frs_Receive_Serial_BT(proto);
       #endif
    
       #if (defined wifiBuiltin) &&  (Telemetry_In == 3)  //   FrSky UDP 
         Frs_Receive_UDP(proto);
       #endif
       
-      #if (defined btBuiltin) &&  (Telemetry_In == 4)   //   FrSky BT 
-        Frs_Receive_BT(proto);
-      #endif
       
     }
     //=======================================================================
@@ -186,48 +183,11 @@
       }
     }
     #endif
-    //======================================================================= 
-    #if (defined btBuiltin) &&  (Telemetry_In == 4)          // BT Classic
-    void Frs_Receive_BT(uint8_t proto) {  
-
-      uint16_t len = SerialBT.available();    // packet to in buffer
-      if (len == 0) return;
-      for (int i = 0 ; i < len ; i++) {
-        inBuf[i] = SerialBT.read();
-        //snprintf(snprintf_buf, snp_max, "byte:%X  i:%d\n", inBuf[i], i);
-        //Log.print(snprintf_buf);
-      }
-  
-      //Log.print("A " );  PrintFrsBuffer(&inBuf[0], len-fr_offset); 
-    
-      if (len == 12) { // S.Port (0x7E + 0x1B) + (0x7E + 0x1B) + frame
-        fr_offset = 4;
-      } else
-      if (len == 10) {  // S.Port 0x7E + 0x1B) + frame
-        fr_offset = 2;
-      } else
-      if (len == 8) {  // F.Port frame
-        fr_offset = 0;
-      }
-      //snprintf(snprintf_buf, snp_max, "B ");  PrintFrsBuffer(&inBuf[fr_offset], len-fr_offset);
-      //Log.print(snprintf_buf);
-      bool mycrcGood = crcGood(&inBuf[fr_offset], len-fr_offset); 
-
-      if (mycrcGood) {  
-        frGood = true;
-        frGood_millis = millis();  
-        #if defined Debug_All || defined Debug_FrSky_Messages_BT
-          Log.print("CRC Good C "); PrintFrsBuffer(&inBuf[fr_offset], len-fr_offset);
-        #endif 
-        Frs_Decode(&inBuf[fr_offset]);   
-      }
-    }
-    #endif
 
     //================================================================
-  #if (Telemetry_In == 0)  // Serial
+  #if (Telemetry_In == 0) || ( (defined btBuiltin) &&  (Telemetry_In == 4) )  // Serial or BT
 
-    void Frs_Receive_Serial(uint8_t proto){
+    void Frs_Receive_Serial_BT(uint8_t proto){
 
       if (proto == 3) {  // proto for protocol detect
         frport = s_port;  
@@ -278,8 +238,11 @@
   
       delay(1);            // I am important!
       
-      while (inSerial.available()) {
-    
+      #if (Telemetry_In == 0)   // serial UART
+        while (inSerial.available()) {
+      #elif (Telemetry_In == 4) // serial BT  
+        while (frsSerialBT.available()) {        
+      #endif
         if (b == 0x7E) {  // end of frame parse
           if (i == 3) {
             memset(&buf[2], 0x00, inMax-2); // clear the rest
@@ -325,8 +288,12 @@
        We are a slave, and default to receiving status      
        Slave responds with uplink frame immediately if matching ID received
       */
+      #if (Telemetry_In == 0)   // serial UART
+        lth=inSerial.available();
+      #elif (Telemetry_In == 4) // serial BT  
+        lth=frsSerialBT.available();  
+      #endif  
 
-      lth=inSerial.available();  
       if (lth < 10) {
         if (lth > 0) {
           //snprintf(snprintf_buf, snp_max, "lth=%d\n", lth); 
@@ -551,7 +518,13 @@
       if (lth == 0) {
         while (lth==0) {
           CheckForTimeouts();
-          lth=inSerial.available();
+
+          #if (Telemetry_In == 0)   // serial UART
+            lth=inSerial.available();
+          #elif (Telemetry_In == 4) // serial BT  
+            lth=frsSerialBT.available();  
+          #endif  
+          
         }
      //    Log.printf("\nlen=%3d\n",len); 
       } 
@@ -559,8 +532,11 @@
       // Data is available
       serGood = true;            // We have a good serial connection!
       serGood_millis = millis();
-      
-      b = inSerial.read();
+      #if (Telemetry_In == 0)   // serial UART
+        b = inSerial.read();
+      #elif (Telemetry_In == 4) // serial BT  
+        b = frsSerialBT.read();    
+      #endif     
       lth--;
       
       #if (defined Debug_FrPort_Stream)  

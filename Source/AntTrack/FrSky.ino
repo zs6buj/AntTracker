@@ -722,8 +722,10 @@
  // * **A** : 1 = GPS fix, 2 = GPS home fix, 4 = home reset (numbers are additive)
  // * **B** : GPS accuracy based on HDOP (0 = lowest to 9 = highest accuracy)
  // * **C** : number of satellites locked (digit C & D are the number of locked satellites)
- // * **D** : number of satellites locked (if 14 satellites are locked, C = 1 & D = 4)                 
+ // * **D** : number of satellites locked (if 14 satellites are locked, C = 1 & D = 4)    
+         
                     iNav=true;
+                    pt_payload = uint32Extract(buf, 3);                        
                     bytes = (uint8_t*)&pt_payload;           // cast 4 byte payload to bytes
                     pt_gps_fix = bytes[0] & 0x01;
                     pt_gps_homefix = bytes[0] & 0x02;

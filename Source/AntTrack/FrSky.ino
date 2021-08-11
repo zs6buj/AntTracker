@@ -1,15 +1,12 @@
-  //    0x410 iNav GPS Status
-  uint32_t pt410_gps_status;
-  uint8_t pt_gps_fix;
-  uint8_t pt_gps_homefix;
-  uint8_t pt_gps_homereset;
-  uint8_t pt_gps_accuracy;     // 0 thru 9 highest accuracy
-  uint16_t pt_gps_numsats;
-
-  // variables for iNav 0x410 decode
-  uint8_t *bytes;  // for cast
+    //    0x410 iNav GPS Status
+    uint32_t pt410_gps_status;
+    uint8_t pt_gps_fix;
+    uint8_t pt_gps_homefix;
+    uint8_t pt_gps_homereset;
+    uint8_t pt_gps_accuracy;     // 0 thru 9 highest accuracy
+    uint16_t pt_gps_numsats;
        
-      // 0x800 GPS
+    // 0x800 GPS
     uint32_t pt_latlong;
     int32_t  pt_lat = 0;
     int32_t  pt_lon = 0;
@@ -729,15 +726,17 @@
                     }
 
                     break; 
+                    
                   case 0x410:              // Tmp2 - iNav GPS status 
- //* **Tmp2** : GPS lock status, accuracy, home reset trigger, and number of satellites. Number is sent as **ABCD** detailed below. Typical minimum GPS 3D lock value is 3906 (GPS locked and home fixed, HDOP highest accuracy, 6 satellites).
- // * **A** : 1 = GPS fix, 2 = GPS home fix, 4 = home reset (numbers are additive)
- // * **B** : GPS accuracy based on HDOP (0 = lowest to 9 = highest accuracy)
- // * **C** : number of satellites locked (digit C & D are the number of locked satellites)
- // * **D** : number of satellites locked (if 14 satellites are locked, C = 1 & D = 4)                 
+                    //* **Tmp2** : GPS lock status, accuracy, home reset trigger, and number of satellites. 
+                    //  Number is sent as **ABCD** detailed below. Typical minimum GPS 3D lock value is 3906 
+                    // (GPS locked and home fixed, HDOP highest accuracy, 6 satellites).
+                    // * **A** : 1 = GPS fix, 2 = GPS home fix, 4 = home reset (numbers are additive)
+                    // * **B** : GPS accuracy based on HDOP (0 = lowest to 9 = highest accuracy)
+                    // * **C** : number of satellites locked (digit C & D are the number of locked satellites)
+                    // * **D** : number of satellites locked (if 14 satellites are locked, C = 1 & D = 4)                 
                     iNav=true;
                     pt410_gps_status = uint32Extract(buf, 3);
-                    //pt410_gps_status = 0xaf060000;    // my debug
                     // decode to digits 1 thru 4
                     d1 = (pt410_gps_status / 1000);
                     dr1 = d1 * 1000;
@@ -759,9 +758,9 @@
                     pt_gps_accuracy = d2;   // 0 thru 9 highest accuracy
                     pt_gps_numsats = (d3*10) + d4;
                     
+                    hdopGood = (pt_gps_accuracy > 7);  // 0 thru 9 - 9 best  
+                      
                     #if defined Debug_All || defined Debug_FrSky_Messages
-
-                      Log.printf("0x410 payload  b0:%u  b1:%u B2:%u  b3:%u\n", bytes[0], bytes[1], bytes[2], bytes[3]);
                       Log.print("pt_gp_fix="); Serial.print(pt_gps_fix);     
                       Log.print(" pt_gps_homefix ="); Log.print(pt_gps_homefix);
                       Log.print(" pt_gp_homereset="); Log.print(pt_gps_homereset);     

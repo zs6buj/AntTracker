@@ -25,8 +25,8 @@ v2.18.01 2021-06-25  Fix S.Port altitude. Use 0x5004.
 v2.18.02 2021-07-27  Tidy up FrSky UDP telemetry input.
 v2.18.03 2021-08-02  BT option syntax
 v2.18.04 2021-08-05  Set up with FrSky BT options
-v2.18.05a 2021-08-09 Rewrite old 0x410 decode 
-v2.18.05b 2021-08-11 Revert v2.18.05a 
+v2.18.05 2021-08-09 Rewrite old 0x410 decode 
+v2.18.06 2021-08-11 Revert to v2.18.04. Rename 32b pt_gps_status pt410_gps_status.
                     
 */
 //================================== Please select your options below before compiling ==================================

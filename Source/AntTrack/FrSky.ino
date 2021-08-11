@@ -737,7 +737,7 @@
  // * **D** : number of satellites locked (if 14 satellites are locked, C = 1 & D = 4)                 
                     iNav=true;
                     pt410_gps_status = uint32Extract(buf, 3);
-                    pt410_gps_status = 0xaf060000;    // my debug
+                    //pt410_gps_status = 0xaf060000;    // my debug
                     // decode to digits 1 thru 4
                     d1 = (pt410_gps_status / 1000);
                     dr1 = d1 * 1000;

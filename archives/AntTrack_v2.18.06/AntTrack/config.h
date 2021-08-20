@@ -577,6 +577,7 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort,  FrSky +1
       #elif (SCR_ORIENT == 1)         // landscape
         #define TEXT_SIZE     2                       
       #endif 
+      #define SCR_BACKGROUND TFT_BLACK  
       
     //==========================================================
     
@@ -597,7 +598,7 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort,  FrSky +1
         #define OLED_RESET    -1 // Reset pin # (or -1 if sharing Arduino reset pin)
       #endif  
       Adafruit_SSD1306 display(SCR_H_PX, SCR_W_PX, &Wire, OLED_RESET); // 128, 64
-          
+      #define SCR_BACKGROUND BLACK      
     //==========================================================  
     #elif (defined SSD1331_Display)    // SSD1331 0.95" TTGO T2 colour TFT display (96 x 64)
       #include <Adafruit_GFX.h>
@@ -609,7 +610,7 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort,  FrSky +1
       #define TEXT_SIZE    1
 
       Adafruit_SSD1331 display = Adafruit_SSD1331(CS, DC, MOSI, SCLK, RST);  
-      
+      #define SCR_BACKGROUND BLACK 
     //========================================================== 
     #elif  (defined ILI9341_Display)    // ILI9341 2.8" COLOUR TFT SPI 240x320 V1.2  
       #include "Adafruit_GFX.h"   
@@ -623,6 +624,7 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort,  FrSky +1
    
       #define SCR_W_PX  240             //  always define in portrait
       #define SCR_H_PX  320   
+      #define SCR_BACKGROUND ILI9341_BLUE  
       
     #endif   
     //==========================================================   

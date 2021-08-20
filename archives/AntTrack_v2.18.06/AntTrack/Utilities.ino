@@ -1279,12 +1279,12 @@ void WiFiEventHandler(WiFiEvent_t event)  {
           display.setTextFont(1);        
         #endif   
          
-      display.fillScreen(SCR_BACKGROUND);
-      display.setTextColor(TFT_SKYBLUE);    
+        display.fillScreen(SCR_BACKGROUND);
+        display.setTextColor(TFT_SKYBLUE);    
             
-      //display.setTextColor(TFT_WHITE);
-      //display.setTextColor(TFT_BLUE);  
-      //display.setTextColor(TFT_GREEN, TFT_BLACK);
+        //display.setTextColor(TFT_WHITE);
+        //display.setTextColor(TFT_BLUE);  
+        //display.setTextColor(TFT_GREEN, TFT_BLACK);
     
       #elif (defined SSD1306_Display)            // all  boards with SSD1306 OLED display
         display.clearDisplay(); 
@@ -1292,9 +1292,8 @@ void WiFiEventHandler(WiFiEvent_t event)  {
              
       #elif (defined SSD1331_Display)            // T2 board with SSD1331 colour TFT display
         //  software SPI pins defined in config.h 
-        display.fillScreen(BLACK);
+        display.fillScreen(SCR_BACKGROUND);
         display.setCursor(0,0);
-        #define SCR_BACKGROUND BLACK  
         
       #elif (defined ILI9341_Display)           // ILI9341 2.8" COLOUR TFT SPI 240x320 V1.2  
         //  hardware SPI pins defined in config.h 
@@ -1327,29 +1326,28 @@ void WiFiEventHandler(WiFiEvent_t event)  {
           display.setTextFont(1);       // and font 
         #endif    
 
-      display.fillScreen(SCR_BACKGROUND);
-      display.setTextColor(TFT_SKYBLUE);    
+        display.fillScreen(SCR_BACKGROUND);
+        display.setTextColor(TFT_SKYBLUE);    
             
-      //display.setTextColor(TFT_WHITE);
-      //display.setTextColor(TFT_BLUE);  
-      //display.setTextColor(TFT_GREEN, TFT_BLACK);
+        //display.setTextColor(TFT_WHITE);
+        //display.setTextColor(TFT_BLUE);  
+        //display.setTextColor(TFT_GREEN, TFT_BLACK);
     
-      #elif (defined SSD1306_Display)            // all  boards with SSD1306 OLED display
+      #elif (defined SSD1306_Display)            // all  boards with SSD1306 OLED display    
         display.clearDisplay(); 
         display.setTextColor(WHITE);  
- 
-      #elif (defined SSD1331_Display)            // T2 board with SSD1331 colour TFT display
+
+      #elif (defined SSD1331_Display)            // T2 board with SSD1331 colour TFT display     
         //  SPI pins defined in config.h 
         display.fillScreen(BLACK);
         display.setTextColor(WHITE);  
-        #define SCR_BACKGROUND BLACK  
+
       
-      #elif (defined ILI9341_Display)            // ILI9341 2.8" COLOUR TFT SPI 240x320 V1.2  
+      #elif (defined ILI9341_Display)            // ILI9341 2.8" COLOUR TFT SPI 240x320 V1.2          
         //  SPI pins defined in config.h 
-       display.fillScreen(ILI9341_BLUE);
+        display.fillScreen(SCR_BACKGROUND);
         display.setRotation(3);          // landscape pins on the left   
         display.setCursor(0,0);
-        #define SCR_BACKGROUND ILI9341_BLUE      
       #endif
      }
     #endif        

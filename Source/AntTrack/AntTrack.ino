@@ -979,8 +979,17 @@ void loop() {
     #else   // end of tracker box gps moving home location, start of static home location
 
       if (timeGood) LostPowerCheckAndRestore(epochNow());  // only if active timeEnabled protocol
-       
-      if ( (!homeInitialised) && ((timeEnabled) && (lostPowerCheckDone)) || (!timeEnabled)  ) {  // home not yet initialised
+
+      #if defined Debug_Frsky_GPSHdg_Status
+        static uint32_t q = millis(); 
+        if ((millis() - q) > 2000) {
+          q = millis();
+          Log.printf("homeInit:%u  headingSource:%u  timeEnabled:%u  LPCheck:%u ft:%u  gpsGood:%u  boxhdgGood:%u \n", 
+                    homeInitialised, headingSource, timeEnabled, lostPowerCheckDone, gpsGood, boxhdgGood);
+        }
+      #endif
+        
+      if ( (homeInitialised == 0) && ((timeEnabled) && (lostPowerCheckDone)) || (!timeEnabled)  ) {  // home not yet initialised
         
         // FC GPS
         if ((headingSource == 1) && (ft) && (gpsGood) ) {  

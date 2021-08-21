@@ -757,13 +757,13 @@
                     pt_gps_accuracy = d2;   // 0 thru 9 highest accuracy
                     pt_gps_numsats = (d3*10) + d4;
                     
-                    hdopGood = (pt_gps_accuracy > 7);  // 0 thru 9 - 9 best  
+                    hdopGood = (pt_gps_accuracy >= 7);  // 0 thru 9 - 9 best  
                       
                     #if defined Debug_All || defined Debug_FrSky_Messages
                       Log.print("pt_gp_fix="); Serial.print(pt_gps_fix);     
-                      Log.print(" pt_gps_homefix ="); Log.print(pt_gps_homefix);
+                      Log.print(" pt_gps_homefix="); Log.print(pt_gps_homefix);
                       Log.print(" pt_gp_homereset="); Log.print(pt_gps_homereset);     
-                      Log.print(" pt_gps_accuracy ="); Log.print(pt_gps_accuracy);
+                      Log.print(" pt_gps_accuracy="); Log.print(pt_gps_accuracy);
                       Log.print(" pt_gps_numsats="); Log.println(pt_gps_numsats); 
                     #endif  
                     break;                    

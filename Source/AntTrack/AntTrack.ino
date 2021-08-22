@@ -985,11 +985,13 @@ void loop() {
         if ((millis() - q) > 2000) {
           q = millis();
           Log.printf("homeInit:%u  headingSource:%u  timeEnabled:%u  LPCheck:%u ft:%u  gpsGood:%u  boxhdgGood:%u \n", 
-                    homeInitialised, headingSource, timeEnabled, lostPowerCheckDone, gpsGood, boxhdgGood);
+                    homeInitialised, headingSource, timeEnabled, lostPowerCheckDone, ft, gpsGood, boxhdgGood);
+          Log.printf("Composit1:%u \n", ( ((timeEnabled) && (lostPowerCheckDone)) || (!timeEnabled) ) );
+          Log.printf("Composit2:%u \n", ( ( (headingSource == 3) || (headingSource == 4) ) && (ft) && (boxhdgGood) ) );      
         }
       #endif
         
-      if ( (homeInitialised == 0) && ((timeEnabled) && (lostPowerCheckDone)) || (!timeEnabled)  ) {  // home not yet initialised
+      if ( (homeInitialised == 0) && ( ((timeEnabled) && (lostPowerCheckDone)) || (!timeEnabled) )  ) {  // home not yet initialised
         
         // FC GPS
         if ((headingSource == 1) && (ft) && (gpsGood) ) {  
@@ -1003,7 +1005,7 @@ void loop() {
         }
           
         // FC compass or Trackerbox compass 
-        if ( ((headingSource == 2) && (ft) && (hdgGood)) || ( ((headingSource == 3) || (headingSource == 4)) && (ft) && (boxhdgGood) ) ) {
+        if ( ((headingSource == 2) && (ft) && (hdgGood)) || ( ( (headingSource == 3) || (headingSource == 4) ) && (ft) && (boxhdgGood) ) ) {
           ft=false;
           snprintf(snprintf_buf, snp_max, "GPS lock good! Push set-home button (pin:%d) anytime to start tracking \n", SetHomePin);  
           //Log.printf("GPS lock good! Push set-home button (pin:%d) anytime to start tracking\n", SetHomePin); 

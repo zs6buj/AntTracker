@@ -1,5 +1,6 @@
     //    0x400 iNav Flight Mode
     uint32_t pt400_flight_mode;
+    uint8_t  pt400_arm_flag = 0;
     
     //    0x410 iNav GPS Status
     uint32_t pt410_gps_status;
@@ -731,6 +732,8 @@
                     
                   case 0x400:              // Tmp1 FLIGHT_MODE
                     pt400_flight_mode = uint32Extract(buf, 3); 
+                    pt400_arm_flag = (uint8_t)pt400_flight_mode * 0.0001;
+                    
                   /*
                     #define INAV_FLIGHT_MODE_DATA_ID 0x0400 // Tmp1 sensor
                     //######## Flight_Flag #########*
@@ -744,7 +747,7 @@
                     
                     #if defined Debug_All || defined Debug_FrSky_Messages || defined Debug_FrSkyD_Flight_Mode
                       Log.print(" FrSky 0x400 Flight Mode=");
-                      Log.print(pt400_flight_mode);
+                      Log.printf("payload=%u arm_flag=%u\n", pt400_flight_mode, pt400_flight_mode);
                     #endif  
                     break;   
                                       

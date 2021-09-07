@@ -29,6 +29,7 @@ v2.18.05 2021-08-09 Rewrite old 0x410 decode
 v2.18.06 2021-08-11 Revert to v2.18.04. Rename 32b pt_gps_status pt410_gps_status.
 v2.18.07 2021-08-20 Add debug for FrSky GPS & Mag Status
 v2.18.08 2021-09-06 Add debug for FrSky D-Style Flight Mode 0x400
+         2021-09-07 Invert ESP32 home button push sense and change pin number
                     
 */
 //================================== Please select your options below before compiling ==================================
@@ -360,12 +361,12 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort,  FrSky +1
   uint8_t gps_rxPin =       13;  // uart2 for tracker box GPS if applicable
   #define gps_txPin          4  
   bool rxInvert = true;          // ONLY FOR FrSky S.Port, NOT F.Port, NOT MAVLINK
-  #define SetHomePin        18    
-  #define StatusLed         25  // Off=No good GPS yet, flashing=good GPS but home not set yet, solid = ready to track
+  #define SetHomePin        34   // HIGH (3.3V) == pushed    
+  #define StatusLed         25   // Off=No good GPS yet, flashing=good GPS but home not set yet, solid = ready to track
   #define BuiltinLed        99
-  #define azPWM_Pin         32  // azimuth servo (can't be 34,35,36,39 because input only !!)
-  #define elPWM_Pin         33  // elevation servo(can't be 34,35,36,39 because input only !!)
-  #define BuiltinLed        02  // PB1   
+  #define azPWM_Pin         32   // azimuth servo (can't be 34,35,36,39 because input only !!)
+  #define elPWM_Pin         33   // elevation servo(can't be 34,35,36,39 because input only !!)
+  #define BuiltinLed        02   // PB1   
 
     #define displaySupport       // uncomment me if you have a SSD1306 display
     #if (defined displaySupport)   // Display type defined with # define displaySupport   

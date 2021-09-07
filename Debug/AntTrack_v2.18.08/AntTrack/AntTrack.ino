@@ -525,7 +525,11 @@ void setup() {
   EEPROM_Setup();
   
   millisStartup = millis();
-  pinMode(SetHomePin, INPUT_PULLUP); 
+  #if (defined ESP32)
+    pinMode(SetHomePin, INPUT);            // HIGH == true
+  #else
+    pinMode(SetHomePin, INPUT_PULLUP);     // LOW == true
+  #endif  
   pinMode(StatusLed, OUTPUT ); 
   pinMode(BuiltinLed, OUTPUT);     // Board LED mimics status led
   digitalWrite(BuiltinLed, LOW);  // Logic is NOT reversed! Initialse off    
@@ -1012,8 +1016,11 @@ void loop() {
           new_GPS_data = false;
         }
       }
-      
-      uint8_t SetHomeState = digitalRead(SetHomePin);            // Check if home button is pushed = 0
+      uint8_t SetHomeState = digitalRead(SetHomePin);            // Check if home button is pushed
+      #if (defined ESP32)
+        SetHomeState = !SetHomeState;           // ESP32 pushed == HIGH (3.3V), else pushed == LOW)
+      #endif        
+
       if (headingSource==1) {
         if (SetHomeState == 0 && gpsGood && homSaved && !homeInitialised){     // SetHomePin is pulled up - normally high
           FinalStoreHome();  

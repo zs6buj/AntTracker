@@ -5,7 +5,7 @@
 
 #define MAJOR_VERSION      2
 #define MINOR_VERSION      18
-#define PATCH_LEVEL        08
+#define PATCH_LEVEL         8
 
 /*
 =================================================================================================== 
@@ -862,7 +862,7 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort,  FrSky +1
 
 //#define Debug_Our_FC_Heartbeat
 
-#defined Debug_FrSkyD_Flight_Mode
+#define Debug_FrSkyD_Flight_Mode
 
 #define Report_Packetloss   2     // F.Port packet loss every n minutes
 

@@ -733,7 +733,7 @@
                   case 0x400:              // Tmp1 FLIGHT_MODE
                     pt400_flight_mode = uint32Extract(buf, 3); 
                     d1234 = (uint16_t)(pt400_flight_mode * 0.1);                  
-                    pt400_arm_flag =  pt400_arm_flag - (d1234 * 10);                    
+                    pt400_arm_flag =  pt400_flight_mode - (d1234 * 10);                    
                     motArmed = (pt400_arm_flag == 5);                   
                     
                   /*

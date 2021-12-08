@@ -21,7 +21,7 @@ v2.18.09 2021-09-08 Add Set_Home_On_Arm option for testing
          2021-09-10 Wait forever for BT connection.  
                     Fix FrSky 0x400 motArmed.  
 v2.19.00 2021-11-09 Tinfo and Pinfo pins deprecated, removed code 
-v2.19.01 2021-12-08 Resurect STM32f103C version. Replace printf with snprintf. I2C pins in Wire.h                  
+v2.19.01 2021-12-08 Resurrect STM32f103C version. Replace printf with snprintf. I2C pins in Wire.h                  
                     
 */
 //================================== Please select your options below before compiling ==================================

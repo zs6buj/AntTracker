@@ -524,14 +524,16 @@ void RestoreHomeFromFlash() {
         #if (Telemetry_In == 2)                // Mavlink 
           #if (WiFi_Protocol == 2)         // Mav UDP 
             mav_udp_object.begin(UDP_localPort);
-            Log.printf("Mav UDP instance started, listening on IP %s, UDP local port %d\n", localIP.toString().c_str(), UDP_localPort);
+            snprintf(snprintf_buf, snp_max, "Mav UDP instance started, listening on IP %s, UDP local port %d\n", localIP.toString().c_str(), UDP_localPort);    
+            Log.print(snprintf_buf);               
             LogScreenPrint("UDP port = ");  LogScreenPrintln(String(UDP_localPort));
           #endif
         #endif
 
         #if (Telemetry_In == 3)               // FrSky
           frs_udp_object.begin(UDP_localPort+1);
-          Log.printf("Frs UDP instance started, listening on IP %s, UDP port %d\n", localIP.toString().c_str(), UDP_localPort+1);       
+          snprintf(snprintf_buf, snp_max, "Frs UDP instance started, listening on IP %s, UDP port %d\n", localIP.toString().c_str(), UDP_localPort+1);    
+          Log.print(snprintf_buf);                
           LogScreenPrint("UDP port = ");  LogScreenPrintln(String(UDP_localPort+1));       
         #endif
         
@@ -564,14 +566,16 @@ void RestoreHomeFromFlash() {
         #if (Telemetry_In == 2)                // Mavlink 
           #if (WiFi_Protocol == 2)             // Mav UDP 
             mav_udp_object.begin(UDP_localPort);
-            Log.printf("Mav UDP instance started, listening on IP %s, UDP port %d\n", localIP.toString().c_str(), UDP_localPort);
+            snprintf(snprintf_buf, snp_max, "Mav UDP instance started, listening on IP %s, UDP port %d\n", localIP.toString().c_str(), UDP_localPort);    
+            Log.print(snprintf_buf);             
             LogScreenPrint("UDP port = ");  LogScreenPrintln(String(UDP_localPort));
           #endif
         #endif
 
         #if (Telemetry_In == 3)                // FrSky
           frs_udp_object.begin(UDP_localPort);
-          Log.printf("Frs UDP instance started, listening on IP %s, UDP port %d\n", localIP.toString().c_str(), UDP_localPort);
+          snprintf(snprintf_buf, snp_max, "Frs UDP instance started, listening on IP %s, UDP port %d\n", localIP.toString().c_str(), UDP_localPort);    
+          Log.print(snprintf_buf);            
           LogScreenPrint("UDP port = ");  LogScreenPrintln(String(UDP_localPort));       
         #endif
       
@@ -609,7 +613,8 @@ void RestoreHomeFromFlash() {
     Log.print(" remote Port:"); Log.println(TCP_remotePort);
     nbdelay(1000);
     LogScreenPrintln("Remote server IP =");
-    Log.printf("%d.%d.%d.%d", TCP_remoteIP[0], TCP_remoteIP[1], TCP_remoteIP[2], TCP_remoteIP[3] );        
+    snprintf(snprintf_buf, snp_max, "%d.%d.%d.%d", TCP_remoteIP[0], TCP_remoteIP[1], TCP_remoteIP[2], TCP_remoteIP[3]);    
+    Log.print(snprintf_buf);              
     
  //   LogScreenPrintln(TCP_remoteIP.toString()); 
     return true;
@@ -672,7 +677,8 @@ int16_t Add360(int16_t arg1, int16_t arg2) {
 //================================================================================================= 
 #if (defined ESP32)   && ( (Telemetry_In == 2) || (Telemetry_In == 3)) && (defined Debug_WiFi)
 void WiFiEventHandler(WiFiEvent_t event)  {
-    Log.printf("[WiFi-event] event: %d ", event);
+    snprintf(snprintf_buf, snp_max, "[WiFi-event] event: %d ", event);    
+    Log.print(snprintf_buf);      
 
     switch (event) {
         case SYSTEM_EVENT_WIFI_READY: 
@@ -916,7 +922,8 @@ void WiFiEventHandler(WiFiEvent_t event)  {
       }
       uint16_t lth = strlen(S.c_str());           // store the new line a char at a time
       if (lth > scr_w_ch) {    
-        Log.printf("Display width of %d exceeded for |%s|\n", scr_w_ch, S.c_str());  // scr_w_ch = max_col-1
+        snprintf(snprintf_buf, snp_max, "Display width of %d exceeded for |%s|\n", scr_w_ch, S.c_str()); // scr_w_ch = max_col-1   
+        Log.print(snprintf_buf);         
         lth = scr_w_ch-1;  // prevent array overflow
       }
 
@@ -967,7 +974,8 @@ void WiFiEventHandler(WiFiEvent_t event)  {
        
       uint8_t lth = strlen(S.c_str());          // store the line a char at a time
       if (lth > scr_w_ch) {
-        Log.printf("Display width of %d exceeded for |%s|\n", scr_w_ch, S.c_str());  // scr_w_ch = max_col-1
+        snprintf(snprintf_buf, snp_max, "Display width of %d exceeded for |%s|\n", scr_w_ch, S.c_str()); // scr_w_ch = max_col-1   
+        Log.print(snprintf_buf);           
         lth = scr_w_ch-1;  // prevent array overflow
       }  
 

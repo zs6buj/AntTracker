@@ -5,7 +5,7 @@
 
 #define MAJOR_VERSION       2
 #define MINOR_VERSION      19
-#define PATCH_LEVEL         0
+#define PATCH_LEVEL         1
 
 /*
 =================================================================================================== 
@@ -20,7 +20,8 @@ v2.18.09 2021-09-08 Add Set_Home_On_Arm option for testing
          2021-09-09 Tidy up Mavlink BT in.
          2021-09-10 Wait forever for BT connection.  
                     Fix FrSky 0x400 motArmed.  
-V2.19.00 2021-11-09 Tinfo and Pinfo pins deprecated, removed code                   
+v2.19.00 2021-11-09 Tinfo and Pinfo pins deprecated, removed code 
+v2.19.01 2021-12-08 Resurrect STM32f103C version. Replace printf with snprintf. I2C pins in Wire.h                  
                     
 */
 //================================== Please select your options below before compiling ==================================
@@ -31,11 +32,11 @@ V2.19.00 2021-11-09 Tinfo and Pinfo pins deprecated, removed code
 
 // Choose one only of these input channels 
 // How does telemetry enter the tracker?
-//#define Telemetry_In  0    // Serial Port (default) - all protocols        
+#define Telemetry_In  0    // Serial Port (default) - all protocols        
 //#define Telemetry_In  1    // Mavlink BlueTooth Classic- ESP32 
 //#define Telemetry_In  2    // Mavlink WiFi - ESP only
 //#define Telemetry_In  3    // FrSky UDP - ESP only
-#define Telemetry_In  4    // FrSky BT classic - ESP32 only
+//#define Telemetry_In  4    // FrSky BT classic - ESP32 only
 
 
 // Select only one telemetry PROTOCOL here
@@ -309,8 +310,8 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort,  FrSky +1
   #define elPWM_Pin       6
   #define BuiltinLed     13
   #undef  displaySupport 
-  #define SDA            17  // I2C OLED board and/or Compass - default must be changed in Wire.h 
-  #define SCL            16  // I2C OLED board and/or Compass - default must be changed in Wire.h 
+  #define SDA            17  // I2C OLED board and/or Compass - default can be changed in Wire.h 
+  #define SCL            16  // I2C OLED board and/or Compass - default can be changed in Wire.h 
   //=========================================================================   
 #elif (Target_Board == 1)         // Blue Pill
   #include <Servo.h>  
@@ -324,8 +325,8 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort,  FrSky +1
   #define azPWM_Pin         PA07  // azimuth servo 
   #define elPWM_Pin         PA08  // elevation servo
   #define BuiltinLed        PC13  
-  #define SDA               PB07  // I2C OLED board and/or Compass - default must be changed in Wire.h 
-  #define SCL               PB06  // I2C OLED board and/or Compass - default must be changed in Wire.h 
+  #define SDA               PB07  // I2C OLED board and/or Compass - default can be changed in Wire.h 
+  #define SCL               PB06  // I2C OLED board and/or Compass - default can be changed in Wire.h 
   //=========================================================================   
 #elif (Target_Board == 2)         // Maple Mini
 

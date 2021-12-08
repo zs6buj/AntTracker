@@ -472,7 +472,8 @@
     //===================================================================   
  
     bool ParseFrame(uint8_t *buf, frport_t  frport_type, uint16_t lth) {
-      //Log.printf("buf[0]:%X  buf[1]:%X  buf[2]:%X\n", buf[0], buf[1], buf[2]); 
+      //snprintf(snprintf_buf, snp_max, "buf[0]:%X  buf[1]:%X  buf[2]:%X\n", buf[0], buf[1], buf[2]);    
+      //Log.print(snprintf_buf);          
       uint8_t crc_lo, crc_hi;
          
       int i = 0;
@@ -506,7 +507,8 @@
         badFrames++; // due to crc
       }
       #if defined Debug_CRC
-        Log.printf("mycrcGood=%d\n\n", mycrcGood);  
+        snprintf(snprintf_buf, snp_max, "mycrcGood=%d\n\n", mycrcGood);    
+        Log.print(snprintf_buf);            
       #endif  
       return mycrcGood;   
    
@@ -575,7 +577,8 @@
     void crcEnd(int16_t *mycrc)  {
       *mycrc = 0xFF - *mycrc;                  // final 2s complement
       #if defined Debug_CRC
-        Log.printf("crcEnd=%3X %3d\n", *mycrc, *mycrc );
+        snprintf(snprintf_buf, snp_max, "crcEnd=%3X %3d\n", *mycrc, *mycrc);    
+        Log.print(snprintf_buf);         
       #endif  
     }
     //===================================================================
@@ -585,7 +588,8 @@
        crcin += crcin >> 8;   // add in high byte overflow if any
        crcin &= 0xff;  // mask all but low byte, constrain to 8 bits 
        #if defined Debug_CRC       
-         Log.printf("AddIn %3d %2X\tcrcin_now=%3d %2X\n", b, b, crcin, crcin);
+         snprintf(snprintf_buf, snp_max, "AddIn %3d %2X\tcrcin_now=%3d %2X\n", b, b, crcin, crcin);    
+         Log.print(snprintf_buf);           
        #endif  
     }  
     //===================================================================
@@ -596,7 +600,8 @@
        *mycrc &= 0xff;          // mask all but low byte, constrain to 8 bits
 
       #if defined Debug_CRC
-         Log.printf("CRC Step: b=%3X %3d\  crc=%3X %3d\n", b, b, *mycrc, *mycrc);
+         snprintf(snprintf_buf, snp_max, "CRC Step: b=%3X %3d\  crc=%3X %3d\n", *mycrc, *mycrc);    
+         Log.print(snprintf_buf);           
       #endif
     }    
     //===================================================================   
@@ -616,7 +621,8 @@
       uint8_t mycrc = crcGet(buf, lth);   
       uint8_t fpcrc = *(buf+lth);
       #if defined Debug_CRC    
-        Log.printf("mycrc=%3X %3d  fpcrc=%3X\ %3d\n", mycrc, mycrc, fpcrc, fpcrc );
+        snprintf(snprintf_buf, snp_max, "mycrc=%3X %3d  fpcrc=%3X\ %3d\n", mycrc, mycrc, fpcrc, fpcrc);    
+        Log.print(snprintf_buf);        
       #endif
     return (mycrc == fpcrc);
 
@@ -627,7 +633,8 @@
     // Do the sensor packets according to appID
         uint16_t appID = uint16Extract(buf, 1 );
         pt_payload = uint32Extract(buf, 3);
-        //Log.printf("appID:%4X  cur.alt:%.0f  hom.alt:%.0f  cur.alt_ag:%.0f\n", appID, cur.alt, hom.alt, cur.at_ag);
+        //snprintf(snprintf_buf, snp_max, "appID:%4X  cur.alt:%.0f  hom.alt:%.0f  cur.alt_ag:%.0f\n", appID, cur.alt, hom.alt, cur.at_agc);    
+        //Log.print(snprintf_buf);            
         switch(appID) {
 
                 // One byte ID old D Style Hub/legacy protocol below 
@@ -751,7 +758,8 @@
                     */
                     
                     #if defined Debug_All || defined Debug_FrSky_Messages || defined Debug_FrSkyD_Flight_Mode
-                      Log.printf("FrSky 0x400 payload=%u pt400_arm_flag=%u  motArmed=%u\n", pt400_flight_mode, pt400_arm_flag, motArmed);
+                      snprintf(snprintf_buf, snp_max, "FrSky 0x400 payload=%u pt400_arm_flag=%u  motArmed=%u\n", pt400_flight_mode, pt400_arm_flag, motArmed);    
+                      Log.print(snprintf_buf);                         
                     #endif  
                     break;   
                                       
@@ -931,6 +939,9 @@
                   case 0x5003:                         // Battery 1 Hz
                    pt_bat1_volts = (float)(bit32Extract(pt_payload,0,9));  // dv -> V
                    //Log.printf("mantissa:%d  10exponent:%d mutiplier:%d \n", bit32Extract(pt_payload,10,7), bit32Extract(pt_payload,9,1), TenToPwr(bit32Extract(pt_payload,9,1)) );
+                   //snprintf(snprintf_buf, snp_max, "mantissa:%d  10exponent:%d mutiplier:%d \n", bit32Extract(pt_payload,10,7), bit32Extract(pt_payload,9,1), TenToPwr(bit32Extract(pt_payload,9,1)));    
+                   //Log.print(snprintf_buf);
+                   
                    pt_bat1_amps = (bit32Extract(pt_payload,10,7) * TenToPwr(bit32Extract(pt_payload,9,1) ) );  // rounded to nearest whole A
                    pt_bat1_mAh = bit32Extract(pt_payload,17,15);
                    pt_bat1_amps *= 10;  // prep_number() divided by 10 to get A, but we want dA for consistency
@@ -1015,7 +1026,8 @@
         hbGood_millis= millis();                    // good GPS data is equivalent to a mavlink heartbeat
         
         #if defined Debug_Frsky_GPS_Status
-          Log.printf("gpsGood:%u  gpsfixGood:%u  lonGood:%u  latGood:%u  altGood:%u  hdgGood:%u  boxhdgGood:%u \n", gpsGood, gpsfixGood, lonGood, latGood, altGood, hdgGood, boxhdgGood);
+          snprintf(snprintf_buf, snp_max, "gpsGood:%u  gpsfixGood:%u  lonGood:%u  latGood:%u  altGood:%u  hdgGood:%u  boxhdgGood:%u \n", gpsGood, gpsfixGood, lonGood, latGood, altGood, hdgGood, boxhdgGood);    
+          Log.print(snprintf_buf);         
         #endif
         
          

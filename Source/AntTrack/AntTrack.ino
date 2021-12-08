@@ -143,7 +143,7 @@
     uint32_t gpsBaud = 0;   // Tracker attached GPS, not flight GPS
     uint8_t  protocol = 0;
 
-    const uint8_t snp_max = 74;
+    const uint8_t snp_max = 128;
     char          snprintf_buf[snp_max];       // for use with snprintf() formatting of display line
 
     // ************************************
@@ -347,17 +347,23 @@ void setup() {
   #endif  
  
   #if ((defined ESP32) || (defined ESP8266)) && (defined Debug_SRAM)
-    Log.printf("Free Heap just after startup = %d\n", ESP.getFreeHeap());
+    snprintf(snprintf_buf, snp_max, "Free Heap just after startup = %d\n", ESP.getFreeHeap());
+    Log.print(snprintf_buf);    
   #endif  
 // ======================== Setup I2C ==============================
-  #if (( defined displaySupport) && (defined SSD1306_Display) )   // SSD1306 display
-    Log.printf("Setting up wire I2C   SDA:%u  SCL:%u\n", SDA, SCL);
-    Wire.begin(SDA, SCL);  
-  #elif ( (Heading_Source == 3) || (Heading_Source == 4) )        // Compass
-    Log.printf("Setting up wire I2C  SDA:%u  SCL:%u\n", SDA, SCL);
-    Wire.begin(SDA, SCL);  
-  #endif
-    
+  #if (( defined ESP32 ) || (defined ESP8266) )
+    #if (( defined displaySupport) && (defined SSD1306_Display) )   // SSD1306 display
+      snprintf(snprintf_buf, snp_max, "Setting up wire I2C   SDA:%u  SCL:%u\n", SDA, SCL);
+      Log.print(snprintf_buf);     
+      Wire.begin(SDA, SCL);  
+    #elif ( (Heading_Source == 3) || (Heading_Source == 4) )        // Compass
+      snprintf(snprintf_buf, snp_max, "Setting up wire I2C   SDA:%u  SCL:%u\n", SDA, SCL);
+      Log.print(snprintf_buf);     
+      Wire.begin(SDA, SCL);  
+    #endif
+  #else
+    Log.println("Default I2C pins are defined in Wire.h");
+  #endif  
 //=================================================================================================   
 //                                   S E T U P   D I S P L A Y
 //=================================================================================================
@@ -420,8 +426,8 @@ void setup() {
 
     SetScreenSizeOrient(TEXT_SIZE, SCR_ORIENT);
 
-    Log.printf("%dx%d  text_size=%d  char_w_px=%d  char_h_px=%d  scr_h_ch=%d  scr_w_ch=%d\n", scr_h_px, scr_w_px, TEXT_SIZE, char_w_px, char_h_px, scr_h_ch, scr_w_ch);
-    
+    snprintf(snprintf_buf, snp_max, "%dx%d  text_size=%d  char_w_px=%d  char_h_px=%d  scr_h_ch=%d  scr_w_ch=%d\n", scr_h_px, scr_w_px, TEXT_SIZE, char_w_px, char_h_px, scr_h_ch, scr_w_ch);
+    Log.print(snprintf_buf);     
     LogScreenPrintln("Starting .... ");
   #else
     Log.println("No display support selected or built-in");    
@@ -431,7 +437,8 @@ void setup() {
   display.setFont(Dialog_plain_16);    //  col=13 x row=4  on 128x64 display
   */
   #if ((defined ESP32) || (defined ESP8266)) && (defined Debug_SRAM)
-    Log.printf("==============>Free Heap after OLED setup = %d\n", ESP.getFreeHeap());
+    snprintf(snprintf_buf, snp_max, "==============>Free Heap after OLED setup = %d\n", ESP.getFreeHeap());
+    Log.print(snprintf_buf);    
   #endif
 
   
@@ -591,8 +598,8 @@ void setup() {
 
     #if ( (defined ESP8266) || (defined ESP32) )
       gpsBaud = getBaud(gps_rxPin);
-      //Log.print("Tracker box GPS baud rate detected is ");  Log.print(gpsBaud); Log.println(" b/s"); 
-      Log.printf("Tracker box GPS baud rate detected is %db/s\n", gpsBaud); 
+      snprintf(snprintf_buf, snp_max, "Tracker box GPS baud rate detected is %db/s\n", gpsBaud);
+      Log.print(snprintf_buf);         
       String s_baud=String(gpsBaud);   // integer to string. "String" overloaded
       LogScreenPrintln("Box GPS at "+ s_baud);
      
@@ -774,11 +781,13 @@ void setup() {
     #if (Telemetry_In == 1)  // Mavlink BT
 
       #if (mavBT_Mode == 1)     // 1 master mode, connect to slave name
-        Log.printf("Mavlink bluetooth master mode looking for slave name %s\n", mavBT_Slave_Name);
+        snprintf(snprintf_buf, snp_max, "Mavlink bluetooth master mode looking for slave name %s\n", mavBT_Slave_Name);
+        Log.print(snprintf_buf);           
         LogScreenPrintln("Mav BT master cnnct");      
         mavSerialBT.begin(mavBT_Slave_Name, true);            
       #else                  // 2 slave mode, advertise slave name
-          Log.printf("Mavlink bluetooth slave mode advertising mavlink slave name %s\n", mavBT_Slave_Name);
+          snprintf(snprintf_buf, snp_max, "Mavlink bluetooth slave mode advertising mavlink slave name %s\n", mavBT_Slave_Name);
+          Log.print(snprintf_buf);            
           LogScreenPrintln("Mav BT slave ready");   
           mavSerialBT.begin(mavBT_Slave_Name);   
       #endif 
@@ -806,10 +815,12 @@ void setup() {
            
      #if (Telemetry_In == 4) // FrSky BT
       #if (frsBT_Mode == 1)     // 1 master mode, connect to slave name
-        Log.printf("Frs bluetooth master mode looking for slave name %s\n", frsBT_Slave_Name);
+        snprintf(snprintf_buf, snp_max, "Frs bluetooth master mode looking for slave name %s\n", frsBT_Slave_Name);
+        Log.print(snprintf_buf);           
         frsSerialBT.begin(frsBT_Slave_Name, true);            
       #else                  // 2 slave mode, advertise slave name
-          Log.printf("Frs bluetooth slave mode advertising slave name %s\n", frsBT_Slave_Name);
+          snprintf(snprintf_buf, snp_max, "Frs bluetooth slave mode advertising slave name %s\n", frsBT_Slave_Name);
+          Log.print(snprintf_buf);             
           frsSerialBT.begin(frsBT_Slave_Name);   
       #endif 
       
@@ -977,9 +988,9 @@ void loop() {
 
     //       D Y N A M I C   H O M E   L O C A T I O N
 
-    //Log.printf("headingSource:%u  hbG:%u  gpsG:%u  boxgpsG:%u  PacketG:%u  new_GPS_data:%u  new_boxGPS_data:%u \n", 
-    //         headingSource, hbGood, gpsGood, boxgpsGood, PacketGood(), new_GPS_data, new_boxGPS_data);
-     
+    //snprintf(snprintf_buf, snp_max, "headingSource:%u  hbG:%u  gpsG:%u  boxgpsG:%u  PacketG:%u  new_GPS_data:%u  new_boxGPS_data:%u \n", 
+    //         headingSource, hbGood, gpsGood, boxgpsGood, PacketGood(), new_GPS_data, new_boxGPS_data);   
+    //Log.print(snprintf_buf);       
     #if (Heading_Source == 4)        // Trackerbox_GPS_And_Compass - possible moving home location
         if (hbGood && gpsGood && boxgpsGood && PacketGood() && new_GPS_data && new_boxGPS_data) {  //  every time there is new GPS data 
           static bool first_dynamic_home = true;
@@ -1009,10 +1020,11 @@ void loop() {
     #else   // end of tracker box gps moving home location, start of static home location, headingSource 1, 2 and 3
 
       if (timeGood) LostPowerCheckAndRestore(epochNow());  // only if active timeEnabled protocol
-      
-      //Log.printf("finalHomeStored:%u  timeEnabled:%u  lostPowerCheckDone:%u  firstHomeStored:%u  homeButtonPushed:%u\n", 
-      //        finalHomeStored, timeEnabled, lostPowerCheckDone, firstHomeStored, homeButtonPushed());  
-                 
+       
+      //snprintf(snprintf_buf, snp_max, "finalHomeStored:%u  timeEnabled:%u  lostPowerCheckDone:%u  firstHomeStored:%u  homeButtonPushed:%u\n", 
+      //        finalHomeStored, timeEnabled, lostPowerCheckDone, firstHomeStored, homeButtonPushed());    
+      //Log.print(snprintf_buf);  
+                     
       if ( (!finalHomeStored) && ( ((timeEnabled) && (lostPowerCheckDone)) || (!timeEnabled) ) ) {  // final home not yet stored
        
         if ((headingSource == 1) && (gpsGood) ) {                                                  // if FC GPS      
@@ -1037,7 +1049,8 @@ void loop() {
             sh_armFlag = true;
           #endif
           
-          //Log.printf("sh_armFlag:%u  motArmed:%u  gpsfixGood:%u  ft:%u \n", sh_armFlag, motArmed, gpsfixGood, ft); 
+          //snprintf(snprintf_buf, snp_max, "sh_armFlag:%u  motArmed:%u  gpsfixGood:%u  ft:%u \n", sh_armFlag, motArmed, gpsfixGood, ft);    
+          //Log.print(snprintf_buf);            
                 
           if (sh_armFlag) {                    // if set home at arm time
             if ( motArmed && gpsfixGood ) { 

@@ -181,7 +181,8 @@ byte x;
 // **********************************************************
 uint32_t getBaud(uint8_t pin) {
   Log.print("autoBaud - sensing pin "); Log.println(pin);
- // Log.printf("autoBaud - sensing pin %2d \n", pin );
+ //snprintf(snprintf_buf, snp_max, "autoBaud - sensing pin %2d \n", pin);    
+ //Log.print(snprintf_buf);   
   uint8_t i = 0;
   uint8_t col = 0;
   pinMode(pin, INPUT);       
@@ -258,7 +259,8 @@ uint32_t su_baud = 0;
 const uint32_t su_timeout = 5000; // uS !  Default timeout 1000mS!
 
   #if defined Debug_All || defined Debug_Baud
-    Log.printf("pin:%d  rxInvert:%d\n", pin, rxInvert);  
+    snprintf(snprintf_buf, snp_max, "pin:%d  rxInvert:%d\n", pin, rxInvert);    
+    Log.print(snprintf_buf);       
   #endif  
 
   if (rxInvert) {
@@ -281,7 +283,8 @@ const uint32_t su_timeout = 5000; // uS !  Default timeout 1000mS!
     } 
   } 
   #if defined Debug_All || defined Debug_Baud
-    Log.printf("pw:%d  min_pw:%d\n", pw, min_pw);
+    snprintf(snprintf_buf, snp_max, "pw:%d  min_pw:%d\n", pw, min_pw);    
+    Log.print(snprintf_buf);      
   #endif
 
   switch(min_pw) {   

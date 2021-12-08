@@ -646,7 +646,8 @@ void Send_To_FC(uint32_t msg_id) {
          
     #if defined  Debug_FC_Write
       if (msg_id) {    //  dont print heartbeat - too much info
-        Log.printf("Write to FC Serial: len=%d\n", len);
+        snprintf(snprintf_buf, snp_max, "Write to FC Serial: len=%d\n", len);    
+        Log.print(snprintf_buf);          
         PrintMavBuffer(&msg);
       }  
     #endif    

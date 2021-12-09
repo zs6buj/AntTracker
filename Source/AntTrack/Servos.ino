@@ -1,5 +1,5 @@
 
-#if (defined STM32F103C) || (defined MAPLE_MINI)     // NOTE: ONLY STM32 library uses PWM writeMicroseconds command
+#if (defined STM32F103C8) || (defined MAPLE_MINI)     // NOTE: ONLY STM32 library uses PWM writeMicroseconds command
   #ifdef Az_Servo_360           // Set the limits of the servos here
     int16_t llAz = 0;           // Az lower limit in degrees
     int16_t ulAz = 360;         // Az upper limit in degrees

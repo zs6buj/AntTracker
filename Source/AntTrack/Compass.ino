@@ -17,7 +17,7 @@ bool initialiseCompass() {
   #if ( (defined ESP32) || (defined ESP8266) )
     Wire.begin(SDA, SCL);
   #else
-    Wire.begin();   // default pins must be changed in Wire.h 
+    Wire.begin();   // default pins are defined in Wire.h 
   #endif
   
   #if defined HMC5883L  

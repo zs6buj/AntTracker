@@ -594,7 +594,7 @@ void setup() {
                  
 
 // ======================== Setup Serial ==============================
-  #if (Heading_Source == 4)  // Tracker box  GPS on Serial2
+  #if (Heading_Source == 4)  // Tracker box  
 
     #if ( (defined ESP8266) || (defined ESP32) )
       gpsBaud = getBaud(gps_rxPin);
@@ -604,10 +604,10 @@ void setup() {
       LogScreenPrintln("Box GPS at "+ s_baud);
      
       delay(100);
-      gpsSerial.begin(gpsBaud, SERIAL_8N1, gps_rxPin, gps_txPin); 
+      gpsSerial.begin(gpsBaud, SERIAL_8N1, gps_rxPin, gps_txPin); //GPS on Serial2
       delay(10);
     #else
-      gpsSerial.begin(gpsBaud);
+      gpsSerial.begin(gpsBaud);                                   // GPS on default Serial2 (UART3)
     #endif
     
   #endif

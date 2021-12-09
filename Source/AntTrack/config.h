@@ -185,11 +185,11 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort,  FrSky +1
   #define Target_Board   0      // Teensy 3.1 and 3.2    
       
 #elif defined (__BluePill_F103C8__) ||  defined (MCU_STM32F103RB)
-  #define Target_Board   1      // Blue Pill STM32F103C  
-  #define STM32F103C
+  #define Target_Board   1      // Blue Pill STM32F103C8  
+  #define STM32F103C8
          
 #elif defined (STM32_MEDIUM_DENSITY) 
-  #define Target_Board   2      // Maple_Mini STM32F103C     
+  #define Target_Board   2      // Maple_Mini STM32F103C      
 #elif defined (_BOARD_MAPLE_MINI_H_)
   // LeafLabs high density
   #define Target_Board   2      // Maple_Mini 
@@ -317,9 +317,9 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort,  FrSky +1
   #include <Servo.h>  
   uint8_t in_rxPin =        PA03;  // rx2 Serial1
   #define in_txPin          PA02   // tx2 Serial1
-  uint8_t gps_rxPin =       PA10;  // rx3 Serial2
-  #define gps_txPin         PA09   // tx3 Serial2
-  bool rxInvert = true;           // ONLY FOR FrSky S.Port, NOT F.Port, NOT MAVLINK    
+  uint8_t gps_rxPin =       PB11;  // rx3 Serial2
+  #define gps_txPin         PB10   // tx3 Serial2
+  bool rxInvert = false;           // ONLY FOR FrSky S.Port, NOT F.Port, NOT MAVLINK    
   #define SetHomePin        PA0;    
   #define StatusLed         PA06  // Off=No good GPS yet, flashing=good GPS but home not set yet, solid = ready to track
   #define azPWM_Pin         PA07  // azimuth servo 
@@ -796,7 +796,7 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort,  FrSky +1
     #define inSerial            Serial1        // ESP32 General telemetry input   
   #endif  
   #if (Heading_Source == 4) 
-    #define gpsSerial           Serial2        // ESP32 Tracker box GPS
+    #define gpsSerial           Serial2        // ESP32 and STM32F103C8 Tracker box GPS
   #endif  
 
 // ******************************** D E B U G G I N G   O P T I O N S ***************************************

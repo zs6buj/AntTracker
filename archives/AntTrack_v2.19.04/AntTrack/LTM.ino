@@ -61,7 +61,7 @@ byte NextChr() {
 byte x;
   iLth=Serial1.available();     //   wait for more data
   while (iLth==0) {
- //   CheckForTimeouts();
+ //   CheckStatusAndTimeouts();
     iLth=Serial1.available();
   }  
   // Data is available
@@ -135,7 +135,6 @@ boolean UnpackGPS(int lth) {
     new_GPS_data = true;
   }
 
-  if (headingSource==1 && (gpsGood) && (!homeInitialised) && (!homSaved)) AutoStoreHome();  // Only need this whenheadingSource is GPS  
   
   gpsGood_millis = millis();                 // Time of last good GPS packet
 

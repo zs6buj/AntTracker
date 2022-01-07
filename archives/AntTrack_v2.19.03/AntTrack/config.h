@@ -357,7 +357,7 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort,  FrSky +1
   uint8_t gps_rxPin =       13;  // uart2 for tracker box GPS if applicable
   #define gps_txPin          4  
   bool rxInvert = true;          // ONLY FOR FrSky S.Port, NOT F.Port, NOT MAVLINK
-  #define SetHomePin        34   // HIGH (3.3V) == pushed    
+  #define SetHomePin        34   // LOW == pushed    
   #define StatusLed         25   // Off=No good GPS yet, flashing=good GPS but home not set yet, solid = ready to track
   #define BuiltinLed        99
   #define azPWM_Pin         32   // azimuth servo (can't be 34,35,36,39 because input only !!)

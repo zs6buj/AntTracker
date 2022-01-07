@@ -1,23 +1,23 @@
 
-//#include <Wire.h>  allready included in main
+#if (Heading_Source  == 3) || (Heading_Source  == 4) // Tracker_Compass or (GPS + Compass)
 
-#define DECLINATION  -18.9 // In degrees   http://www.magnetic-declination.com/ 
+  #define DECLINATION  -18.9 // In degrees   http://www.magnetic-declination.com/ 
 
-#if defined HMC5883L  
-  #include <Adafruit_Sensor.h>
-  #include <Adafruit_HMC5883_U.h>
-  Adafruit_HMC5883_Unified mag = Adafruit_HMC5883_Unified(12345);
- #elif  defined QMC5883L  
-  // no libs - we do it the long way 
- #endif
+  #if defined HMC5883L  
+    #include <Adafruit_Sensor.h>
+    #include <Adafruit_HMC5883_U.h>
+    Adafruit_HMC5883_Unified mag = Adafruit_HMC5883_Unified(12345);
+   #elif  defined QMC5883L  
+    // no libs - we do it the long way 
+   #endif
 
 
-//=========================================================================
-bool initialiseCompass() {
+  //=========================================================================
+  bool initialiseCompass() {
   #if ( (defined ESP32) || (defined ESP8266) )
     Wire.begin(SDA, SCL);
   #else
-    Wire.begin();   // default pins must be changed in Wire.h 
+    Wire.begin();   // default pins are defined in Wire.h 
   #endif
   
   #if defined HMC5883L  
@@ -26,7 +26,7 @@ bool initialiseCompass() {
       return false;
     }
     if (magTimeout()) {       // this test requires my patched Adafruit_HMC5883_U.cpp
-      Log.println("No HMC5883 compass found! No box orietation!");
+      Log.println("No HMC5883 compass found! No box orientation!");
       LogScreenPrintln("No compass!");     
       return false;      
     }
@@ -54,8 +54,7 @@ bool initialiseCompass() {
     }
     uint8_t retry = 20;
     while ((!QMC5883L_Ready()) && (retry) ) {   
-      snprintf(snprintf_buf, snp_max, " %d", retry);
-      Log.print(snprintf_buf);
+      Log.printf(" %d", retry);
       retry--;
       delay(100);
     }
@@ -70,10 +69,10 @@ bool initialiseCompass() {
     }
   #endif
 
-}
+  }
 
-//====================================================
-float getTrackerboxHeading() {
+  //====================================================
+  float getTrackerboxHeading() {
   float fHeading = 0.0;
 
   #if defined HMC5883L
@@ -90,7 +89,7 @@ float getTrackerboxHeading() {
   #endif
       
       val += DECLINATION;  // Add magnetic declination
-      fHeading = wrap360(val);
+      fHeading = (float)wrap360((uint_16)val);
   
       #if defined Debug_All || defined Debug_boxCompass
         // Display the results (magnetic vector values are in micro-Tesla (uT)) */
@@ -108,15 +107,9 @@ float getTrackerboxHeading() {
       return 0.0;
     }
   #endif    
-}
-//====================================================
+  }
 
-float wrap360(float ang) {
-  if (ang < 0) ang += 360;
-  if (ang > 359) ang -= 360;
-  return ang;
-}
-#if  defined QMC5883L
+  #if  defined QMC5883L
   //====================================================
   
   bool QMC5883L_Ready() {
@@ -131,8 +124,7 @@ float wrap360(float ang) {
      ovfl    = stat & 0x02;
      skipped = stat & 0x04;
      bool rdy = (stat & 0x01) == 1;
-     snprintf(snprintf_buf, snp_max, "num:%d  stat:%d  rdy:%d \n", num, stat, rdy);
-     //Log.print(snprintf_buf);
+     //Log.printf("num:%d  stat:%d  rdy:%d \n", num, stat, rdy);
      return rdy; 
   }
 
@@ -177,9 +169,11 @@ float wrap360(float ang) {
 #endif
 
   //====================================================
-#if  defined HMC5883L
-  bool magTimeout() {
-    sensors_event_t event;  
-    return (!(mag.getEvent(&event)));
-  }
-#endif
+  #if  defined HMC5883L
+    bool magTimeout() {
+      sensors_event_t event;  
+      return (!(mag.getEvent(&event)));
+    }
+  #endif
+
+#endif  // end of whole Compass module  

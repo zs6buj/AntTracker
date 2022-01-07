@@ -6,7 +6,7 @@ void PrintByte(byte b);
 // ******************************************
 // Mavlink Message Types
 
-  mavlink_message_t msg;
+  mavlink_message_t msg, sendmsg;
   uint8_t             readbuf[300];  
   uint8_t             sendbuf[128];
   
@@ -641,22 +641,22 @@ bool Read_Bluetooth(mavlink_message_t* msgptr)  {
 void Send_To_FC(uint32_t msg_id) {
   
   #if (Telemetry_In == 0)              // Serial to FC
-    len = mavlink_msg_to_send_buffer(sendbuf, &msg);
+    len = mavlink_msg_to_send_buffer(sendbuf, &sendmsg);
     inSerial.write(sendbuf,len);  
          
     #if defined  Debug_FC_Write
       if (msg_id) {    //  dont print heartbeat - too much info
-        Log.printf("Write to FC Serial: len=%d\n", len);
-        PrintMavBuffer(&msg);
+        Log.printf("Write to FC Serial: len=%d\n", len);             
+        PrintMavBuffer(&sendmsg);
       }  
     #endif    
   #endif
 
   #if (Telemetry_In == 1)              // Bluetooth to FC   
-        bool msgSent = Send_Bluetooth(&msg);      
+        bool msgSent = Send_Bluetooth(&sendmsg);      
         #ifdef  Debug_FC_Write
           Log.print("Write to FC Bluetooth: msgSent="); Log.println(msgSent);
-          if (msgSent) PrintMavBuffer(&msg);
+          if (msgSent) PrintMavBuffer(&sendmsg);
         #endif     
   #endif
 
@@ -665,18 +665,18 @@ void Send_To_FC(uint32_t msg_id) {
       if (wifiSuGood) { 
         #if (WiFi_Protocol == 1)      // TCP/IP
            active_client_idx = 0;             // we only ever need 1
-           bool msgSent = Send_TCP(&msg);  // to FC   
+           bool msgSent = Send_TCP(&sendmsg);  // to FC   
            #ifdef  Debug_FC_Write
              Log.print("Write to FC WiFi TCP: msgSent="); Log.println(msgSent);
-             PrintMavBuffer(&msg);
+             PrintMavBuffer(&sendmsg);
            #endif    
          #endif   
          #if (WiFi_Protocol == 2)       // UDP 
            active_client_idx = 0;             // we only ever need 1 here   
-           bool msgSent = Send_UDP(&msg);     // to FC    
+           bool msgSent = Send_UDP(&sendmsg);     // to FC    
            #ifdef  Debug_FC_Write
              Log.print("Write to FC WiFi UDP: msgSent="); Log.println(msgSent);
-             if (msgSent) PrintMavBuffer(&msg);
+             if (msgSent) PrintMavBuffer(&sendmsg);
            #endif           
          #endif                                                             
       }
@@ -797,7 +797,7 @@ void Send_FC_Heartbeat() {
   apo_base_mode = 0;
   apo_system_status = MAV_STATE_ACTIVE;         // 4
    
-  mavlink_msg_heartbeat_pack(apo_sysid, apo_compid, &msg, apo_type, apo_autopilot, apo_base_mode, apo_system_status, 0); 
+  mavlink_msg_heartbeat_pack(apo_sysid, apo_compid, &sendmsg, apo_type, apo_autopilot, apo_base_mode, apo_system_status, 0); 
   Send_To_FC(0); 
   #if defined Debug_Our_FC_Heartbeat
      Log.print("Our own heartbeat to FC: #0 Heartbeat: ");  
@@ -837,7 +837,7 @@ void RequestDataStreams() {    //  REQUEST_DATA_STREAM ( #66 ) DEPRECATED. USE S
  // req_message_rate The requested interval between two messages of this type
 
   for (int i=0; i < maxStreams; i++) {
-    mavlink_msg_request_data_stream_pack(apo_sysid, apo_compid, &msg,
+    mavlink_msg_request_data_stream_pack(apo_sysid, apo_compid, &sendmsg,
         apo_targsys, apo_targcomp, mavStreams[i], mavRates[i], 1);    // start_stop 1 to start sending, 0 to stop sending   
                           
   Send_To_FC(66);

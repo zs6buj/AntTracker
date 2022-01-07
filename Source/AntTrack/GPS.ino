@@ -21,7 +21,7 @@
 
 
   // **********************************************************
-  void Setup_inGPS() {
+  void Setup_inGPS() {      // this is NOT the Trackebox GPS. See lower down.
     #if defined Debug_All || defined Debug_inGPS
        Log.println("Setup inGPS");
     #endif  
@@ -31,7 +31,7 @@
     #if ( (defined ESP32) || (defined ESP8266) )
       inSerial.begin(inBaud, SERIAL_8N1, in_rxPin, in_txPin);  // likely 9600 for NMEA
     #else
-      inSerial.begin(inBaud);  // Serial1 default pins - rx2 tx2 on STM32F103C
+      inSerial.begin(inBaud);  // Serial1 default pins - rx1 tx2 on STM32F1xx
     #endif
 
   }
@@ -41,7 +41,7 @@
   uint16_t yyyy = 0;
   float hdop = 0;
   bool got_data = false;
-  CheckForTimeouts();
+  CheckStatusAndTimeouts();
 
   while (inSerial.available() > 0) {
     if (inGPS.encode(inSerial.read())) {
@@ -51,7 +51,7 @@
         cur.lat = inGPS.location.lat();
         cur.lon = inGPS.location.lng();
         cur.alt = inGPS.altitude.meters();
-        if (homeInitialised) {
+        if (finalHomeStored) {
           cur.alt_ag = cur.alt - hom.alt;
         } else {
           cur.alt_ag = 0;
@@ -89,9 +89,7 @@
        
     }  // read() loop
   }  // available() loop
- 
-  if (headingSource==1 && (gpsGood) && (!homeInitialised) && (!homSaved)) AutoStoreHome();  // Only need this when headingSource is flight GPS 
-         
+          
   }
   
 #endif // end of inGPS
@@ -140,7 +138,7 @@
 
 //====================================================
 //====================================================
-#if (Heading_Source == 4)
+#if (Heading_Source == 4)   // Trackebox GPS
 
 TinyGPSPlus tboxGPS;
 

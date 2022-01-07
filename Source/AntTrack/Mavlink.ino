@@ -6,7 +6,7 @@ void PrintByte(byte b);
 // ******************************************
 // Mavlink Message Types
 
-  mavlink_message_t msg;
+  mavlink_message_t msg, sendmsg;
   uint8_t             readbuf[300];  
   uint8_t             sendbuf[128];
   
@@ -216,13 +216,16 @@ void Mavlink_Receive() {
           ap_system_status = mavlink_msg_heartbeat_get_system_status(&msg);
           ap_mavlink_version = mavlink_msg_heartbeat_get_mavlink_version(&msg);
           hbGood_millis = millis();    
-          
+
+          motArmed = ap_base_mode >> 7;  // motors armed!
+                    
           #if defined Debug_All || defined Debug_Mav_Heartbeat
             Log.print("Mavlink in #0 Heartbeat: ");           
             Log.print("ap_type="); Log.print(ap_type);   
             Log.print("  ap_autopilot="); Log.print(ap_autopilot); 
             Log.print("  ap_base_mode="); Log.print(ap_base_mode); 
-            Log.print(" ap_custom_mode="); Log.print(ap_custom_mode);   
+            Log.print("  motArmed="); Log.print(motArmed);            
+            Log.print("  ap_custom_mode="); Log.print(ap_custom_mode);   
             Log.print("  ap_system_status="); Log.print(ap_system_status); 
             Log.print("  ap_mavlink_version="); Log.println(ap_mavlink_version);
           #endif
@@ -236,7 +239,7 @@ void Mavlink_Receive() {
             Log.println("");
             #endif
 
-            if((hb_count >= 3) || (homeInitialised)) {  // If 3 heartbeats or 1 hb && previously connected, we are connected
+            if((hb_count >= 3) || (finalHomeStored)) {  // If 3 heartbeats or 1 hb && previously connected, we are connected
               hbGood=true; 
               mavGood = true;   
               hbGood_millis = millis();                   
@@ -312,7 +315,9 @@ void Mavlink_Receive() {
              pt_numsats = 15; // limit to 15 due to only 4 bits available
           }  else 
               pt_numsats = ap24_sat_visible;
-
+              
+          gpsfixGood = (ap24_fixtype>=4);
+          
           #if defined Debug_All || defined Debug_Mav_GPS 
             Log.print("Mavlink in #24 GPS_RAW_INT: ");  
             Log.print("ap24_fixtype="); Log.print(ap24_fixtype);
@@ -320,6 +325,7 @@ void Mavlink_Receive() {
               else if (ap24_fixtype==2) Log.print(" No Lock");
               else if (ap24_fixtype==3) Log.print(" 3D Lock");
               else if (ap24_fixtype==4) Log.print(" 3D+ Lock");
+              else if (ap24_fixtype>4) Log.print(" GPS fix > 4");             
               else Log.print(" Unknown");
 
             Log.print("  sats visible="); Log.print(ap24_sat_visible);
@@ -390,7 +396,7 @@ void Mavlink_Receive() {
           cur.lat =  (float)ap33_lat / 1E7;
           cur.lon = (float)ap33_lon / 1E7;
           cur.alt = ap33_alt_ag / 1E3;            
-          if (homeInitialised) {
+          if (finalHomeStored) {
             cur.alt_ag = cur.alt - hom.alt;
           } else {
             cur.alt_ag = 0;
@@ -398,8 +404,6 @@ void Mavlink_Receive() {
           cur.hdg = ap33_hdg / 100;
           hdgGood=true;
           
-          if (headingSource==1 && (gpsGood) && (!homeInitialised) && (!homSaved)) AutoStoreHome();  // Only need this when headingSource is FC GPS 
-
           #if defined Debug_All || defined Debug_Mav_GPS
             Log.print("Mavlink in #33 GPS Int: ");
             Log.print(" ap33_lat="); Log.print((float)ap33_lat / 1E7, 6);
@@ -637,22 +641,22 @@ bool Read_Bluetooth(mavlink_message_t* msgptr)  {
 void Send_To_FC(uint32_t msg_id) {
   
   #if (Telemetry_In == 0)              // Serial to FC
-    len = mavlink_msg_to_send_buffer(sendbuf, &msg);
+    len = mavlink_msg_to_send_buffer(sendbuf, &sendmsg);
     inSerial.write(sendbuf,len);  
          
     #if defined  Debug_FC_Write
       if (msg_id) {    //  dont print heartbeat - too much info
-        Log.printf("Write to FC Serial: len=%d\n", len);
-        PrintMavBuffer(&msg);
+        Log.printf("Write to FC Serial: len=%d\n", len);             
+        PrintMavBuffer(&sendmsg);
       }  
     #endif    
   #endif
 
   #if (Telemetry_In == 1)              // Bluetooth to FC   
-        bool msgSent = Send_Bluetooth(&msg);      
+        bool msgSent = Send_Bluetooth(&sendmsg);      
         #ifdef  Debug_FC_Write
           Log.print("Write to FC Bluetooth: msgSent="); Log.println(msgSent);
-          if (msgSent) PrintMavBuffer(&msg);
+          if (msgSent) PrintMavBuffer(&sendmsg);
         #endif     
   #endif
 
@@ -661,18 +665,18 @@ void Send_To_FC(uint32_t msg_id) {
       if (wifiSuGood) { 
         #if (WiFi_Protocol == 1)      // TCP/IP
            active_client_idx = 0;             // we only ever need 1
-           bool msgSent = Send_TCP(&msg);  // to FC   
+           bool msgSent = Send_TCP(&sendmsg);  // to FC   
            #ifdef  Debug_FC_Write
              Log.print("Write to FC WiFi TCP: msgSent="); Log.println(msgSent);
-             PrintMavBuffer(&msg);
+             PrintMavBuffer(&sendmsg);
            #endif    
          #endif   
          #if (WiFi_Protocol == 2)       // UDP 
            active_client_idx = 0;             // we only ever need 1 here   
-           bool msgSent = Send_UDP(&msg);     // to FC    
+           bool msgSent = Send_UDP(&sendmsg);     // to FC    
            #ifdef  Debug_FC_Write
              Log.print("Write to FC WiFi UDP: msgSent="); Log.println(msgSent);
-             if (msgSent) PrintMavBuffer(&msg);
+             if (msgSent) PrintMavBuffer(&sendmsg);
            #endif           
          #endif                                                             
       }
@@ -793,7 +797,7 @@ void Send_FC_Heartbeat() {
   apo_base_mode = 0;
   apo_system_status = MAV_STATE_ACTIVE;         // 4
    
-  mavlink_msg_heartbeat_pack(apo_sysid, apo_compid, &msg, apo_type, apo_autopilot, apo_base_mode, apo_system_status, 0); 
+  mavlink_msg_heartbeat_pack(apo_sysid, apo_compid, &sendmsg, apo_type, apo_autopilot, apo_base_mode, apo_system_status, 0); 
   Send_To_FC(0); 
   #if defined Debug_Our_FC_Heartbeat
      Log.print("Our own heartbeat to FC: #0 Heartbeat: ");  
@@ -833,7 +837,7 @@ void RequestDataStreams() {    //  REQUEST_DATA_STREAM ( #66 ) DEPRECATED. USE S
  // req_message_rate The requested interval between two messages of this type
 
   for (int i=0; i < maxStreams; i++) {
-    mavlink_msg_request_data_stream_pack(apo_sysid, apo_compid, &msg,
+    mavlink_msg_request_data_stream_pack(apo_sysid, apo_compid, &sendmsg,
         apo_targsys, apo_targcomp, mavStreams[i], mavRates[i], 1);    // start_stop 1 to start sending, 0 to stop sending   
                           
   Send_To_FC(66);

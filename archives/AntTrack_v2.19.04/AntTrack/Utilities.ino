@@ -220,7 +220,7 @@ void PrintFrsBuffer(byte *buf, uint8_t len){
 bool PacketGood() {
 // Allow 1 degree of lat and lon away from home, i.e. 60 nautical miles radius at the equator
 // Allow 1km up and 300m down from home altitude
-if (homeInitialised==0) {  //  You can't use the home co-ordinates for a reasonability test if you don't have them yet
+if (finalHomeStored==0) {  //  You can't use the home co-ordinates for a reasonability test if you don't have them yet
   return true;
   }
 if (cur.lat<(hom.lat-1.0) || cur.lat>(hom.lat+1.0)) {  // Also works for negative lat
@@ -265,7 +265,7 @@ return true;
 }
 //=================================================================================================  
 
-    void CheckForTimeouts() {
+    void CheckStatusAndTimeouts() {
       
      if ((millis() - hbGood_millis) > ((2*timeout_secs) * 1000)) {
        mavGood = false; 
@@ -298,6 +298,17 @@ return true;
     //===================================================================     
     
     void ReportOnlineStatus() {
+
+       if (motArmed != motPrev) {  // report on change of status
+         motPrev = motArmed;
+         if (motArmed) {
+           Log.println("Motors Armed!");
+           LogScreenPrintln("Motors Armed!");         
+         } else {
+          Log.println("Motors Disarmed");
+          LogScreenPrintln("Motors Disarmed");         
+         }
+       }      
        if (frGood != frPrev) {  // report on change of status
          frPrev = frGood;
          if (frGood) {
@@ -365,12 +376,11 @@ void LostPowerCheckAndRestore(uint32_t epoch_now) { // only ever called if activ
     uint16_t decay_secs = epoch_now -  epochHome();  
     if (decay_secs <= home_decay_secs) {  //  restore home if restart within decay seconds
       RestoreHomeFromFlash();     
-      snprintf(snprintf_buf, snp_max, "Home data restored from NVM, decay %d secs is within limit of %d secs\n", decay_secs, home_decay_secs); 
-      Log.print(snprintf_buf);     
+      Log.printf("Home data restored from NVM, decay %d secs is within limit of %d secs\n", decay_secs, home_decay_secs);     
       //Log.printf("Home data restored from NVM, decay %d secs is within limit of %d secs\n", decay_secs, home_decay_secs);     
       LogScreenPrintln("Home data restored");
       LogScreenPrintln("from Flash. Go Fly!");  
-      homeInitialised=1;           
+      finalHomeStored=1;           
     }
   #endif
   
@@ -386,7 +396,7 @@ void SaveHomeToFlash() {
   EEPROMWritelong(4, hom.hdg*10);  
   
 #if defined Debug_All || defined Debug_EEPROM || defined Debug_Time || defined Debug_Home
-  Log.print("  homSaved="); Log.print(homSaved);
+  Log.print("  firstHomeStored="); Log.print(firstHomeStored);
   Log.print("  home.lon="); Log.print(hom.lon, 6);
   Log.print("  home.lat="); Log.print(hom.lat, 6);
   Log.print("  home.alt="); Log.print(hom.alt, 1);
@@ -400,7 +410,7 @@ void StoreEpochPeriodic() {
   uint32_t epochPeriodic = epochNow();
   EEPROMWritelong(5, epochPeriodic); // Seconds
 
-  if (homeInitialised) {
+  if (finalHomeStored) {
     EEPROMWritelong(0, epochPeriodic); // UPDATE epochHome
     #if defined Debug_All || defined Debug_EEPROM || defined Debug_Time || defined Debug_Home
       Log.print("epochHome stored="); Log.println(TimeString(epochPeriodic));
@@ -513,14 +523,14 @@ void RestoreHomeFromFlash() {
         #if (Telemetry_In == 2)                // Mavlink 
           #if (WiFi_Protocol == 2)         // Mav UDP 
             mav_udp_object.begin(UDP_localPort);
-            Log.printf("Mav UDP instance started, listening on IP %s, UDP local port %d\n", localIP.toString().c_str(), UDP_localPort);
+            Log.printf("Mav UDP instance started, listening on IP %s, UDP local port %d\n", localIP.toString().c_str(), UDP_localPort);                 
             LogScreenPrint("UDP port = ");  LogScreenPrintln(String(UDP_localPort));
           #endif
         #endif
 
         #if (Telemetry_In == 3)               // FrSky
           frs_udp_object.begin(UDP_localPort+1);
-          Log.printf("Frs UDP instance started, listening on IP %s, UDP port %d\n", localIP.toString().c_str(), UDP_localPort+1);       
+          Log.printf("Frs UDP instance started, listening on IP %s, UDP port %d\n", localIP.toString().c_str(), UDP_localPort+1);                  
           LogScreenPrint("UDP port = ");  LogScreenPrintln(String(UDP_localPort+1));       
         #endif
         
@@ -553,14 +563,14 @@ void RestoreHomeFromFlash() {
         #if (Telemetry_In == 2)                // Mavlink 
           #if (WiFi_Protocol == 2)             // Mav UDP 
             mav_udp_object.begin(UDP_localPort);
-            Log.printf("Mav UDP instance started, listening on IP %s, UDP port %d\n", localIP.toString().c_str(), UDP_localPort);
+            Log.printf("Mav UDP instance started, listening on IP %s, UDP port %d\n", localIP.toString().c_str(), UDP_localPort);              
             LogScreenPrint("UDP port = ");  LogScreenPrintln(String(UDP_localPort));
           #endif
         #endif
 
         #if (Telemetry_In == 3)                // FrSky
           frs_udp_object.begin(UDP_localPort);
-          Log.printf("Frs UDP instance started, listening on IP %s, UDP port %d\n", localIP.toString().c_str(), UDP_localPort);
+          Log.printf("Frs UDP instance started, listening on IP %s, UDP port %d\n", localIP.toString().c_str(), UDP_localPort);         
           LogScreenPrint("UDP port = ");  LogScreenPrintln(String(UDP_localPort));       
         #endif
       
@@ -598,7 +608,7 @@ void RestoreHomeFromFlash() {
     Log.print(" remote Port:"); Log.println(TCP_remotePort);
     nbdelay(1000);
     LogScreenPrintln("Remote server IP =");
-    Log.printf("%d.%d.%d.%d", TCP_remoteIP[0], TCP_remoteIP[1], TCP_remoteIP[2], TCP_remoteIP[3] );        
+    Log.printf("%d.%d.%d.%d", TCP_remoteIP[0], TCP_remoteIP[1], TCP_remoteIP[2], TCP_remoteIP[3]);               
     
  //   LogScreenPrintln(TCP_remoteIP.toString()); 
     return true;
@@ -661,7 +671,7 @@ int16_t Add360(int16_t arg1, int16_t arg2) {
 //================================================================================================= 
 #if (defined ESP32)   && ( (Telemetry_In == 2) || (Telemetry_In == 3)) && (defined Debug_WiFi)
 void WiFiEventHandler(WiFiEvent_t event)  {
-    Log.printf("[WiFi-event] event: %d ", event);
+    Log.printf("[WiFi-event] event: %d ", event);        
 
     switch (event) {
         case SYSTEM_EVENT_WIFI_READY: 
@@ -780,35 +790,11 @@ void WiFiEventHandler(WiFiEvent_t event)  {
   #if defined displaySupport  
     void HandleDisplayButtons() {
 
-      if (Pinfo != 99)  {   // if digital pin for info display enumerated
-        infoButton = !digitalRead(Pinfo);  // low == pressed
-      }
-        
-      if ((infoButton) && (!infoPressBusy)) { 
-        infoPressBusy = true; 
-        infoNewPress = true;          
-        info_debounce_millis = millis();   
-
-        info_millis = millis();                       
-        if (show_log) {
-          show_log = false; 
-          info_millis = millis() + db_period;  
-        } else {
-          show_log = true;    
-        }
-      }
-        
-      if(millis() - info_debounce_millis > db_period) { 
-        infoPressBusy = false; 
-        infoButton = false; // for slow decay touch buttons
-      }
-
       if (millis() - last_log_millis > 15000) { // after 15 seconds default to flight info screen
         last_log_millis = millis();             // and enable toggle button again
         show_log = false;
       }
-
-      
+        
       if (show_log) {
         if (infoNewPress) {     
           PaintLogScreen(row, show_last_row);  // one time     
@@ -917,7 +903,6 @@ void WiFiEventHandler(WiFiEvent_t event)  {
     //===================================
     void LogScreenPrintln(String S) {
     #if defined displaySupport   
-     
       if (display_mode != logg) {
           SetupLogDisplayStyle();
           display_mode = logg; 
@@ -929,7 +914,7 @@ void WiFiEventHandler(WiFiEvent_t event)  {
       }
       uint16_t lth = strlen(S.c_str());           // store the new line a char at a time
       if (lth > scr_w_ch) {    
-        Log.printf("Display width of %d exceeded for |%s|\n", scr_w_ch, S.c_str());  // scr_w_ch = max_col-1
+        Log.printf("Display width of %d exceeded for |%s|\n", scr_w_ch, S.c_str()); // scr_w_ch = max_col-1            
         lth = scr_w_ch-1;  // prevent array overflow
       }
 
@@ -980,7 +965,7 @@ void WiFiEventHandler(WiFiEvent_t event)  {
        
       uint8_t lth = strlen(S.c_str());          // store the line a char at a time
       if (lth > scr_w_ch) {
-        Log.printf("Display width of %d exceeded for |%s|\n", scr_w_ch, S.c_str());  // scr_w_ch = max_col-1
+        Log.printf("Display width of %d exceeded for |%s|\n", scr_w_ch, S.c_str()); // scr_w_ch = max_col-1             
         lth = scr_w_ch-1;  // prevent array overflow
       }  
 
@@ -1002,6 +987,38 @@ void WiFiEventHandler(WiFiEvent_t event)  {
     } // ready for next line
     
     //===================================
+    void LogScreenPrintChar(char ch) {
+    #if defined displaySupport   
+
+      if (display_mode != logg) {
+          SetupLogDisplayStyle();
+          display_mode = logg; 
+          PaintLogScreen(row, omit_last_row);
+      } else {   
+        if (row >= scr_h_ch) {                      // if the new line exceeds the page lth, re-display existing lines
+          PaintLogScreen(row, omit_last_row);
+        }
+      }
+      // display.setCursor( ((col+1) * char_w_px), ((row+1) * char_h_px) );
+      display.print(ch);                         // the new char
+      #if (defined SSD1306_Display)
+        display.display();
+      #endif 
+
+      ScreenRow[row].x[col] = ch;
+      col++;
+          
+      if (col > scr_w_ch-1) {   // if columns exceeded, increment row
+        col = 0;
+        row++;
+      }
+      last_log_millis = millis();             // and enable toggle button again
+      show_log = true;
+    #endif    
+    } // ready for next char
+    
+    //===================================
+    
     #if defined displaySupport  
     
     void DisplayFlightInfo() {
@@ -1516,4 +1533,20 @@ void WiFiEventHandler(WiFiEvent_t event)  {
     }
     #endif
     //===================================================================  
-       
+    bool homeButtonPushed() {
+      bool hbp = false;
+      if (SetHomePin != 99) {
+        hbp = (!(digitalRead(SetHomePin)));            // Check if home button is pushed
+      }
+      #if (defined ESP32)
+          hbp = !hbp;     // ESP32 pushed == HIGH (3.3V), else pushed == LOW)
+      #endif  
+      return hbp;
+    }
+    //===================================================================   
+
+   uint16_t wrap360(int16_t ang) {
+     if (ang < 0) ang += 360;
+     if (ang > 359) ang -= 360;
+     return ang;
+   }     

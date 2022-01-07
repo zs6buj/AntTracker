@@ -67,7 +67,6 @@
   bool lonGood = false;
   bool latGood = false;
   bool altGood = false;
-  bool hdopGood = false;
 
   bool Passthru = false;
   bool d_dia = false;
@@ -82,6 +81,7 @@
   boolean crc_bad; 
   
   // variables for iNav 0x410 decode
+  uint16_t d1234;
   uint8_t  d1;
   uint16_t dr1;
   uint8_t  d2;
@@ -133,7 +133,7 @@
     uint8_t   fr_prime = 0;
     
     // Forward Declarations
-    void CheckForTimeouts();
+    void CheckStatusAndTimeouts();
 
      
     //=======================================================================
@@ -156,8 +156,7 @@
       if (len == 0) return;
       for (int i = 0 ; i < len ; i++) {
         inBuf[i] = frs_udp_object.read();
-        //snprintf(snprintf_buf, snp_max, "byte:%X  i:%d\n", inBuf[i], i);
-        //Log.print(snprintf_buf);
+        //Log.printf("byte:%X  i:%d\n", inBuf[i], i);
       }
   
       //Log.print("A " );  PrintFrsBuffer(&inBuf[0], len-fr_offset); 
@@ -171,8 +170,7 @@
       if (len == 8) {  // F.Port frame
         fr_offset = 0;
       }
-      //snprintf(snprintf_buf, snp_max, "B ");  PrintFrsBuffer(&inBuf[fr_offset], len-fr_offset);
-      //Log.print(snprintf_buf);
+      //Log.printf("B ");  PrintFrsBuffer(&inBuf[fr_offset], len-fr_offset);
       bool mycrcGood = crcGood(&inBuf[fr_offset], len-fr_offset); 
 
       if (mycrcGood) {  
@@ -233,8 +231,7 @@
        if (millis() - packetloss_millis > period) {
          packetloss_millis = millis();
          float packetloss = float(float(badFrames * 100) / float(goodFrames + badFrames));
-         snprintf(snprintf_buf, snp_max, "S.Port goodFrames:%d   badFrames:%d   frame loss:%.3f%%\n", goodFrames, badFrames, packetloss);
-         Log.print(snprintf_buf);
+         Log.printf("S.Port goodFrames:%d   badFrames:%d   frame loss:%.3f%%\n", goodFrames, badFrames, packetloss);
        }      
       #endif  
   
@@ -249,8 +246,7 @@
           if (i == 3) {
             memset(&buf[2], 0x00, inMax-2); // clear the rest
           }
-          //snprintf(snprintf_buf, snp_max, "0x7E found  i:%d  ", i);   PrintFrsBuffer(buf, 10);
-          //Log.print(snprintf_buf);
+          //Log.printf("0x7E found  i:%d  ", i);   PrintFrsBuffer(buf, 10);
           buf[0] = b;
           i = 1;  
 
@@ -271,8 +267,7 @@
         }  // end of b == 0x7E
          
         b = SafeRead();
-        //Printbyte(b, true, ','); snprintf(snprintf_buf, snp_max, ":i[%d] ", i); 
-        //Log.print(snprintf_buf);
+        //Printbyte(b, true, ','); Log.printf(":i[%d] ", i); 
         if (b != 0x7E) {  // if next start/stop don't put it in the buffer
           if ((i > 1) && (i < 9))  crcStepIn(b);           
         }
@@ -298,8 +293,7 @@
 
       if (lth < 10) {
         if (lth > 0) {
-          //snprintf(snprintf_buf, snp_max, "lth=%d\n", lth); 
-          //Log.print(snprintf_buf);
+          //Log.printf("lth=%d\n", lth); 
         }
         return false;       // prevent 'wait-on-read' blocking
       }
@@ -309,7 +303,7 @@
         if (millis() - packetloss_millis > period) {
           packetloss_millis = millis();
           float packetloss = float(float(badFrames * 100) / float(goodFrames + badFrames));
-          snprintf(snprintf_buf, snp_max, "F.Port goodFrames:%d   badFrames:%d   frame loss:%.3f%%\n", goodFrames, badFrames, packetloss);
+          Log.printf("F.Port goodFrames:%d   badFrames:%d   frame loss:%.3f%%\n", goodFrames, badFrames, packetloss);
         }
       #endif
 
@@ -370,13 +364,12 @@
               return false;
                     
             default: 
-              //   snprintf(snprintf_buf, snp_max, "Unknown frame type = %X\n", fr_type);  
+              //   Log.printf("Unknown frame type = %X\n", fr_type);  
               return false;     
           }       // end of switch   
         } else {  // end of length ok
           badFrames++; // frame length error due to fail length test
-          //snprintf(snprintf_buf, snp_max, "Bad FPort frame length = %X\n", fr_lth); 
-          //Log.print(snprintf_buf);
+          //Log.printf("Bad FPort frame length = %X\n", fr_lth); ;
           return false; 
         }     
       }          // end of FPort1
@@ -402,8 +395,7 @@
         if ((fr_lth == 0x08) || (fr_lth == 0x0d) || (fr_lth == 0x18) || (fr_lth == 0x20) ) {  // 
           frGood = true;            
           frGood_millis = millis();  
-          //snprintf(snprintf_buf, snp_max, "fr_lth:%d   fr_type:%X\n", fr_lth, fr_type);  
-          //Log.print(snprintf_buf); 
+          //Log.printf("fr_lth:%d   fr_type:%X\n", fr_lth, fr_type);  
     
           switch(fr_type){
             
@@ -453,15 +445,13 @@
             case 0xf2:      // OTA end frame
               return false;    
             default: 
-           //   snprintf(snprintf_buf, snp_max, "Unknown frame type = %X\n", fr_type);  
-           //Log.print(snprintf_buf);
+           //   Log.printf("Unknown frame type = %X\n", fr_type);  
               break;           
           }       // end of switch   
         } else {  // end of length ok
           badFrames++; // due to fail length test
           return false;
-          // snprintf(snprintf_buf, snp_max, "Bad FPort frame length = %X\n", fr_lth);  
-          //Log.print(snprintf_buf);
+          // Log.printf("Bad FPort frame length = %X\n", fr_lth);  
         }     
       }          // end of FPort2
 
@@ -472,7 +462,7 @@
     //===================================================================   
  
     bool ParseFrame(uint8_t *buf, frport_t  frport_type, uint16_t lth) {
-      //Log.printf("buf[0]:%X  buf[1]:%X  buf[2]:%X\n", buf[0], buf[1], buf[2]); 
+      //Log.printf("buf[0]:%X  buf[1]:%X  buf[2]:%X\n", buf[0], buf[1], buf[2]);            
       uint8_t crc_lo, crc_hi;
          
       int i = 0;
@@ -506,7 +496,7 @@
         badFrames++; // due to crc
       }
       #if defined Debug_CRC
-        Log.printf("mycrcGood=%d\n\n", mycrcGood);  
+        Log.printf("mycrcGood=%d\n\n", mycrcGood);              
       #endif  
       return mycrcGood;   
    
@@ -519,7 +509,7 @@
 
       if (lth == 0) {
         while (lth==0) {
-          CheckForTimeouts();
+          CheckStatusAndTimeouts();
 
           #if (Telemetry_In == 0)   // serial UART
             lth=inSerial.available();
@@ -575,7 +565,7 @@
     void crcEnd(int16_t *mycrc)  {
       *mycrc = 0xFF - *mycrc;                  // final 2s complement
       #if defined Debug_CRC
-        Log.printf("crcEnd=%3X %3d\n", *mycrc, *mycrc );
+        Log.printf("crcEnd=%3X %3d\n", *mycrc, *mycrc);             
       #endif  
     }
     //===================================================================
@@ -585,7 +575,7 @@
        crcin += crcin >> 8;   // add in high byte overflow if any
        crcin &= 0xff;  // mask all but low byte, constrain to 8 bits 
        #if defined Debug_CRC       
-         Log.printf("AddIn %3d %2X\tcrcin_now=%3d %2X\n", b, b, crcin, crcin);
+         Log.printf("AddIn %3d %2X\tcrcin_now=%3d %2X\n", b, b, crcin, crcin);              
        #endif  
     }  
     //===================================================================
@@ -596,7 +586,7 @@
        *mycrc &= 0xff;          // mask all but low byte, constrain to 8 bits
 
       #if defined Debug_CRC
-         Log.printf("CRC Step: b=%3X %3d\  crc=%3X %3d\n", b, b, *mycrc, *mycrc);
+         Log.printf("CRC Step: b=%3X %3d\  crc=%3X %3d\n", *mycrc, *mycrc);           
       #endif
     }    
     //===================================================================   
@@ -616,7 +606,7 @@
       uint8_t mycrc = crcGet(buf, lth);   
       uint8_t fpcrc = *(buf+lth);
       #if defined Debug_CRC    
-        Log.printf("mycrc=%3X %3d  fpcrc=%3X\ %3d\n", mycrc, mycrc, fpcrc, fpcrc );
+        Log.printf("mycrc=%3X %3d  fpcrc=%3X\ %3d\n", mycrc, mycrc, fpcrc, fpcrc);          
       #endif
     return (mycrc == fpcrc);
 
@@ -627,7 +617,7 @@
     // Do the sensor packets according to appID
         uint16_t appID = uint16Extract(buf, 1 );
         pt_payload = uint32Extract(buf, 3);
-        //Log.printf("appID:%4X  cur.alt:%.0f  hom.alt:%.0f  cur.alt_ag:%.0f\n", appID, cur.alt, hom.alt, cur.at_ag);
+        //Log.printf("appID:%4X  cur.alt:%.0f  hom.alt:%.0f  cur.alt_ag:%.0f\n", appID, cur.alt, hom.alt, cur.at_agc);              
         switch(appID) {
 
                 // One byte ID old D Style Hub/legacy protocol below 
@@ -732,22 +722,26 @@
                     
                   case 0x400:              // Tmp1 FLIGHT_MODE
                     pt400_flight_mode = uint32Extract(buf, 3); 
-                    pt400_arm_flag = (uint8_t)(pt400_flight_mode * 0.0001);
+                    d1234 = (uint16_t)(pt400_flight_mode * 0.1);                  
+                    pt400_arm_flag =  pt400_flight_mode - (d1234 * 10);                    
+                    motArmed = (pt400_arm_flag == 5);                   
                     
                   /*
-                    #define INAV_FLIGHT_MODE_DATA_ID 0x0400 // Tmp1 sensor
-                    //######## Flight_Flag #########*
-                    String MODE_flag = MODE_strg.substring(4);
-                    int fMODE_int = MODE_flag.toInt();
-                    String fMODE;
-                    if (fMODE_int == 1) fMODE = ("OK_to_ARM");
-                    else if (fMODE_int == 2) fMODE = ("PREVENT_Arming");
-                    else if (fMODE_int == 4) fMODE = ("ARMED");
+                   * NOTE from observation, (LSD == 5) appears to signal armed status - zs6buj 
+                    Extract from BetaFlight source code below appears to be obsolete
+                    Actual flight mode, sent as 4 digits. Number is sent as (1)1234. 
+                    Please ignore the leading 1, it is just there to ensure the number 
+                    as always 5 digits (the 1 + 4 digits of actual data) the numbers 
+                    are aditives (for example, if first digit after the leading 1 is 
+                    6, it means GPS Home and Headfree are both active)
+                    1 is GPS Hold, 2 is GPS Home, 4 is Headfree
+                    1 is mag enabled, 2 is baro enabled, 4 is sonar enabled
+                    3. 1 is angle, 2 is horizon, 4 is passthrough
+                    4. 1 is ok to arm, 2 is arming is prevented, 4 is armed
                     */
                     
                     #if defined Debug_All || defined Debug_FrSky_Messages || defined Debug_FrSkyD_Flight_Mode
-                      Log.print(" FrSky 0x400 Flight Mode=");
-                      Log.printf("payload=%u arm_flag=%u\n", pt400_flight_mode, pt400_arm_flag);
+                      Log.printf("FrSky 0x400 payload=%u pt400_arm_flag=%u  motArmed=%u\n", pt400_flight_mode, pt400_arm_flag, motArmed);                             
                     #endif  
                     break;   
                                       
@@ -781,8 +775,8 @@
                     pt_gps_homereset = d14;
                     pt_gps_accuracy = d2;   // 0 thru 9 highest accuracy
                     pt_gps_numsats = (d3*10) + d4;
-                    
-                    hdopGood = (pt_gps_accuracy > 7);  // 0 thru 9 - 9 best  
+              
+                    gpsfixGood = (pt_gps_accuracy > 7);  // 0 thru 9 - 9 best  
                       
                     #if defined Debug_All || defined Debug_FrSky_Messages
                       Log.print("pt_gp_fix="); Serial.print(pt_gps_fix);     
@@ -904,7 +898,9 @@
                     neg = bit32Extract(pt_gps, 31, 1);
                     if (neg==1) cur.alt = 0 - cur.alt;
                     new_GPS_data = true;
-                    hdopGood=(pt_hdop>=3) && (pt_numsats>9);
+                    
+                    gpsfixGood=(pt_hdop>=3) && (pt_numsats>9);
+                    
                     #if defined Debug_All || defined Debug_FrSky_Messages || defined Debug_FrSky_GPS
                       Log.print(" FrSky 0x5002 Num sats=");
                       Log.print(pt_numsats);
@@ -914,8 +910,8 @@
                       Log.print(pt_hdop);                    
                       Log.print(" gpsAlt=");
                       Log.print((float)(gpsAlt/10), 1);
-                      Log.print(" hdopGood=");
-                      Log.print(hdopGood);                      
+                      Log.print(" gpsfixGood=");
+                      Log.print(gpsfixGood);                      
                       Log.print(" neg=");
                       Log.println(neg);   
                     #endif
@@ -925,6 +921,7 @@
                   case 0x5003:                         // Battery 1 Hz
                    pt_bat1_volts = (float)(bit32Extract(pt_payload,0,9));  // dv -> V
                    //Log.printf("mantissa:%d  10exponent:%d mutiplier:%d \n", bit32Extract(pt_payload,10,7), bit32Extract(pt_payload,9,1), TenToPwr(bit32Extract(pt_payload,9,1)) );
+                   
                    pt_bat1_amps = (bit32Extract(pt_payload,10,7) * TenToPwr(bit32Extract(pt_payload,9,1) ) );  // rounded to nearest whole A
                    pt_bat1_mAh = bit32Extract(pt_payload,17,15);
                    pt_bat1_amps *= 10;  // prep_number() divided by 10 to get A, but we want dA for consistency
@@ -944,7 +941,7 @@
                     fHomeDist = (float)pt_home_dist * 0.1;  // Not used here 
                     pt_home_alt = bit32Extract(pt_home,14,10) * TenToPwr(bit32Extract(pt_home,12,2)); // decimetres
                     cur.alt  = (float)(pt_home_alt) / 10;
-                    if (homeInitialised) {
+                    if (finalHomeStored) {
                       cur.alt_ag = cur.alt - hom.alt;
                     } else {
                       cur.alt_ag = 0;
@@ -997,24 +994,22 @@
                    break;
                   default:                                  
                     #if defined Debug_All || defined Debug_FrSky_Messages
-                      Log.print("Frsky un-handeled appID=");
-                      Log.println(appID);             
+                      Log.print("Frsky un-handeled appID=0x");
+                      Log.println(appID, HEX);             
                     #endif
                     break;                   
         }
 
-        gpsGood = hbGood = hdopGood & lonGood & latGood & altGood;    
+        gpsGood = hbGood = gpsfixGood & lonGood & latGood & altGood;    
 
         if (gpsGood) gpsGood_millis = millis();     // Time of last good GPS packet 
         hbGood_millis= millis();                    // good GPS data is equivalent to a mavlink heartbeat
         
-        #if defined Debug_Frsky_GPSHdg_Status
-          Log.printf("gpsGood:%u  hdopGood:%u  lonGood:%u  latGood:%u  altGood:%u  hdgGood:%u  boxhdgGood:%u \n", gpsGood, hdopGood, lonGood, latGood, altGood, hdgGood, boxhdgGood);
+        #if defined Debug_Frsky_GPS_Status
+          Log.printf("gpsGood:%u  gpsfixGood:%u  lonGood:%u  latGood:%u  altGood:%u  hdgGood:%u  boxhdgGood:%u \n", gpsGood, gpsfixGood, lonGood, latGood, altGood, hdgGood, boxhdgGood);           
         #endif
         
-        if ( (headingSource==1) && (gpsGood) && (hdgGood) && (!homeInitialised) && (!homSaved) ) AutoStoreHome(); 
          
-
     }
 
     //========================================================

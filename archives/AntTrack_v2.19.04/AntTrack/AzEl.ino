@@ -52,17 +52,17 @@ void getAzEl(const struct Location &hom, const struct Location &cur){
   hc_vector.el=hc_vector.el*360/(2*PI);     // Radians to degrees
   
   #if defined Debug_All || defined Debug_AzEl
-  if (hc_vector.dist >= minDist) {  // Craft must be minDist away otherwise calculations are unreliable
+
+  if ( (hc_vector.dist >= minDist) || ((int)cur.alt_ag >= minAltAg) ) { // Craft must be near otherwise calculations are unreliable
     float elapsed = millis() - millisStartup;
     elapsed /=1000;
-    Log.print("  hc_vector.az= "); Log.print(hc_vector.az); 
+    Log.print("  hc_vector.az= "); Log.print(hc_vector.az);             // just debug printing here
     Log.print("  hc_vector.el= "); Log.print(hc_vector.el);
     Log.print("  hc_vector.dist= "); Log.print(hc_vector.dist);
     Log.print("  Elapsed= "); Log.println(elapsed, 3);
   }
   else {
-     Log.print(" hc_vector.dist = "); Log.print(hc_vector.dist); 
-     Log.print("  < minDist = "); Log.println(minDist);
+     Log.printf(" (hc_vector.dist=%u < minDist=%u) AND (cur.alt_ag=%u < minAlt%u)\n", hc_vector.dist, minDist, (int)cur.alt_ag, minAltAg); 
   }
   #endif
   

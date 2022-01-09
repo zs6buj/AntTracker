@@ -1,11 +1,11 @@
-//================================================================================================= 
+  //================================================================================================= 
 //================================================================================================= 
 //
 //                                    C O N F I G U R A T I O N 
 
 #define MAJOR_VERSION       2
 #define MINOR_VERSION      19
-#define PATCH_LEVEL         4
+#define PATCH_LEVEL         5
 
 /*
 //=============================================================================================
@@ -22,7 +22,8 @@ v2.19.3  2022-01-03 Changes to support the official STM32 OEM core - RECOMMENDED
                     Mavlink send gets it's own msg buffer (stops receive msg buffer tainting, repeating Motos Armed/Disarmed)
 v2.19.4  2022-01-07 Add servo slowdown factor
                     Improve servo testing 
-                    Fix set home button press on STM32F1xx                            
+                    Fix set home button press on STM32F1xx 
+v2.19.5  2022-01-09 Define hud offset                                               
                     
 */
 //=============================================================================================
@@ -33,7 +34,7 @@ v2.19.4  2022-01-07 Add servo slowdown factor
 #define Device_compid    MAV_COMP_ID_PERIPHERAL  // 158 Generic autopilot peripheral - APM FC is 1, MP is 190, QGC is  https://mavlink.io/en/messages/common.html
 
 //=============================================================================================
-//                 I N P U T   C H A N N E L       How does telemetry enter the tracker?
+//======================  I N P U T   C H A N N E L       How does telemetry enter the tracker?
 //=============================================================================================
 // Choose one only of these input channels 
 #define Telemetry_In  0    // Serial Port (default) - all protocols        
@@ -113,7 +114,7 @@ const char* frsBT_Slave_Name   =   "Frs2BT";
   #define azStart  90       // 0 deg = left, 90 deg = straight ahead, 180 deg = right, 270 deg = behind
   #define elStart   0       // 0 = horizontal, 90 = vertical
 
-  #define Servo_Slowdown 10  // Default 0 - Try 5, 10..  ms/degree to limit angular accel, velocity, torque and current
+  #define Servo_Slowdown 10  // Default 0 - Try 5, 10..  ms/degree to limit angular velocity
 
   // Set the degree range of the servos here. Do not adjust servo mechanical limits here.                         
   #if defined Az_Servo_360   // 1 x 360, 1 x 90 (or 180) servos  
@@ -156,9 +157,9 @@ const char* frsBT_Slave_Name   =   "Frs2BT";
 //=============================================================================================
 //#define ESP32_Variant     1    //  ESP32 Dev Module - there are several sub-variants that work
 //#define ESP32_Variant     4    //  Heltec Wifi Kit 32 
-#define ESP32_Variant     5    //  LILYGO® TTGO T-Display ESP32 1.14" ST7789 Colour LCD
+//#define ESP32_Variant     5    //  LILYGO® TTGO T-Display ESP32 1.14" ST7789 Colour LCD
 //#define ESP32_Variant     6    // LILYGO® TTGO T2 ESP32 OLED Arduino IDE board = "ESP32 Dev Module"
-//#define ESP32_Variant     7    // ESP32 Dev Module with ILI9341 2.8" colour TFT SPI 240x320
+#define ESP32_Variant     7    // ESP32 Dev Module with ILI9341 2.8" colour TFT SPI 240x320
 
 
 //=============================================================================================
@@ -191,8 +192,8 @@ const char* frsBT_Slave_Name   =   "Frs2BT";
 
 uint16_t  TCP_localPort = 5760;     
 uint16_t  TCP_remotePort = 5760;    
-uint16_t  UDP_localPort = 14550;    // Mav readPort,  Frsky +1
-uint16_t  UDP_remotePort = 14555;   // Mav sendPort,  FrSky +1
+uint16_t  UDP_localPort = 14555;    // Mav readPort,  (default 14555) remote host (like MP and QGC) expects to send to this port - Frsky +1
+uint16_t  UDP_remotePort = 14550;   // Mav sendPort,  (default 14550) remote host reads on this port - FrSky +1
 
 //=============================================================================================
 //============================= Auto Determine Target Platform ================================
@@ -641,7 +642,7 @@ uint16_t  UDP_remotePort = 14555;   // Mav sendPort,  FrSky +1
       #define SCR_W_PX  240             //  always define in portrait
       #define SCR_H_PX  320   
       #define SCR_BACKGROUND ILI9341_BLUE  
-      
+      #define HUD_ARROW_OFFSET 999      // no offset=default, else degrees offset for hud arrow
     #endif   
     //==========================================================   
 

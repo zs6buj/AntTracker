@@ -27,6 +27,16 @@ v2.19.5  2022-01-09 Define hud offset
                     
 */
 //=============================================================================================
+//=====================   S E L E C T   E S P   B O A R D   V A R I A N T   ===================
+//=============================================================================================
+//#define ESP32_Variant     1    //  ESP32 Dev Module - there are several sub-variants that work
+//#define ESP32_Variant     4    //  Heltec Wifi Kit 32 
+//#define ESP32_Variant     5    //  LILYGO® TTGO T-Display ESP32 1.14" ST7789 Colour LCD
+//#define ESP32_Variant     6    // LILYGO® TTGO T2 ESP32 OLED Arduino IDE board = "ESP32 Dev Module"
+#define ESP32_Variant     7    // ESP32 Dev Module with ILI9341 2.8" colour TFT SPI 240x320
+
+
+//=============================================================================================
 //================== Please select your options below before compiling ========================
 //=============================================================================================
 
@@ -62,8 +72,8 @@ v2.19.5  2022-01-09 Define hud offset
 //=============================================================================================
 // Select one heading source. We need this to relate the external world of co-ordinates to the internal tracker co_ordinates.
 //#define Heading_Source  1     // 1=Flight Computer GPS, 
-#define Heading_Source  2     // 2=Flight Computer Compass
-//#define Heading_Source  3     // 3=Trackerbox_Compass 
+//#define Heading_Source  2     // 2=Flight Computer Compass
+#define Heading_Source  3     // 3=Trackerbox_Compass 
 //#define Heading_Source  4     // 4=Trackerbox_GPS_And_Compass
 
 //#define HMC5883L            // Select compass type
@@ -153,16 +163,6 @@ const char* frsBT_Slave_Name   =   "Frs2BT";
 
 
 //=============================================================================================
-//=====================   S E L E C T   E S P   B O A R D   V A R I A N T   ===================
-//=============================================================================================
-//#define ESP32_Variant     1    //  ESP32 Dev Module - there are several sub-variants that work
-//#define ESP32_Variant     4    //  Heltec Wifi Kit 32 
-//#define ESP32_Variant     5    //  LILYGO® TTGO T-Display ESP32 1.14" ST7789 Colour LCD
-//#define ESP32_Variant     6    // LILYGO® TTGO T2 ESP32 OLED Arduino IDE board = "ESP32 Dev Module"
-#define ESP32_Variant     7    // ESP32 Dev Module with ILI9341 2.8" colour TFT SPI 240x320
-
-
-//=============================================================================================
 //================================   W I F I   S E T T I N G S  ===============================  
 //=============================================================================================
 
@@ -190,10 +190,10 @@ const char* frsBT_Slave_Name   =   "Frs2BT";
 //  const char    *STAssid =     "TXMOD-54-DD-FE";   
 //  const char    *STApw =       "txmod123"; 
 
-uint16_t  TCP_localPort = 5760;     
-uint16_t  TCP_remotePort = 5760;    
+uint16_t  TCP_localPort = 5760;    // You listen on this port, read port    
+uint16_t  TCP_remotePort = 5760;   // You send to this port, send port
 uint16_t  UDP_localPort = 14555;    // Mav readPort,  (default 14555) remote host (like MP and QGC) expects to send to this port - Frsky +1
-uint16_t  UDP_remotePort = 14550;   // Mav sendPort,  (default 14550) remote host reads on this port - FrSky +1
+uint16_t  UDP_remotePort = 14550;   // Mav sendPort,  (default 14550) remote host reads from this port - FrSky +1
 
 //=============================================================================================
 //============================= Auto Determine Target Platform ================================
@@ -635,7 +635,7 @@ uint16_t  UDP_remotePort = 14550;   // Mav sendPort,  (default 14550) remote hos
       // Uses hardware SPI
       
       Adafruit_ILI9341 display = Adafruit_ILI9341(CS, DC, RST);    // LED=3.3V,  Vcc=5v,  Gnd 
-         
+     // Adafruit_ILI9341 display = Adafruit_ILI9341 (CS, DC, MOSI, SCLK, RST);     
       #define SCR_ORIENT   1            // 0 for portrait or 1 for landscape
       #define TEXT_SIZE    2            // default, may be changed on the fly
    

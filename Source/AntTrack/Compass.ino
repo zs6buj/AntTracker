@@ -89,7 +89,7 @@
   #endif
       
       val += DECLINATION;  // Add magnetic declination
-      fHeading = (float)wrap360((uint_16)val);
+      fHeading = (float)wrap360((uint16_t)val);
   
       #if defined Debug_All || defined Debug_boxCompass
         // Display the results (magnetic vector values are in micro-Tesla (uT)) */

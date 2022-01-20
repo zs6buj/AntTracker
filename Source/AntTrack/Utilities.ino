@@ -1085,7 +1085,7 @@ void WiFiEventHandler(WiFiEvent_t event)  {
           xx = 16 * char_w_px;
           yy = 3 * char_h_px;                 
           display.setCursor(xx, yy);            
-          snprintf(snprintf_buf, snp_max, "Climb %2.1f", ap74_climb); 
+          snprintf(snprintf_buf, snp_max, "Climb %2.1f", hud_climb); 
           display.fillRect(xx+(6*char_w_px), yy, (5 * char_w_px), char_h_px, ILI9341_BLUE);    // blank climb 
           display.println(snprintf_buf);   
            
@@ -1211,7 +1211,7 @@ void WiFiEventHandler(WiFiEvent_t event)  {
           display.fillRect(xx+(4*char_w_px), yy, (4 * char_w_px), char_h_px, SCR_BACKGROUND);    // blank speed 
           display.println(snprintf_buf);  
                  
-          // Climb m/s
+          // Climb - vert speed m/s
           xx = 9 * char_w_px;
           #if (defined SSD1306_Display) 
             yy = 2.4 * char_h_px;  
@@ -1221,7 +1221,7 @@ void WiFiEventHandler(WiFiEvent_t event)  {
             yy = 3.6 * char_h_px;  
           #endif               
           display.setCursor(xx, yy);            
-          snprintf(snprintf_buf, snp_max, "Clm %2.1f", ap74_climb); 
+          snprintf(snprintf_buf, snp_max, "Clm %2.1f", hud_climb); 
           display.fillRect(xx+(4*char_w_px), yy, (4 * char_w_px), char_h_px, SCR_BACKGROUND);   // blank climb 
           display.println(snprintf_buf);   
                     

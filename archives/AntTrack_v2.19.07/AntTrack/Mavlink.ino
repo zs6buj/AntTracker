@@ -458,6 +458,7 @@ void Mavlink_Receive() {
 
           pt_yaw = ap74_hdg * 10; 
           hud_grd_spd = ap74_grd_spd;
+          hud_climb = ap74_climb;
           
          #if defined Mav_Debug_All || defined Mav_Debug_Hud
             Log.print("Mavlink from FC #74 VFR_HUD: ");

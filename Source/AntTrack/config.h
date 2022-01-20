@@ -18,7 +18,8 @@ GitHub Tag
 
 v2.19.5  2022-01-09 Define hud offset   
 v2.19.6  2022-01-19 Add HUD support for iNav, part 1                                             
-v2.19.7  2022-01-20 Add iNav speed, pitch and roll for HUD                 
+v2.19.7  2022-01-20 Add iNav speed, pitch and roll for HUD 
+v2.19.7             Add climb                
 */
 //=============================================================================================
 //=====================   S E L E C T   E S P   B O A R D   V A R I A N T   ===================
@@ -877,7 +878,7 @@ uint16_t  UDP_remotePort = 14550;   // Mav sendPort,  (default 14550) remote hos
 //#define Debug_FrSky_GPS           // 0x5002
 //#define Debug_FrSky_Home          // 0x5004
 
-#define Debug_FrSky_Messages
+//#define Debug_FrSky_Messages
 //#define Debug_Frsky_GPS_Status
 
 //#define Debug_FrPort_Stream

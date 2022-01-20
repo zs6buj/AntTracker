@@ -1,3 +1,7 @@
+   
+     //    0x110 iNav Vertical speed / climb  
+    uint32_t pt110_climb;          // m/s
+    
     //    0x400 iNav Flight Mode
     uint32_t pt400_flight_mode;
     uint8_t  pt400_arm_flag = 0;
@@ -78,9 +82,6 @@
   bool altGood = false;
 
   bool Passthru = false;
-  bool d_dia = false;
-  bool x_dia = false;
-
   bool iNav = false;
 
   // General FrSky
@@ -630,11 +631,7 @@
         switch(appID) {
 
                 // One byte ID old D Style Hub/legacy protocol below 
-                  case 0x01:                         // GPS Alt BP
-                    if (!d_dia) {
-                      d_dia=true;
-                         LogScreenPrintln("D dialect"); 
-                    }           
+                  case 0x01:                         // GPS Alt BP        
                     cur.alt = uint16Extract(buf, 3);
                     if (!(cur.alt==0.0000)) {
                       altGood=true; 
@@ -716,10 +713,7 @@
                 //   Two byte ID, D mode here, X mode below    
                 
                   case 0x100:              // Altitude
-                    if (!x_dia) {
-                      x_dia=true;
-                         LogScreenPrintln("X dialect"); 
-                    }
+
                     pt_altitude= uint32Extract(buf, 3);
                     cur.alt  = pt_altitude / 100;
                     if (!(cur.alt ==0)) {
@@ -727,8 +721,21 @@
                       new_GPS_data = true;
                     }
 
+                    #if defined Debug_All || defined Debug_FrSky_Messages
+                      Log.printf("FrSky 0x100 altitude=%3.1fm\n", cur.alt);  
+                    #endif                     
+
                     break; 
+
+                 case 0x110:              // iNav Climb / vertical speed
+                    pt110_climb = uint32Extract(buf, 3);
+                    hud_climb = (float)pt110_climb / 10;
                     
+                     #if defined Debug_All || defined Debug_FrSky_Messages
+                      Log.printf("FrSky 0x110 climb=%3.1f degrees\n", (pt110_climb/10));  
+                    #endif                      
+                    break;
+                                        
                   case 0x400:              // Tmp1 FLIGHT_MODE
                     pt400_flight_mode = uint32Extract(buf, 3); 
                     d1234 = (uint16_t)(pt400_flight_mode * 0.1);                  
@@ -789,7 +796,8 @@
                     gpsfixGood = (pt_gps_accuracy > 7);  // 0 thru 9 - 9 best  
                       
                     #if defined Debug_All || defined Debug_FrSky_Messages
-                      Log.print("pt_gp_fix="); Log.print(pt_gps_fix);     
+                      Log.print("FrSky 0x410 gps_status payload = ");  Log.print(pt410_gps_status);
+                      Log.print(" pt_gp_fix="); Log.print(pt_gps_fix);     
                       Log.print(" pt_gps_homefix ="); Log.print(pt_gps_homefix);
                       Log.print(" pt_gp_homereset="); Log.print(pt_gps_homereset);     
                       Log.print(" pt_gps_accuracy ="); Log.print(pt_gps_accuracy);
@@ -802,7 +810,7 @@
                     hud_pitch = pt430_pitch / 10;
                     
                      #if defined Debug_All || defined Debug_FrSky_Messages
-                      Log.printf("pt430_pitch=%1.6f degrees\n", (pt430_pitch/10));  
+                      Log.printf("FrSky 0x430 pt430_pitch=%1.6f degrees\n", (pt430_pitch/10));  
                     #endif                      
                     break;
                     
@@ -811,7 +819,7 @@
                     hud_roll = pt440_roll / 10;  
                                      
                     #if defined Debug_All || defined Debug_FrSky_Messages
-                      Log.printf("pt440_roll=%1.6f degrees\n", (pt440_roll/10));     
+                      Log.printf("FrSky 0x440 pt440_roll=%1.6f degrees\n", (pt440_roll/10));     
                     #endif                       
                     break;   
                                      

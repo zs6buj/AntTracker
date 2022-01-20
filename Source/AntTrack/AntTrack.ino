@@ -269,10 +269,11 @@
   uint32_t hud_rssi = 0; 
   float    hud_pitch = 0;
   float    hud_roll = 0; 
-  float    hud_grd_spd;
-  int16_t  hud_bat1_volts;     // dV (V * 10)
-  int16_t  hud_bat1_amps;      // dA )A * 10)
-  uint16_t hud_bat1_mAh;
+  float    hud_grd_spd = 0;
+  float    hud_climb = 0;          // m/s
+  int16_t  hud_bat1_volts = 0;     // dV (V * 10)
+  int16_t  hud_bat1_amps = 0;      // dA )A * 10)
+  uint16_t hud_bat1_mAh = 0;
   
   // Create Servo objects
   

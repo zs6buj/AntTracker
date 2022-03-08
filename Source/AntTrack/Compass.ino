@@ -1,7 +1,10 @@
 
 #if (Heading_Source  == 3) || (Heading_Source  == 4) // Tracker_Compass or (GPS + Compass)
 
-  #define DECLINATION  -18.9 // In degrees   http://www.magnetic-declination.com/ 
+  // If Compass_Declination not defined in config, fallback to a default value of Johannesburg, South Africa
+  #if !(defined Compass_Declination)
+    #define Compass_Declination  -18.9 // In degrees   http://www.magnetic-declination.com/ 
+  #endif
 
   #if defined HMC5883L  
     #include <Adafruit_Sensor.h>
@@ -73,40 +76,44 @@
 
   //====================================================
   float getTrackerboxHeading() {
-  float fHeading = 0.0;
+    float fHeading = 0.0;
 
-  #if defined HMC5883L
-    sensors_event_t event; 
-    mag.getEvent(&event);
-    float val = 180/M_PI * atan2(event.magnetic.y, event.magnetic.x);  // Degrees   
-    
-  #elif defined QMC5883L 
-    int16_t x,y,z;           // Raw compass output values
-    int16_t offx = 0;        //calibration offsets (future)
-    int16_t offy = 0;  
-    if (getQMC5883L(&x, &y, &z) ) {
-      float val = 180/M_PI * atan2((float)(x-offx),(float)(y-offy));  // Degrees    
-  #endif
+    #if defined HMC5883L
+      sensors_event_t event; 
+      mag.getEvent(&event);
+      float val = 180/M_PI * atan2(event.magnetic.y, event.magnetic.x);  // Degrees   
       
-      val += DECLINATION;  // Add magnetic declination
-      fHeading = (float)wrap360((uint16_t)val);
-  
-      #if defined Debug_All || defined Debug_boxCompass
-        // Display the results (magnetic vector values are in micro-Tesla (uT)) */
-        // Log.print("x: "); Log.print(x); Log.print("  ");
-        // Log.print("y: "); Log.print(y); Log.print("  ");
-        // Log.print("z: "); Log.print(z); Log.print("  ");Log.println("uT");
-        Log.print("Heading = "); Log.println(fHeading,0); 
-      #endif 
+    #elif defined QMC5883L 
+      int16_t x,y,z;           // Raw compass output values
+      int16_t offx = 0;        //calibration offsets (future)
+      int16_t offy = 0;  
+      if (getQMC5883L(&x, &y, &z) ) {
+        float val = 180/M_PI * atan2((float)(x-offx),(float)(y-offy));  // Degrees    
+    #endif
         
-      return fHeading;   
+        val += Compass_Declination;  // Add magnetic declination
+        fHeading = (float)wrap360((uint16_t)val);
 
-  #if defined QMC5883L     
-    } else {
-      Log.println("Compass not ready ");
-      return 0.0;
-    }
-  #endif    
+        #if defined Compass_Align
+          fHeading = applySensorAlignment(fHeading, Compass_Align);
+        #endif
+      
+        #if defined Debug_All || defined Debug_boxCompass
+          // Display the results (magnetic vector values are in micro-Tesla (uT)) */
+          // Log.print("x: "); Log.print(x); Log.print("  ");
+          // Log.print("y: "); Log.print(y); Log.print("  ");
+          // Log.print("z: "); Log.print(z); Log.print("  ");Log.println("uT");
+          Log.print("Heading = "); Log.println(fHeading,0); 
+        #endif 
+          
+        return fHeading;   
+
+    #if defined QMC5883L     
+      } else {
+        Log.println("Compass not ready ");
+        return 0.0;
+      }
+    #endif    
   }
 
   #if  defined QMC5883L

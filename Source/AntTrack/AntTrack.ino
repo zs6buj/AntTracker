@@ -134,7 +134,19 @@
     
    typedef enum frport_type_set { f_none = 0, f_port1 = 1, f_port2 = 2, s_port = 3, f_auto = 4} frport_t;  
 
-   typedef enum polarity_set { idle_low = 0, idle_high = 1, no_traffic = 2 } pol_t;    
+   typedef enum polarity_set { idle_low = 0, idle_high = 1, no_traffic = 2 } pol_t;
+
+   typedef enum Compass_Align {
+      ALIGN_DEFAULT = 0,
+      CW0_DEG = 1,
+      CW90_DEG = 2,
+      CW180_DEG = 3,
+      CW270_DEG = 4,
+      CW0_DEG_FLIP = 5,
+      CW90_DEG_FLIP = 6,
+      CW180_DEG_FLIP = 7,
+      CW270_DEG_FLIP = 8
+    };
     
     // Protocol determination
     uint32_t inBaud = 0;    // Includes flight GPS
@@ -597,7 +609,13 @@ void setup() {
   #if (Heading_Source == 4)  // Tracker box  
 
     #if ( (defined ESP8266) || (defined ESP32) )
-      gpsBaud = getBaud(gps_rxPin);
+      
+      #if defined Box_GPS_Baud 
+        gpsBaud = Box_GPS_Baud;
+      #else
+        gpsBaud = getBaud(gps_rxPin);
+      #endif
+
       Log.printf("Tracker box GPS baud rate detected is %db/s\n", gpsBaud);       
       String s_baud=String(gpsBaud);   // integer to string. "String" overloaded
       LogScreenPrintln("Box GPS at "+ s_baud);

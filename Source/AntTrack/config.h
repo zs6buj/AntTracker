@@ -70,9 +70,22 @@ v2.19.7             Add climb
 //#define Heading_Source  2     // 2=Flight Computer Compass
 #define Heading_Source  3     // 3=Trackerbox_Compass 
 //#define Heading_Source  4     // 4=Trackerbox_GPS_And_Compass
+// Select GPS module serial link speed. Many GPS modules are capable of using multiple serial speed out from the box.
+// This information should be provided by the manufacturer.
+// If not defined, speed will be selected automatically.
+// #define Box_GPS_Baud 9600
 
-//#define HMC5883L            // Select compass type
+// Select compass type. This information should be provided by the manufacturer.
+//#define HMC5883L
 #define QMC5883L
+
+// Select compass declination. Consult http://www.magnetic-declination.com/  to check your zone declination value.
+//#define Compass_Declination -0.34
+
+// Select compass orientation. Many of the available GPS/Compass boards have their compass oriented in non-standart way,
+// the correct re-orientation information should be provided by the manufacturer.
+// Available options: ALIGN_DEFAULT, CW0_DEG, CW90_DEG, CW180_DEG, CW270_DEG, CW0_DEG_FLIP, CW90_DEG_FLIP, CW180_DEG_FLIP, CW270_DEG_FLIP
+//#define Compass_Rotation CW270_DEG_FLIP
 
 // If the tracker box has a GPS AND a compass attached, we support a moving tracker. For example,
 // the tracker could be on one moving vehicle and track a second moving vehicle, or a 'plane could 

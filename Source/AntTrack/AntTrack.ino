@@ -456,7 +456,6 @@ void setup() {
 //=================================================================================================   
     
   LogScreenPrintln("AntTracker by zs6buj");
-  Log.print("Target Board is ");
   Log.printf("Target Board = %u  ", Target_Board);   
   #if (defined TEENSY3X) // Teensy3x
     Log.println("Teensy 3.x");

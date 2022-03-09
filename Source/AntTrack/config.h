@@ -19,7 +19,9 @@ GitHub Tag
 v2.19.5  2022-01-09 Define hud offset   
 v2.19.6  2022-01-19 Add HUD support for iNav, part 1                                             
 v2.19.7  2022-01-20 Add iNav speed, pitch and roll for HUD 
-v2.19.7             Add climb                
+v2.19.7             Add climb  
+v2.19.8  2022-03-09 Merge Bohan's code for box compass alignment.
+                    Arrange Library folders            
 */
 //=============================================================================================
 //=====================   S E L E C T   E S P   B O A R D   V A R I A N T   ===================

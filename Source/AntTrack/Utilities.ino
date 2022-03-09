@@ -1549,4 +1549,47 @@ void WiFiEventHandler(WiFiEvent_t event)  {
      if (ang < 0) ang += 360;
      if (ang > 359) ang -= 360;
      return ang;
-   }     
+   }
+   
+  //================================================================================================= 
+  //                              S E N S O R    A L I G N M E N T
+  //=================================================================================================
+  // params: 
+  // int val -> angle value in degrees
+  // unit8_t rotation -> rotation enum definition value, fe CW180_DEG
+  int applySensorAlignment(int val, uint8_t rotation) {
+    int res = 0;
+    
+    switch (rotation) {
+    default:
+    case CW0_DEG:
+    case ALIGN_DEFAULT:
+    case CW180_DEG_FLIP:
+        res = val;
+        break;
+    case CW90_DEG:
+        res = val + 90;
+        break;
+    case CW180_DEG:
+        res = val + 180;
+        break;
+    case CW270_DEG:
+        res = val + 270;
+        break;
+    case CW0_DEG_FLIP:
+        res = val + 180;
+        break;
+    case CW90_DEG_FLIP:
+        res = val + 270;
+        break;
+    case CW270_DEG_FLIP:
+        res = val + 90;
+        break;
+    }
+    
+    if (res > 360) {
+      res = res - 360;
+    }
+
+    return  res;
+  }

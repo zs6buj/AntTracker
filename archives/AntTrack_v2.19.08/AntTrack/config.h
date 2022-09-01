@@ -5,7 +5,7 @@
 
 #define MAJOR_VERSION       2
 #define MINOR_VERSION      19
-#define PATCH_LEVEL         9
+#define PATCH_LEVEL         8
 
 /*
 //=============================================================================================
@@ -21,8 +21,7 @@ v2.19.6  2022-01-19 Add HUD support for iNav, part 1
 v2.19.7  2022-01-20 Add iNav speed, pitch and roll for HUD 
 v2.19.7             Add climb  
 v2.19.8  2022-03-09 Merge Bohan's code for box compass alignment.
-                    Arrange Library folders  
-v2.19.9  2022-09-01 Add option macro for NoGenericSerial                                
+                    Arrange Library folders            
 */
 //=============================================================================================
 //=====================   S E L E C T   E S P   B O A R D   V A R I A N T   ===================
@@ -831,13 +830,12 @@ uint16_t  UDP_remotePort = 14550;   // Mav sendPort,  (default 14550) remote hos
   //================================================================================================= 
 
   #if defined STM32F1xx
-    #if defined NoGenericSerial
-      // NOTE NOTE NOTE NOTE! In IDE select Tools/U(S)ART support: "Enabled (no generic 'Serial')"
-      // Now we map USARTS in a sensible way
-      HardwareSerial Serial(USART1);  //rx1=PA10 tx1=PA9  - for flashing and monitor
-      HardwareSerial Serial1(USART2); //rx2=PA3  tx2=PA2  - for telemetry in
-      HardwareSerial Serial2(USART3); //rx3=PB11 tx3=PB10 - for GPS if present
-    #endif
+    // NOTE In IDE select Tools/U(S)ART support: "Enabled (no generic 'Serial')"
+    // Now we map USARTS in a sensible way
+    HardwareSerial Serial(USART1);  //rx1=PA10 tx1=PA9  - for flashing and monitor
+    HardwareSerial Serial1(USART2); //rx2=PA3  tx2=PA2  - for telemetry in
+    HardwareSerial Serial2(USART3); //rx3=PB11 tx3=PB10 - for GPS if present
+
     #include <SoftwareSerial.h>  
     SoftwareSerial inSerial(in_rxPin, in_txPin, rxInvert); // RX=10, TX=11 
   #endif

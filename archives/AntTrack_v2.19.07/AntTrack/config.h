@@ -114,7 +114,7 @@ const char* frsBT_Slave_Name   =   "Frs2BT";
   #define Test_Servos      // Move servos through their limits, then try box_hdg every 45 degrees of circle
 
   //#define Az_Servo_360   // Means the azimuth servo can point in a 360 deg circle, elevation servo 90 deg
-                           // Default (comment out #define above) if 180 deg azimuth and flip over 180 deg elevation 
+                           // Default (comment out #define above) is 180 deg azimuth and flip over 180 deg elevation 
                            
   #define azStart  90       // 0 deg = left, 90 deg = straight ahead, 180 deg = right, 270 deg = behind
   #define elStart   0       // 0 = horizontal, 90 = vertical

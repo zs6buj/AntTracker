@@ -1027,7 +1027,7 @@ void loop() {
           }  // end of check for button push  
 
         } else  // end of heading source == FC GPS
-        //Log.printf("boxhdgGood:%u\n", boxhdgGood);
+
         if ( ((headingSource == 2) && (hdgGood)) || ( (headingSource == 3) && (boxhdgGood) ) ) {  // if FC compass or Trackerbox compass 
 
           bool sh_armFlag = false;

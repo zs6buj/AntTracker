@@ -5,7 +5,7 @@
 
 #define MAJOR_VERSION       2
 #define MINOR_VERSION      19
-#define PATCH_LEVEL         7
+#define PATCH_LEVEL         8
 
 /*
 //=============================================================================================
@@ -19,7 +19,8 @@ GitHub Tag
 v2.19.5  2022-01-09 Define hud offset   
 v2.19.6  2022-01-19 Add HUD support for iNav, part 1                                             
 v2.19.7  2022-01-20 Add iNav speed, pitch and roll for HUD 
-v2.19.7             Add climb                
+v2.19.7             Add climb       
+v2.19.8  2022-09-01 Add option macro for NoGenericSerial         
 */
 //=============================================================================================
 //=====================   S E L E C T   E S P   B O A R D   V A R I A N T   ===================
@@ -114,7 +115,7 @@ const char* frsBT_Slave_Name   =   "Frs2BT";
   #define Test_Servos      // Move servos through their limits, then try box_hdg every 45 degrees of circle
 
   //#define Az_Servo_360   // Means the azimuth servo can point in a 360 deg circle, elevation servo 90 deg
-                           // Default (comment out #define above) if 180 deg azimuth and flip over 180 deg elevation 
+                           // Default (comment out #define above) is 180 deg azimuth and flip over 180 deg elevation 
                            
   #define azStart  90       // 0 deg = left, 90 deg = straight ahead, 180 deg = right, 270 deg = behind
   #define elStart   0       // 0 = horizontal, 90 = vertical
@@ -815,12 +816,13 @@ uint16_t  UDP_remotePort = 14550;   // Mav sendPort,  (default 14550) remote hos
   //================================================================================================= 
 
   #if defined STM32F1xx
-    // NOTE In IDE select Tools/U(S)ART support: "Enabled (no generic 'Serial')"
-    // Now we map USARTS in a sensible way
-    HardwareSerial Serial(USART1);  //rx1=PA10 tx1=PA9  - for flashing and monitor
-    HardwareSerial Serial1(USART2); //rx2=PA3  tx2=PA2  - for telemetry in
-    HardwareSerial Serial2(USART3); //rx3=PB11 tx3=PB10 - for GPS if present
-
+    #if defined NoGenericSerial
+      // NOTE NOTE NOTE NOTE! In IDE select Tools/U(S)ART support: "Enabled (no generic 'Serial')"
+      // Now we map USARTS in a sensible way
+      HardwareSerial Serial(USART1);  //rx1=PA10 tx1=PA9  - for flashing and monitor
+      HardwareSerial Serial1(USART2); //rx2=PA3  tx2=PA2  - for telemetry in
+      HardwareSerial Serial2(USART3); //rx3=PB11 tx3=PB10 - for GPS if present
+    #endif
     #include <SoftwareSerial.h>  
     SoftwareSerial inSerial(in_rxPin, in_txPin, rxInvert); // RX=10, TX=11 
   #endif

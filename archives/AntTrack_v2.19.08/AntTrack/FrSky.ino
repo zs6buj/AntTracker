@@ -28,9 +28,6 @@
     // 0x830 iNav Speed
     uint32_t pt_speed = 0;
     
-    // 0x840 Heading
-    uint32_t pt_heading;
-    
     //FrSky Variables
     short ms2bits;
     uint32_t pt_payload;
@@ -1106,8 +1103,7 @@
       unsigned long lowWord  = b3 << 8 | b4;
     
         // Now combine the four bytes into an unsigned 32bit integer
-      //uint32_t myvar = buf[posn+3] << 24 | buf[posn+2] << 16 | buf[posn+1] << 8 | buf[posn];
-      //uint32_t myvar = b1 << 24 | b2 << 16 | b3 << 8 | b4;
+
       uint32_t myvar = highWord << 16 | lowWord;
       return myvar;
     }

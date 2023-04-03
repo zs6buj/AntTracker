@@ -23,7 +23,7 @@ v2.19.7             Add climb
 v2.19.8  2022-03-09 Merge Bohan's code for box compass alignment.
                     Arrange Library folders  
 v2.19.9  2022-09-01 Add option macro for NoGenericSerial  
-         2023-04-03 Config.h and binary for asangag                              
+         2023-04-03 Config.h and binary for tibean                              
 */
 //=============================================================================================
 //=====================   S E L E C T   E S P   B O A R D   V A R I A N T   ===================

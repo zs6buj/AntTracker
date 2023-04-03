@@ -62,9 +62,9 @@ v2.19.5  2022-01-09 Define hud offset
 //=============================================================================================
 // Select one heading source. We need this to relate the external world of co-ordinates to the internal tracker co_ordinates.
 //#define Heading_Source  1     // 1=Flight Computer GPS, 
-#define Heading_Source  2     // 2=Flight Computer Compass
+//#define Heading_Source  2     // 2=Flight Computer Compass
 //#define Heading_Source  3     // 3=Trackerbox_Compass 
-//#define Heading_Source  4     // 4=Trackerbox_GPS_And_Compass
+#define Heading_Source  4     // 4=Trackerbox_GPS_And_Compass
 
 //#define HMC5883L            // Select compass type
 #define QMC5883L

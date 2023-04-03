@@ -22,16 +22,17 @@ v2.19.7  2022-01-20 Add iNav speed, pitch and roll for HUD
 v2.19.7             Add climb  
 v2.19.8  2022-03-09 Merge Bohan's code for box compass alignment.
                     Arrange Library folders  
-v2.19.9  2022-09-01 Add option macro for NoGenericSerial                                
+v2.19.9  2022-09-01 Add option macro for NoGenericSerial  
+         2023-04-03 Config.h and binary for asangag                              
 */
 //=============================================================================================
 //=====================   S E L E C T   E S P   B O A R D   V A R I A N T   ===================
 //=============================================================================================
 //#define ESP32_Variant     1    //  ESP32 Dev Module - there are several sub-variants that work
 //#define ESP32_Variant     4    //  Heltec Wifi Kit 32 
-//#define ESP32_Variant     5    //  LILYGO® TTGO T-Display ESP32 1.14" ST7789 Colour LCD
+#define ESP32_Variant     5    //  LILYGO® TTGO T-Display ESP32 1.14" ST7789 Colour LCD
 //#define ESP32_Variant     6    // LILYGO® TTGO T2 ESP32 OLED Arduino IDE board = "ESP32 Dev Module"
-#define ESP32_Variant     7    // ESP32 Dev Module with ILI9341 2.8" colour TFT SPI 240x320
+//#define ESP32_Variant     7    // ESP32 Dev Module with ILI9341 2.8" colour TFT SPI 240x320
 
 
 //=============================================================================================
@@ -71,16 +72,16 @@ v2.19.9  2022-09-01 Add option macro for NoGenericSerial
 // Select one heading source. We need this to relate the external world of co-ordinates to the internal tracker co_ordinates.
 //#define Heading_Source  1     // 1=Flight Computer GPS, 
 //#define Heading_Source  2     // 2=Flight Computer Compass
-#define Heading_Source  3     // 3=Trackerbox_Compass 
-//#define Heading_Source  4     // 4=Trackerbox_GPS_And_Compass
+//#define Heading_Source  3     // 3=Trackerbox_Compass 
+#define Heading_Source  4     // 4=Trackerbox_GPS_And_Compass
 // Select GPS module serial link speed. Many GPS modules are capable of using multiple serial speed out from the box.
 // This information should be provided by the manufacturer.
 // If not defined, speed will be selected automatically.
 // #define Box_GPS_Baud 9600
 
 // Select compass type. This information should be provided by the manufacturer.
-//#define HMC5883L
-#define QMC5883L
+#define HMC5883L
+//#define QMC5883L
 
 // Select compass declination. Consult http://www.magnetic-declination.com/  to check your zone declination value.
 //#define Compass_Declination -0.34
@@ -135,7 +136,7 @@ const char* frsBT_Slave_Name   =   "Frs2BT";
   #define azStart  90       // 0 deg = left, 90 deg = straight ahead, 180 deg = right, 270 deg = behind
   #define elStart   0       // 0 = horizontal, 90 = vertical
 
-  #define Servo_Slowdown 10  // Default 0 - Try 5, 10..  ms/degree to limit angular velocity
+  #define Servo_Slowdown 0  // Default 0 - Try 5, 10..  ms/degree to limit angular velocity
 
   // Set the degree range of the servos here. Do not adjust servo mechanical limits here.                         
   #if defined Az_Servo_360   // 1 x 360, 1 x 90 (or 180) servos  
@@ -594,7 +595,7 @@ uint16_t  UDP_remotePort = 14550;   // Mav sendPort,  (default 14550) remote hos
   //==========================================================
     
     #if (defined ST7789_Display)      // TTGO T_Display 1.14 TFT display 135 x 240 SPI
-      #include <TFT_eSPI.h>           // Remember to select the T_Display board in User_Setup_Select.h in TFT_eSPI library (135 x 240) 
+      #include <TFT_eSPI.h>           // Remember to select the T_Display board in   in TFT_eSPI library (135 x 240) 
       TFT_eSPI display = TFT_eSPI();
       #define SCR_W_PX      135       // OLED display width, in pixels - always define in portrait
       #define SCR_H_PX      240       // OLED display height, in pixels

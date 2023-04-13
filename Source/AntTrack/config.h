@@ -24,7 +24,7 @@ v2.19.8  2022-03-09 Merge Bohan's code for box compass alignment.
                     Arrange Library folders  
 v2.19.9  2022-09-01 Add option macro for NoGenericSerial  
          2023-04-03 Config.h and binary for tibean    
-v2.19.10 2023-04-06 Refined COMPASS_ALIGN routine     
+v2.19.10 2023-04-06 Refined BOX_COMPASS_ALIGN routine     
                     Fixed "E (2613) gpio"                     
 */
 //=============================================================================================
@@ -92,9 +92,9 @@ v2.19.10 2023-04-06 Refined COMPASS_ALIGN routine
 // Select compass orientation. Many of the available GPS/Compass boards have their compass oriented in non-standard way,
 // the correct re-orientation information should be provided by the manufacturer.
 // Available options: ALIGN_DEFAULT, CW0_DEG, CW90_DEG, CW180_DEG, CW270_DEG, CW0_DEG_FLIP, CW90_DEG_FLIP, CW180_DEG_FLIP, CW270_DEG_FLIP
-//#define COMPASS_ALIGN       ALIGN_DEFAULT
-//#define COMPASS_ALIGN       CW90_DEG
-//#define COMPASS_ALIGN      CW90_DEG_FLIP
+//#define BOX_COMPASS_ALIGN       ALIGN_DEFAULT
+//#define BOX_COMPASS_ALIGN       CW90_DEG
+//#define BOX_COMPASS_ALIGN       CW90_DEG_FLIP
 // If the tracker box has a GPS AND a compass attached, we support a moving tracker. For example,
 // the tracker could be on one moving vehicle and track a second moving vehicle, or a 'plane could 
 // always point an antenna at home base.

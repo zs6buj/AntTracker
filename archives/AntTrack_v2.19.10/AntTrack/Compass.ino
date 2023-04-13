@@ -94,9 +94,9 @@
         
         val += Compass_Declination;  // Add magnetic declination
         fHeading = (float)wrap360((uint16_t)val);
-        #if defined COMPASS_ALIGN        
+        #if defined BOX_COMPASS_ALIGN        
           //log.printf("heading before align:%3.0fdeg   ", fHeading);
-          fHeading = applyCompassAlignment(fHeading, COMPASS_ALIGN);
+          fHeading = applyCompassAlignment(fHeading, BOX_COMPASS_ALIGN);
          //log.printf("heading after align:%3.0fdeg\n", fHeading);         
         #endif
      

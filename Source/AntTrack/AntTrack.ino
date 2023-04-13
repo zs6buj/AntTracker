@@ -136,7 +136,7 @@
 
    typedef enum polarity_set { idle_low = 0, idle_high = 1, no_traffic = 2 } pol_t;
 
-   typedef enum COMPASS_ALIGN {
+   typedef enum BOX_COMPASS_ALIGN {
       ALIGN_DEFAULT = 0,
       CW0_DEG = 1,
       CW90_DEG = 2,

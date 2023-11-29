@@ -128,9 +128,9 @@
 #include <ardupilotmega/ardupilotmega.h>
 
 #if (PROTOCOL == 9)
-  #include <terseCRSF.h>  
   CRSF   crsf;          // instantiate crsf object
 #endif
+
    String    pgm_path;
    String    pgm_name;
 
@@ -783,7 +783,10 @@ void setup() {
     #elif (defined STM32F1xx) 
       inSerial.begin(inBaud);
     #endif   
-  #endif
+    #if (PROTOCOL == 9)  // CRSF 
+      crsf.initialise(inSerial);  // initialise pointer to Stream &port
+    #endif
+  #endif // end of Telemetry_In == 0 == inSerial
    
   // ================================  Setup WiFi  ====================================
   #if (defined ESP32)  || (defined ESP8266)

@@ -5,7 +5,7 @@
 
 #define MAJOR_VERSION       2
 #define MINOR_VERSION      20
-#define PATCH_LEVEL         2
+#define PATCH_LEVEL         3
 
 /*
 //=============================================================================================
@@ -26,11 +26,12 @@ v2.19.9  2022-09-01 Add option macro for NoGenericSerial
          2023-04-03 Config.h and binary for tibean    
 v2.19.10 2023-04-06 Refined BOX_COMPASS_ALIGN routine     
                     Fixed "E (2613) gpio" 
-v2.20.0  2023-10-01 Add CRSF/ELRS. Refresh code layout. 
+v2.20.0  2023-10-01 Add CRSF/ELRS. Refresh code layout. https://github.com/zs6buj/terseCRSF
 v2.20.1  2023-11-10 Add I2C bus scan for diagnostics  
                     Switch to QMC5883LCompass.h Library  
                     Fix boardled error msg 
 v2.20.2  2023-11-19 New crsf library, with CRC check added
+v2.20.3  2023-11-29 Upgrade to terseCRSF v0.0.3. 
                        
 */
 //=============================================================================================
@@ -854,8 +855,14 @@ uint16_t  UDP_remotePort = 14550;   // Mav sendPort,  (default 14550) remote hos
 
   #define log                   Serial         // USB / Serial 
 
-  #if (Telemetry_In == 0)                  
+  #if (Telemetry_In == 0)     
+    #if (PROTOCOL == 9)
+      #include <terseCRSF.h>  // https://github.com/zs6buj/terseCRSF   use v 0.0.3 or later
+      #define crsf_uart            1           // Serial1
+      HardwareSerial inSerial(crsf_uart);      // instantiate Serial object   
+    #else            
       #define inSerial          Serial1        // General telemetry input  
+    #endif  
   #endif        
 
   #if (HEADINGSOURCE == 4) 

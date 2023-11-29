@@ -895,7 +895,6 @@ void WiFiEventHandler(WiFiEvent_t event)  {
     }
     #endif 
     //===================================
-   
     void Scroll_Display(scroll_t up_dn) {
       
       if (millis() - scroll_millis < 300) return;
@@ -915,7 +914,58 @@ void WiFiEventHandler(WiFiEvent_t event)  {
           PaintLogScreen(scroll_row, show_last_row);  // paint down to scroll_row      
       }   
     }
+    //===================================================================  
+    #if defined displaySupport       
+    void SetScreenSizeOrient(uint8_t txtsz, uint8_t scr_orient) {
 
+      #if (defined SSD1306_Display) || (defined SSD1331_Display)   // rotation arguement depends on display type
+        if (scr_orient == 0) {          // portrait
+          display.setRotation(1);              
+          scr_h_px = SCR_H_PX;
+          scr_w_px = SCR_W_PX;
+        } else                       
+        if (scr_orient == 1) {          // landscape
+          display.setRotation(0);             
+          scr_h_px = SCR_W_PX;
+          scr_w_px = SCR_H_PX;
+        }
+      #else                             // ST7789 (T-Display) and ILI9341_Display
+        if (scr_orient == 0) {          // portrait
+          display.setRotation(0);       // or 4            
+          scr_h_px = SCR_H_PX;
+          scr_w_px = SCR_W_PX;
+        } else
+        if (scr_orient == 1) {          // landscape
+          display.setRotation(3);       // or 1         
+          scr_h_px = SCR_W_PX;
+          scr_w_px = SCR_H_PX;
+        }
+      #endif
+        
+      display.setTextSize(txtsz);   
+      
+      if (txtsz == 1) {
+        char_w_px = 6;    
+      } else 
+      if(txtsz == 2) {       
+        char_w_px = 12;   
+      } else       
+      if  (txtsz == 3) { 
+        char_w_px = 18;   
+      } else         
+      if  (txtsz == 4) {
+        char_w_px = 24;    
+      } else           
+      if  (txtsz == 5)  {
+        char_w_px = 30;    
+      }     
+   
+      char_h_px = (uint8_t)(char_w_px * 1.4);   // vertical spacing
+
+      scr_w_ch = scr_w_px / char_w_px;
+      scr_h_ch = scr_h_px / char_h_px;       
+    }
+    #endif
     //===================================
     void PaintLogScreen(uint8_t new_row, last_row_t last_row_action) { 
       if (display_mode != logg) { 
@@ -1530,58 +1580,7 @@ void WiFiEventHandler(WiFiEvent_t event)  {
 
     }
     #endif
-    //===================================================================  
-    #if defined displaySupport       
-    void SetScreenSizeOrient(uint8_t txtsz, uint8_t scr_orient) {
 
-      #if (defined SSD1306_Display) || (defined SSD1331_Display)   // rotation arguement depends on display type
-        if (scr_orient == 0) {          // portrait
-          display.setRotation(1);              
-          scr_h_px = SCR_H_PX;
-          scr_w_px = SCR_W_PX;
-        } else                       
-        if (scr_orient == 1) {          // landscape
-          display.setRotation(0);             
-          scr_h_px = SCR_W_PX;
-          scr_w_px = SCR_H_PX;
-        }
-      #else                             // ST7789 (T-Display) and ILI9341_Display
-        if (scr_orient == 0) {          // portrait
-          display.setRotation(0);       // or 4            
-          scr_h_px = SCR_H_PX;
-          scr_w_px = SCR_W_PX;
-        } else
-        if (scr_orient == 1) {          // landscape
-          display.setRotation(3);       // or 1         
-          scr_h_px = SCR_W_PX;
-          scr_w_px = SCR_H_PX;
-        }
-      #endif
-        
-      display.setTextSize(txtsz);   
-      
-      if (txtsz == 1) {
-        char_w_px = 6;    
-      } else 
-      if(txtsz == 2) {       
-        char_w_px = 12;   
-      } else       
-      if  (txtsz == 3) { 
-        char_w_px = 18;   
-      } else         
-      if  (txtsz == 4) {
-        char_w_px = 24;    
-      } else           
-      if  (txtsz == 5)  {
-        char_w_px = 30;    
-      }     
-   
-      char_h_px = (uint8_t)(char_w_px * 1.4);   // vertical spacing
-
-      scr_w_ch = scr_w_px / char_w_px;
-      scr_h_ch = scr_h_px / char_h_px;       
-    }
-    #endif
     //===================================================================  
     bool homeButtonPushed() {
       bool hbp = false;

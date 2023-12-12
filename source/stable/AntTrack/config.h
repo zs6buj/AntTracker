@@ -414,35 +414,35 @@ uint16_t  UDP_remotePort = 14550;   // Mav sendPort,  (default 14550) remote hos
   #endif
   //========================================================================= 
     
-  #if (ESP32_Variant == 4)       // Heltec Wifi Kit 32 (NOTE! 8MB) 
-  uint8_t in_rxPin =        18;  // uart1
-  #define in_txPin          17 
-  uint8_t gps_rxPin =       13;  // uart2 for tracker box GPS if applicable
-  #define gps_txPin         14    
-  bool rxInvert = true;          // ONLY FOR FrSky S.Port, NOT F.Port, NOT MAVLINK
-  #define SetHomePin        23    
-  #define StatusLed         19   // Off=No good GPS yet, flashing=good GPS but home not set yet, solid = ready to track
-  #define BuiltinLed        99 
-  #define azPWM_Pin         32   // azimuth servo (can't be 34,35,36,39 because input only !!)
-  #define elPWM_Pin         33   // elevation servo(can't be 34,35,36,39 because input only !!)
-
-    #if !defined displaySupport       // I2C OLED board is built into Heltec WiFi Kit 32
-      #define displaySupport
-    #endif  
-    #define SSD1306_Display         // OLED display type  
-    #define SCR_ORIENT   1          // 1 Landscape or 0 Portrait 
-    /* Below please choose either Touch pin-pair or Digital pin-pair for display scrolling
-     *  Pin == 99 means the pin-pair is not used
-     */ 
-    #define Pup           99        // Board Button to scroll the display up
-    #define Pdn           99        // Board Button to scroll the display down
-    #define Tup           12        // 33 Touch pin to scroll the display up
-    #define Tdn           11        // 32 Touch pin to scroll the display down 
-    
-    #define SDA           04        // I2C OLED board and/or Compass
-    #define SCL           15        // I2C OLED board and/or Compass
-    #define display_i2c_addr      0x3C       // I2C OLED board
-    #define OLED_RESET    16        // RESET here so no reset lower down     
+#if (ESP32_Variant == 4) // Heltec Wifi Kit 32 V3 (S3) (thanks to Marc Dornan)
+  #define MavStatusLed 35 // Onboard LED
+  #define InvertMavLed false
+  #define BufStatusLed -1 // none
+  #define fc_rxPin 44 // Mavlink serial rx2
+  #define fc_txPin 43 // Mavlink serial tx2
+  #define fr_rxPin 26 // FPort rx1 - (NOTE: DON’T use pin 12! boot fails if pulled high)
+  #define fr_txPin 48 // FPort tx1 - Use me in single wire mode
+  // no GCS serial set up here yet
+  #define sbus_rxPin -1 // not used - don’t care
+  #define sbus_txPin -1 // ?Optional SBUS out pin
+  #define startWiFiPin -1 // Trigger WiFi startup
+  #define resetEepromPin -1 // 5, -1=none use non digital touch pin
+  #if !defined displaySupport // I2C OLED board is built into Heltec WiFi Kit 32
+    #define displaySupport
+  #endif
+  #define SSD1306_Display // OLED display type
+  #define SCR_ORIENT 1 // 1 Landscape or 0 Portrait
+  /* Below please choose either Touch pin-pair or Digital pin-pair for display scrolling
+  * Pin == -1 means the pin-pair is not used
+  */
+  #define Pup -1 // Board Button to scroll the display up
+  #define Pdn -1 // Board Button to scroll the display down
+  #define Tup 45 // 33 Touch pin to scroll the display up
+  #define Tdn 46 // 32 Touch pin to scroll the display down
+  #define SDA 17 // I2C OLED board
+  #define SCL 18 // I2C OLED board
+  #define i2cAddr 0x3C // I2C OLED board
+  #define OLED_RESET 21 // RESET here so no reset lower down
 
     /*  
       SPI/CS               05   For optional TF/SD Card Adapter
@@ -450,7 +450,6 @@ uint16_t  UDP_remotePort = 14550;   // Mav sendPort,  (default 14550) remote hos
       SPI/MISO             19   For optional TF/SD Card Adapter
       SPI/SCK              18   For optional TF/SD Card Adapter  
     */
-
   #endif
   //========================================================================= 
     

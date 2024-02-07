@@ -31,7 +31,8 @@ TryAgain:
   chr = NextChr();                // start2 should be 0x54 
   if (!chr==0x54) goto TryAgain;   // otherwise reject the start signals
   inBuf[1] = chr;
-  
+  hbGood=true; 
+  hbGood_millis = millis();
   chr = NextChr();    // Packet type
   inBuf[2] = chr;
   switch (chr) {
@@ -133,10 +134,10 @@ boolean UnpackGPS(int lth) {
   if ((!(Lat == 0)) && (!(Lon == 0))) {
     gpsGood=1;
     new_GPS_data = true;
+    gpsGood_millis = millis();                 // Time of last good GPS packet    
   }
 
-  
-  gpsGood_millis = millis();                 // Time of last good GPS packet
+
 
   #if defined DEBUG_All || defined DEBUG_LTM
     printBuffer(lth); 

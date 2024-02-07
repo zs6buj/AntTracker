@@ -331,7 +331,8 @@ return true;
   
      if ((millis() - gpsGood_millis) > (timeout_secs * 1000) ) {
       gpsGood = false;        // If no inGPS packet  
-    }    
+      new_GPS_data = true;   
+      }    
     
     #if (headingsource == 4)
       if ((millis() - boxgpsGood_millis) > (timeout_secs * 1000) ) {

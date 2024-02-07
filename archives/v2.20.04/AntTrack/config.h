@@ -5,7 +5,7 @@
 
 #define MAJOR_VERSION       2
 #define MINOR_VERSION      20
-#define PATCH_LEVEL         3
+#define PATCH_LEVEL         4
 
 /*
 //=============================================================================================
@@ -32,19 +32,20 @@ v2.20.1  2023-11-10 Add I2C bus scan for diagnostics
                     Fix boardled error msg 
 v2.20.2  2023-11-19 New crsf library, with CRC check added
 v2.20.3  2023-11-29 Upgrade to terseCRSF v0.0.3. 
+v2.20.4  202-02-07  Patches as per casfra96 for LTM.
                        
 */
 //=============================================================================================
 //=====================   S E L E C T   E S P   B O A R D   V A R I A N T   ===================
 //=============================================================================================
-//#define ESP32_Variant     1    //  ESP32 Dev Module - there are several sub-variants that work
+#define ESP32_Variant     1    //  ESP32 Dev Module - there are several sub-variants that work
 //#define ESP32_Variant     4    //  Heltec Wifi Kit 32 
-#define ESP32_Variant     5    //  LILYGO® TTGO T-Display ESP32 1.14" ST7789 Colour LCD
 //#define ESP32_Variant     6    // LILYGO® TTGO T2 ESP32 OLED Arduino IDE board = "ESP32 Dev Module"
 //#define ESP32_Variant     7    // ESP32 Dev Module with ILI9341 2.8" colour TFT SPI 240x320
 
 
-//=============================================================================================
+//===============================t     5    //  LILYGO® TTGO T-Display ESP32 1.14" ST7789 Colour LCD
+//#define ESP32_Varian==============================================================
 //================== Please select your options below before compiling ========================
 //=============================================================================================
 
@@ -71,10 +72,10 @@ v2.20.3  2023-11-29 Upgrade to terseCRSF v0.0.3.
 //#define PROTOCOL 3     // FrSky S.Port
 //#define PROTOCOL 4     // FrSky F.Port 1
 //#define PROTOCOL 5     // FrSky F.Port 2
-//#define PROTOCOL 6     // LTM
+#define PROTOCOL 6     // LTM
 //#define PROTOCOL 7     // MSP
 //#define PROTOCOL 8     // GPS NMEA
-#define PROTOCOL 9     // CRFS / ELRS
+//#define PROTOCOL 9     // CRFS / ELRS
 
 //=============================================================================================
 //==================================  H E A D I N G   S O U R C E  ============================

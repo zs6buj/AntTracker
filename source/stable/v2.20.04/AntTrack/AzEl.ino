@@ -14,7 +14,7 @@ void getAzEl(const struct Location &hom, const struct Location &cur){
   
   float a, c, d, dLat, dLon;
   
-  #if defined Debug_All || defined Debug_AzEl
+  #if defined DEBUG_All || defined DEBUG_AzEl
     log.print("hom.lat = "); log.print(hom.lat,7);
     log.print(" hom.lon = "); log.print(hom.lon,7);
     log.print(" hom.alt = "); log.print(hom.alt,0);
@@ -46,12 +46,12 @@ void getAzEl(const struct Location &hom, const struct Location &cur){
   // Calculate elevation
   int16_t altR = (int)cur.alt_ag;      //cur.alt - hom.alt;  // Relative alt or delta between tracker box and craft
 
-  if (headingSource != 4) altR = altR * LimitCloseToHomeError(d, altR);
+  if (headingsource != 4) altR = altR * LimitCloseToHomeError(d, altR);
   
   hc_vector.el=atan(altR/d);
   hc_vector.el=hc_vector.el*360/(2*PI);     // Radians to degrees
   
-  #if defined Debug_All || defined Debug_AzEl
+  #if defined DEBUG_All || defined DEBUG_AzEl
 
   if ( (hc_vector.dist >= minDist) || ((int)cur.alt_ag >= minAltAg) ) { // Craft must be near otherwise calculations are unreliable
     float elapsed = millis() - millisStartup;

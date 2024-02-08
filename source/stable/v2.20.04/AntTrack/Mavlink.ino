@@ -1,6 +1,6 @@
 
 // Forward declarations
-void PrintByte(byte b);
+void printByte(byte b);
 
 
 // ******************************************
@@ -132,20 +132,26 @@ bool      rssi109 = false;
 uint16_t len;
 void Mavlink_Receive() { 
 
+  //==================== Periodically Send Our Own Heartbeat to FC to trigger tardy telemetry
+  if(millis()- millisFcHheartbeat > 2000) {  // MavToPass heartbeat to FC every 2 seconds
+  millisFcHheartbeat=millis();       
+  Send_FC_Heartbeat();                     // for serial must have tx pin connected to dedicated telem radio rx pin  
+  }
+
   mavlink_status_t status;
   gotRecord = false;
   #if (Telemetry_In == 0)              // Serial    
     while(inSerial.available()) {
       uint8_t c = inSerial.read();
       //Printbyte(c, false, ' ');
-      #ifdef Debug_Mav_Buffer
+      #ifdef DEBUG_Mav_Buffer
         log.println("Mavlink buffer : ");
       PrintMavBuffer(&msg);
       #endif
     
       if(mavlink_parse_char(MAVLINK_COMM_0, c, &msg, &status)) {
 
-        #if defined Debug_All || defined Debug_Input
+        #if defined DEBUG_All || defined DEBUG_Input
           log.println("Serial record read:");
           PrintMavBuffer(&msg);  
         #endif
@@ -162,7 +168,7 @@ void Mavlink_Receive() {
 
         gotRecord = true;     
 
-        #ifdef  Debug_FC_Down   
+        #ifdef  DEBUG_FC_Down   
           log.println("BT record read:");
           PrintMavBuffer(&msg);
         #endif      
@@ -180,7 +186,7 @@ void Mavlink_Receive() {
         
         gotRecord = true;   
 
-        #if defined Debug_All || defined Debug_Input 
+        #if defined DEBUG_All || defined DEBUG_Input 
           log.print("Received WiFi TCP message. msgReceived=" ); log.println(msgReceived);
           PrintMavBuffer(&msg);
         #endif      
@@ -195,7 +201,7 @@ void Mavlink_Receive() {
         
         gotRecord = true;   
 
-        #if defined Debug_All || defined Debug_Input
+        #if defined DEBUG_All || defined DEBUG_Input
           log.println(" UDP WiFi record read:");
           PrintMavBuffer(&msg);
         #endif      
@@ -219,7 +225,7 @@ void Mavlink_Receive() {
 
           motArmed = ap_base_mode >> 7;  // motors armed!
                     
-          #if defined Debug_All || defined Debug_Mav_Heartbeat
+          #if defined DEBUG_All || defined DEBUG_Mav_Heartbeat
             log.print("Mavlink in #0 Heartbeat: ");           
             log.print("ap_type="); log.print(ap_type);   
             log.print("  ap_autopilot="); log.print(ap_autopilot); 
@@ -233,7 +239,7 @@ void Mavlink_Receive() {
           if(!hbGood) {
             ap24_fixtype = 0;  
             hb_count++; 
-            #ifdef Debug_Status
+            #ifdef DEBUG_Status
             log.print(" hb_count=");
             log.print(hb_count);
             log.println("");
@@ -261,7 +267,7 @@ void Mavlink_Receive() {
           hud_bat1_volts = pt_bat1_volts;
           hud_bat1_amps = pt_bat1_amps;
           
-          #if defined Mav_Debug_All || defined Mav_Debug_SysStatus || defined Debug_Batteries
+          #if defined Mav_DEBUG_All || defined Mav_DEBUG_SysStatus || defined DEBUG_Batteries
             log.print("Mavlink from FC #1 Sys_status: ");     
             log.print(" Sensor health=");
             log.print(" Bat volts=");
@@ -284,7 +290,7 @@ void Mavlink_Receive() {
             millisSync = millis();   
           }
           
-          #if defined Debug_All || defined Debug_Time 
+          #if defined DEBUG_All || defined DEBUG_Time 
             log.print("Mavlink in #02 SYSTEM_TIME: ");  
             log.print("ap_time_unix sec="); log.print(ap_time_unix_usec/1E6, 0);
             log.print("  ap_time_boot_ms="); log.print(ap_time_boot_ms/1E3, 3);
@@ -323,7 +329,7 @@ void Mavlink_Receive() {
           hud_num_sats = pt_numsats;                
           gpsfixGood = (ap24_fixtype>=4);
           
-          #if defined Debug_All || defined Debug_Mav_GPS 
+          #if defined DEBUG_All || defined DEBUG_Mav_GPS 
             log.print("Mavlink in #24 GPS_RAW_INT: ");  
             log.print("ap24_fixtype="); log.print(ap24_fixtype);
             if (ap24_fixtype==1) log.print(" No GPS");
@@ -363,7 +369,7 @@ void Mavlink_Receive() {
           hud_pitch = pt_fpitch;
           hud_roll = pt_froll;         
   
-          #if defined Mav_Debug_All || defined Mav_Debug_Attitude   
+          #if defined Mav_DEBUG_All || defined Mav_DEBUG_Attitude   
             log.print("Mavlink from FC #30 Attitude: ");      
             log.print(" ap_roll degs=");
             log.print(ap_roll, 1);
@@ -411,7 +417,7 @@ void Mavlink_Receive() {
           cur.hdg = ap33_hdg / 100;
           hdgGood=true;
           
-          #if defined Debug_All || defined Debug_Mav_GPS
+          #if defined DEBUG_All || defined DEBUG_Mav_GPS
             log.print("Mavlink in #33 GPS Int: ");
             log.print(" ap33_lat="); log.print((float)ap33_lat / 1E7, 6);
             log.print(" ap33_lon="); log.print((float)ap33_lon / 1E7, 6);
@@ -460,7 +466,7 @@ void Mavlink_Receive() {
           hud_grd_spd = ap74_grd_spd;
           hud_climb = ap74_climb;
           
-         #if defined Mav_Debug_All || defined Mav_Debug_Hud
+         #if defined Mav_DEBUG_All || defined Mav_DEBUG_Hud
             log.print("Mavlink from FC #74 VFR_HUD: ");
             log.print("Airspeed= "); log.print(ap74_air_spd, 2);                 // m/s    
             log.print("  Groundspeed= "); log.print(ap74_grd_spd, 2);            // m/s
@@ -494,7 +500,7 @@ void Mavlink_Receive() {
           
           hud_bat1_mAh = pt_bat1_mAh;
            
-          #if defined Mav_Debug_All || defined Debug_Batteries
+          #if defined Mav_DEBUG_All || defined DEBUG_Batteries
             log.print("Mavlink from FC #147 Battery Status: ");
             log.print(" bat id= "); log.print(ap_battery_id); 
             log.print(" bat current mA= "); log.print(ap_current_battery*10); // now shows mA
@@ -655,7 +661,7 @@ void Send_To_FC(uint32_t msg_id) {
     len = mavlink_msg_to_send_buffer(sendbuf, &sendmsg);
     inSerial.write(sendbuf,len);  
          
-    #if defined  Debug_FC_Write
+    #if defined  DEBUG_FC_Write
       if (msg_id) {    //  dont print heartbeat - too much info
         log.printf("Write to FC Serial: len=%d\n", len);             
         PrintMavBuffer(&sendmsg);
@@ -665,7 +671,7 @@ void Send_To_FC(uint32_t msg_id) {
 
   #if (Telemetry_In == 1)              // Bluetooth to FC   
         bool msgSent = Send_Bluetooth(&sendmsg);      
-        #ifdef  Debug_FC_Write
+        #ifdef  DEBUG_FC_Write
           log.print("Write to FC Bluetooth: msgSent="); log.println(msgSent);
           if (msgSent) PrintMavBuffer(&sendmsg);
         #endif     
@@ -677,7 +683,7 @@ void Send_To_FC(uint32_t msg_id) {
         #if (WiFi_Protocol == 1)      // TCP/IP
            active_client_idx = 0;             // we only ever need 1
            bool msgSent = Send_TCP(&sendmsg);  // to FC   
-           #ifdef  Debug_FC_Write
+           #ifdef  DEBUG_FC_Write
              log.print("Write to FC WiFi TCP: msgSent="); log.println(msgSent);
              PrintMavBuffer(&sendmsg);
            #endif    
@@ -685,7 +691,7 @@ void Send_To_FC(uint32_t msg_id) {
          #if (WiFi_Protocol == 2)       // UDP 
            active_client_idx = 0;             // we only ever need 1 here   
            bool msgSent = Send_UDP(&sendmsg);     // to FC    
-           #ifdef  Debug_FC_Write
+           #ifdef  DEBUG_FC_Write
              log.print("Write to FC WiFi UDP: msgSent="); log.println(msgSent);
              if (msgSent) PrintMavBuffer(&sendmsg);
            #endif           
@@ -797,8 +803,8 @@ uint32_t start;
 //================================================================================================= 
 void Send_FC_Heartbeat() {
   
-  apo_sysid = Device_sysid;                    // From config.h MP is 255, QGC default is 0
-  apo_compid = Device_compid;                  // 158 Generic autopilot peripheral component ID. MP is 190
+  apo_sysid = DEVICE_SYSID;                    // From config.h MP is 255, QGC default is 0
+  apo_compid = DEVICE_COMPID;                  // 158 Generic autopilot peripheral component ID. MP is 190
   apo_targsys = 1;                             // FC
   apo_targcomp = 1;                            // FC                   
 
@@ -810,7 +816,7 @@ void Send_FC_Heartbeat() {
    
   mavlink_msg_heartbeat_pack(apo_sysid, apo_compid, &sendmsg, apo_type, apo_autopilot, apo_base_mode, apo_system_status, 0); 
   Send_To_FC(0); 
-  #if defined Debug_Our_FC_Heartbeat
+  #if defined DEBUG_Our_FC_Heartbeat
      log.print("Our own heartbeat to FC: #0 Heartbeat: ");  
      log.print("apo_sysid="); log.print(apo_sysid);   
      log.print("  apo_compid="); log.print(apo_compid);  

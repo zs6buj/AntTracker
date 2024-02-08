@@ -183,7 +183,7 @@ uint16_t mav_checksum;          ///< X.25 CRC_Out
    log.println();
   
 }
-//=================================================================================================  
+//======================================= 
 void Printbyte(byte b, bool LF, char delimiter) {
   
   if ( (b == 0x7E) && (LF) ) {//             || (b == 0x10)  || (b == 0x32)) {
@@ -195,20 +195,20 @@ void Printbyte(byte b, bool LF, char delimiter) {
 }
 
 //==================================
-void PrintByte(byte b) {
+void printByte(byte b) {
   if (b<=0xf) log.print("0");
     log.print(b,HEX);
     log.print(" ");
 }
 
-//=================================================================================================  
-void PrintMavBuffer(int lth){
+//======================================= 
+void printBuffer(int lth){
   for ( int i = 0; i < lth; i++ ) {
     Printbyte(inBuf[i], false, ' ');
   }
   log.println();
 }
-//=================================================================================================  
+//======================================= 
 void PrintFrsBuffer(byte *buf, uint8_t len){
   log.print("len:"); log.print(len); log.print("  ");
   for ( int i = 0; i < len; i++ ) {
@@ -216,62 +216,110 @@ void PrintFrsBuffer(byte *buf, uint8_t len){
   }
   log.println();
 }
-//=================================================================================================  
-bool PacketGood() {
-// Allow 1 degree of lat and lon away from home, i.e. 60 nautical miles radius at the equator
-// Allow 1km up and 300m down from home altitude
-if (finalHomeStored==0) {  //  You can't use the home co-ordinates for a reasonability test if you don't have them yet
-  return true;
+//=======================================
+void scanI2C()
+// 0x03C for SSD1306_Display, 0x1E for HMC5883L, 0x0D for QMC5883
+{
+  uint8_t found = 0;
+  log.print("Scanning I2C bus: ");
+  for(int addr = 1; addr < 127; addr++ ) 
+  {
+    Wire.beginTransmission(addr);
+      uint8_t err = Wire.endTransmission();
+    if (err == 0) 
+    {
+      log.print("I2C device found at 0x");
+      printByte(addr);
+      if (addr == 0x0C)
+      {
+        log.println("likely SSD1306_Display");
+      } else
+      if (addr == 0x0D)
+      {
+        log.println("likely QMC5883L compass");
+      } else
+      if (addr == 0x0E)
+      {
+        log.println("likely HMC5883L compass");
+      }
+      found++;
+    }
+    else if (err==4) 
+    {
+      log.print("Unknown error at addr 0x");
+      printByte(addr);
+    }    
   }
-if (cur.lat<(hom.lat-1.0) || cur.lat>(hom.lat+1.0)) {  // Also works for negative lat
-  log.print(" Bad lat! cur.lat=");
-  log.print(cur.lat,7);  
-  log.print(" hom.lat=");log.print(hom.lat,7);
-  log.println("  Packet ignored");   
-  return false; 
+  if (found == 0) 
+  {
+    log.println("No I2C devices found");
   }
-if (cur.lon<(hom.lon-1.0) || cur.lon>(hom.lon+1.0)) { // Also works for negative lon
-  log.print(" Bad lon! cur.lon=");
-  log.print(cur.lon,7);  
-  log.print(" hom.lon=");log.print(hom.lon,7);
-  log.println("  Packet ignored");  
-  return false;  
-  }
-if (cur.alt<(hom.alt-300) || cur.alt>(hom.alt+2000)) {
-  log.print(" Bad alt! cur.alt=");
-  log.print(cur.alt,0);  
-  log.print(" hom.alt=");log.print(hom.alt,0);
-  log.println("  Packet ignored");    
-  return false;  
-  }
-if ((cur.alt-hom.alt)<-300 || (cur.alt-hom.alt)>2000) {
-  log.print(" Bad alt! cur.alt=");
-  log.print(cur.alt,0);  
-  log.print(" hom.alt=");log.print(hom.alt,0);
-  log.println("  Packet ignored");    
-  return false;  
-  }
-if (headingSource == 2) { //  Heading source from flight controller
-  if (cur.hdg<0 || cur.hdg>360) {
-    log.print(" Bad hdg! cur.hdg=");
-    log.print(cur.hdg,0);  
-    log.print(" hom.hdg=");log.print(hom.hdg,0);
-    log.println("  Packet ignored");    
-    return false;  
-   }
 }
+//=======================================
+bool PacketGood() 
+{
+  // Allow 1 degree of lat and lon away from home, i.e. 60 nautical miles radius at the equator
+  // Allow 1km up and 300m down from home altitude
+  if (finalHomeStored==0) {  //  You can't use the home co-ordinates for a reasonability test if you don't have them yet
+    return true;
+    }
+  if (cur.lat<(hom.lat-1.0) || cur.lat>(hom.lat+1.0)) {  // Also works for negative lat
+    #if defined SHOW_BAD_PACKETS
+      log.print(" Bad lat! cur.lat=");
+      log.print(cur.lat,7);  
+      log.print(" hom.lat=");log.print(hom.lat,7);
+      log.println("  Packet ignored");  
+    #endif
+    return false; 
+    }
+  if (cur.lon<(hom.lon-1.0) || cur.lon>(hom.lon+1.0)) { // Also works for negative lon
+    #if defined SHOW_BAD_PACKETS   
+      log.print(" Bad lon! cur.lon=");
+      log.print(cur.lon,7);  
+      log.print(" hom.lon=");log.print(hom.lon,7);
+      log.println("  Packet ignored");
+    #endif  
+    return false;  
+    }
+  if (cur.alt<(hom.alt-300) || cur.alt>(hom.alt+2000)) {
+    #if defined SHOW_BAD_PACKETS    
+      log.print(" Bad alt! cur.alt=");
+      log.print(cur.alt,0);  
+      log.print(" hom.alt=");log.print(hom.alt,0);
+      log.println("  Packet ignored");
+    #endif    
+    return false;  
+    }
+  if ((cur.alt-hom.alt)<-300 || (cur.alt-hom.alt)>2000) {
+      log.print(" Bad alt! cur.alt=");
+      log.print(cur.alt,0);  
+      log.print(" hom.alt=");log.print(hom.alt,0);
+      log.println("  Packet ignored");    
+    return false;  
+    }
+  if (headingsource == 2) { //  Heading source from flight controller
+    if (cur.hdg<0 || cur.hdg>360) {
+      #if defined SHOW_BAD_PACKETS
+        log.print(" Bad hdg! cur.hdg=");
+        log.print(cur.hdg,0);  
+        log.print(" hom.hdg=");log.print(hom.hdg,0);
+        log.println("  Packet ignored");    
+      #endif
+      return false;  
+     }
+ }
   
 return true;
 }
 //=================================================================================================  
 
-    void CheckStatusAndTimeouts() {
-      
+  void CheckStatusAndTimeouts() 
+  {
      if ((millis() - hbGood_millis) > ((2*timeout_secs) * 1000)) {
        mavGood = false; 
        hbGood = false;         
      }    
-
+  
      if ((millis() - frGood_millis) > (timeout_secs * 1000)) {
        frGood = false;
        pwmGood = false;  
@@ -280,12 +328,13 @@ return true;
      if ((millis() - pwmGood_millis) > (timeout_secs * 1000) ) {
        pwmGood = false;
      }
-
+  
      if ((millis() - gpsGood_millis) > (timeout_secs * 1000) ) {
       gpsGood = false;        // If no inGPS packet  
-    }    
+      new_GPS_data = true;   
+      }    
     
-    #if (Heading_Source == 4)
+    #if (headingsource == 4)
       if ((millis() - boxgpsGood_millis) > (timeout_secs * 1000) ) {
         boxgpsGood = false;        // If no box GPS packet  
       }  
@@ -293,11 +342,11 @@ return true;
      
     ReportOnlineStatus();
     ServiceTheStatusLed();  
-    
-    }   
+  }   
     //===================================================================     
     
-    void ReportOnlineStatus() {
+    void ReportOnlineStatus() 
+    {
 
        if (motArmed != motPrev) {  // report on change of status
          motPrev = motArmed;
@@ -320,9 +369,11 @@ return true;
          }
        }
        
-       if (pwmGood != pwmPrev) {  
+       if (pwmGood != pwmPrev) 
+       {  
          pwmPrev = pwmGood;
-         if (pwmGood) {
+         if (pwmGood) 
+         {
            log.println("RC PWM good");
            LogScreenPrintln("RC PWM good");         
          } else {
@@ -330,6 +381,7 @@ return true;
           LogScreenPrintln("RC PWM timeout");         
          }
        }
+       
        if (gpsGood != gpsPrev) {  
          gpsPrev = gpsGood;
          if (gpsGood) {
@@ -341,7 +393,7 @@ return true;
          }
        }
        
-       #if (Heading_Source == 4)
+       #if (headingsource == 4)
          if (boxgpsGood != boxgpsPrev) {  
            boxgpsPrev = boxgpsGood;
            if (boxgpsGood) {
@@ -352,8 +404,7 @@ return true;
             LogScreenPrintln("No box GPS lock!");         
            }
          }     
-       #endif    
-       
+       #endif           
     } 
 
 //=================================================================================================  
@@ -366,13 +417,13 @@ void LostPowerCheckAndRestore(uint32_t epoch_now) { // only ever called if activ
   
   if (lostPowerCheckDone) return;
 
-  #if defined Debug_All || defined Debug_Time || defined Debug_Home
+  #if defined DEBUG_All || defined DEBUG_Time || defined DEBUG_Home
     log.print("Checking for RestoreHomeFromFlash conditions:"); 
     log.print("  epochHome="); log.print(TimeString(epochHome())); 
     log.print("  epochNow="); log.println(TimeString(epochNow()));
   #endif 
 
-  #if (headingSource != 4)  // If NOT (Tracker GPS + Compass). Home could move constantly.
+  #if (HEADINGSOURCE != 4)  // If NOT (Tracker GPS + Compass). Home could move constantly.
     uint16_t decay_secs = epoch_now -  epochHome();  
     if (decay_secs <= home_decay_secs) {  //  restore home if restart within decay seconds
       RestoreHomeFromFlash();     
@@ -395,7 +446,7 @@ void SaveHomeToFlash() {
   EEPROMWritelong(3, hom.alt*10);
   EEPROMWritelong(4, hom.hdg*10);  
   
-#if defined Debug_All || defined Debug_EEPROM || defined Debug_Time || defined Debug_Home
+#if defined DEBUG_All || defined DEBUG_EEPROM || defined DEBUG_Time || defined DEBUG_Home
   log.print("  firstHomeStored="); log.print(firstHomeStored);
   log.print("  home.lon="); log.print(hom.lon, 6);
   log.print("  home.lat="); log.print(hom.lat, 6);
@@ -412,12 +463,12 @@ void StoreEpochPeriodic() {
 
   if (finalHomeStored) {
     EEPROMWritelong(0, epochPeriodic); // UPDATE epochHome
-    #if defined Debug_All || defined Debug_EEPROM || defined Debug_Time || defined Debug_Home
+    #if defined DEBUG_All || defined DEBUG_EEPROM || defined DEBUG_Time || defined DEBUG_Home
       log.print("epochHome stored="); log.println(TimeString(epochPeriodic));
     #endif  
   }
   
-  #if defined Debug_All || defined Debug_EEPROM || defined Debug_Time || defined Debug_Home
+  #if defined DEBUG_All || defined DEBUG_EEPROM || defined DEBUG_Time || defined DEBUG_Home
   log.print("epochPeriodic stored="); log.println(TimeString(epochPeriodic));
   #endif  
 }
@@ -427,7 +478,7 @@ uint32_t epochHome() {
 
 uint32_t epHome = EEPROMReadlong(0);
 
- #if defined Debug_All || defined Debug_EEPROM
+ #if defined DEBUG_All || defined DEBUG_EEPROM
    log.print("epochHome="); log.println(TimeString(epHome));
 
  #endif
@@ -441,7 +492,7 @@ void RestoreHomeFromFlash() {
   hom.alt = EEPROMReadlong(3) / 10;
   hom.hdg = EEPROMReadlong(4) / 10;
   
-  #if defined Debug_All || defined Debug_EEPROM || defined Debug_Time || defined Debug_Home
+  #if defined DEBUG_All || defined DEBUG_EEPROM || defined DEBUG_Time || defined DEBUG_Home
     log.print("  home.lon="); log.print(hom.lon, 6);
     log.print("  home.lat="); log.print(hom.lat, 6);
     log.print("  home.alt="); log.print(hom.alt, 0);
@@ -669,7 +720,7 @@ int16_t Add360(int16_t arg1, int16_t arg2) {
   return ret; 
 }  
 //================================================================================================= 
-#if (defined ESP32)   && ( (Telemetry_In == 2) || (Telemetry_In == 3)) && (defined Debug_WiFi)
+#if (defined ESP32)   && ( (Telemetry_In == 2) || (Telemetry_In == 3)) && (defined DEBUG_WiFi)
 void WiFiEventHandler(WiFiEvent_t event)  {
     log.printf("[WiFi-event] event: %d ", event);        
 
@@ -808,7 +859,7 @@ void WiFiEventHandler(WiFiEvent_t event)  {
       //log.printf("busy=%d  new=%d log=%d  bounce=%d  info=%d\n", infoPressBusy, infoNewPress, show_log, info_debounce_millis, info_millis); 
       
      #if ((defined ESP32) || (defined ESP8266))   // Teensy does not have touch pins          
-      if ( (Tup != 99) && (Tdn != 99) ) {         // if ESP touch pin-pair enumerated
+      if ( (Tup != -1) && (Tdn != -1) ) {         // if ESP touch pin-pair enumerated
         if (upButton) {
           Scroll_Display(up);
         }
@@ -818,7 +869,7 @@ void WiFiEventHandler(WiFiEvent_t event)  {
       } else
       #endif
       
-      if ( (Pup != 99) && (Pdn != 99) ) {   // if digital pin-pair enumerated
+      if ( (Pup != -1) && (Pdn != -1) ) {   // if digital pin-pair enumerated
         upButton = !digitalRead(Pup);       // low == pressed
         if (upButton) {                 
           Scroll_Display(up);
@@ -845,7 +896,6 @@ void WiFiEventHandler(WiFiEvent_t event)  {
     }
     #endif 
     //===================================
-   
     void Scroll_Display(scroll_t up_dn) {
       
       if (millis() - scroll_millis < 300) return;
@@ -865,7 +915,58 @@ void WiFiEventHandler(WiFiEvent_t event)  {
           PaintLogScreen(scroll_row, show_last_row);  // paint down to scroll_row      
       }   
     }
+    //===================================================================  
+    #if defined displaySupport       
+    void SetScreenSizeOrient(uint8_t txtsz, uint8_t scr_orient) {
 
+      #if (defined SSD1306_Display) || (defined SSD1331_Display)   // rotation arguement depends on display type
+        if (scr_orient == 0) {          // portrait
+          display.setRotation(1);              
+          scr_h_px = SCR_H_PX;
+          scr_w_px = SCR_W_PX;
+        } else                       
+        if (scr_orient == 1) {          // landscape
+          display.setRotation(0);             
+          scr_h_px = SCR_W_PX;
+          scr_w_px = SCR_H_PX;
+        }
+      #else                             // ST7789 (T-Display) and ILI9341_Display
+        if (scr_orient == 0) {          // portrait
+          display.setRotation(0);       // or 4            
+          scr_h_px = SCR_H_PX;
+          scr_w_px = SCR_W_PX;
+        } else
+        if (scr_orient == 1) {          // landscape
+          display.setRotation(3);       // or 1         
+          scr_h_px = SCR_W_PX;
+          scr_w_px = SCR_H_PX;
+        }
+      #endif
+        
+      display.setTextSize(txtsz);   
+      
+      if (txtsz == 1) {
+        char_w_px = 6;    
+      } else 
+      if(txtsz == 2) {       
+        char_w_px = 12;   
+      } else       
+      if  (txtsz == 3) { 
+        char_w_px = 18;   
+      } else         
+      if  (txtsz == 4) {
+        char_w_px = 24;    
+      } else           
+      if  (txtsz == 5)  {
+        char_w_px = 30;    
+      }     
+   
+      char_h_px = (uint8_t)(char_w_px * 1.4);   // vertical spacing
+
+      scr_w_ch = scr_w_px / char_w_px;
+      scr_h_ch = scr_h_px / char_h_px;       
+    }
+    #endif
     //===================================
     void PaintLogScreen(uint8_t new_row, last_row_t last_row_action) { 
       if (display_mode != logg) { 
@@ -1480,66 +1581,15 @@ void WiFiEventHandler(WiFiEvent_t event)  {
 
     }
     #endif
-    //===================================================================  
-    #if defined displaySupport       
-    void SetScreenSizeOrient(uint8_t txtsz, uint8_t scr_orient) {
 
-      #if (defined SSD1306_Display) || (defined SSD1331_Display)   // rotation arguement depends on display type
-        if (scr_orient == 0) {          // portrait
-          display.setRotation(1);              
-          scr_h_px = SCR_H_PX;
-          scr_w_px = SCR_W_PX;
-        } else                       
-        if (scr_orient == 1) {          // landscape
-          display.setRotation(0);             
-          scr_h_px = SCR_W_PX;
-          scr_w_px = SCR_H_PX;
-        }
-      #else                             // ST7789 (T-Display) and ILI9341_Display
-        if (scr_orient == 0) {          // portrait
-          display.setRotation(0);       // or 4            
-          scr_h_px = SCR_H_PX;
-          scr_w_px = SCR_W_PX;
-        } else
-        if (scr_orient == 1) {          // landscape
-          display.setRotation(3);       // or 1         
-          scr_h_px = SCR_W_PX;
-          scr_w_px = SCR_H_PX;
-        }
-      #endif
-        
-      display.setTextSize(txtsz);   
-      
-      if (txtsz == 1) {
-        char_w_px = 6;    
-      } else 
-      if(txtsz == 2) {       
-        char_w_px = 12;   
-      } else       
-      if  (txtsz == 3) { 
-        char_w_px = 18;   
-      } else         
-      if  (txtsz == 4) {
-        char_w_px = 24;    
-      } else           
-      if  (txtsz == 5)  {
-        char_w_px = 30;    
-      }     
-   
-      char_h_px = (uint8_t)(char_w_px * 1.4);   // vertical spacing
-
-      scr_w_ch = scr_w_px / char_w_px;
-      scr_h_ch = scr_h_px / char_h_px;       
-    }
-    #endif
     //===================================================================  
     bool homeButtonPushed() {
       bool hbp = false;
-      if (SetHomePin != 99) {
+      if (SetHomePin != -1) {
         hbp = (!(digitalRead(SetHomePin)));            // Check if home button is pushed
       }
       #if (defined ESP32)
-          hbp = !hbp;     // ESP32 pushed == HIGH (3.3V), else pushed == LOW)
+          //hbp = !hbp;     
       #endif  
       return hbp;
     }

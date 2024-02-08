@@ -1,9 +1,10 @@
 
-#if (PROTOCOL == 9)   //  CRSF Serial
+
 
   // **********************************************************
   void CRSF_Receive() 
   {
+  #if (PROTOCOL == 9)   //  CRSF Serial
     if (crsf.readCrsfFrame(crsf.frame_lth))  // got a frame
     {
       uint8_t crsf_id = crsf.decodeTelemetry(&*crsf.crsf_buf);
@@ -79,6 +80,7 @@
     #if defined DEBUG_GOODFLAGS
       log.printf("gpsGood:%u  gpsfixGood:%u  lonGood:%u  latGood:%u  altGood:%u  hdgGood:%u  boxhdgGood:%u \n", gpsGood, gpsfixGood, lonGood, latGood, altGood, hdgGood, boxhdgGood);           
     #endif
+#endif // end of CRSF Serial    
   }    
-#endif // end of CRSF Serial
+
         

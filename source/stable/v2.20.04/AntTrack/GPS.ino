@@ -1,5 +1,5 @@
   // 9600 NMEA
-#if ( (Telemetry_In == 0) || (Heading_Source == 4) )  //  Serial in or have Trackerbox GPS  
+#if ( (Telemetry_In == 0) || (HEADINGSOURCE == 4) )  //  Serial in or have Trackerbox GPS  
   
   #include <TinyGPS++.h>
 
@@ -22,7 +22,7 @@
 
   // **********************************************************
   void Setup_inGPS() {      // this is NOT the Trackebox GPS. See lower down.
-    #if defined Debug_All || defined Debug_inGPS
+    #if defined DEBUG_All || defined DEBUG_inGPS
        log.println("Setup inGPS");
     #endif  
   
@@ -94,7 +94,7 @@
   
 #endif // end of inGPS
   //====================================================
-#if ( (Telemetry_In == 0) || (Heading_Source == 4) )  //  Serial in or have Trackerbox GPS    
+#if ( (Telemetry_In == 0) || (HEADINGSOURCE == 4) )  //  Serial in or have Trackerbox GPS    
   uint32_t getEpoch(struct compdate &dt) {
 
   uint32_t  epoch;
@@ -138,7 +138,7 @@
 
 //====================================================
 //====================================================
-#if (Heading_Source == 4)   // Trackebox GPS
+#if (HEADINGSOURCE == 4)   // Trackebox GPS
 
 TinyGPSPlus tboxGPS;
 
@@ -187,7 +187,7 @@ void  getTrackerboxLocation()  {
       if (got_data) {
         got_data = false;
 
-        #if defined Debug_All || defined Debug_boxGPS
+        #if defined DEBUG_All || defined DEBUG_BOXGPS
           log.print("Sats: "); log.print(sats);
           if ( (sats) && (new_boxGPS_data) ) {
             log.print("  boxgpsGood: "); log.print(boxgpsGood);        

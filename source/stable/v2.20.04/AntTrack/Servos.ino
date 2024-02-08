@@ -3,7 +3,7 @@ void pointServos(int16_t worldAz, int16_t ourEl, int16_t boxHdg) {
  
   if (worldAz == 360) worldAz = 0;   // our servo azimuth working range is 0 deg through 359 deg
 
-  #if defined Debug_All || defined Debug_Servos
+  #if defined DEBUG_All || defined DEBUG_Servos
     log.print("\nworldAz = " );
     log.print(worldAz);
     log.print("\t ourEl = ");
@@ -16,7 +16,7 @@ void pointServos(int16_t worldAz, int16_t ourEl, int16_t boxHdg) {
   int16_t ourAz = worldAz - boxHdg + azStart;    // here we compensate for offset of the boxview to worldview
   ourAz = wrap360(ourAz);
  
-  #if defined Debug_All || defined Debug_Servos
+  #if defined DEBUG_All || defined DEBUG_Servos
     log.print("ourAz = " );
     log.print(ourAz);
     log.print(" ourEl = ");
@@ -31,7 +31,7 @@ void pointServos(int16_t worldAz, int16_t ourEl, int16_t boxHdg) {
 //=====================================================
 void moveServos(uint16_t az, uint16_t el) {
   
-   #if (defined Debug_Servos)
+   #if (defined DEBUG_Servos)
     log.printf("moveServos() az=%u  el=%u\n", az, el);
   #endif
 
@@ -40,7 +40,7 @@ void moveServos(uint16_t az, uint16_t el) {
     if ( (az > 180) && (az <= 360) ) {        // Pointing direction is behind us,
       az -= 180;                              // so flip the frame of reference over and mirror it 
       el = 180 - el;                          // and make the el servo reach over and behind
-      #if (defined Debug_Servos)
+      #if (defined DEBUG_Servos)
         log.printf("Flipped az:%d el:%d \n", az, el);  
       #endif            
     }
@@ -73,7 +73,7 @@ void moveServos(uint16_t az, uint16_t el) {
   // here we move the servos and hence the antenna
   // note: myservo.attach(pin, 1000, 2000)
 
-  #if (defined Debug_Servos) 
+  #if (defined DEBUG_Servos) 
     if (az_reversed) log.print("az reversed ");
     if (el_reversed) log.print("el reversed ");
     log.printf("Servo write az=%u  el=%u\n", az, el);

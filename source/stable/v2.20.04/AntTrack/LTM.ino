@@ -31,7 +31,8 @@ TryAgain:
   chr = NextChr();                // start2 should be 0x54 
   if (!chr==0x54) goto TryAgain;   // otherwise reject the start signals
   inBuf[1] = chr;
-  
+  hbGood=true; 
+  hbGood_millis = millis();
   chr = NextChr();    // Packet type
   inBuf[2] = chr;
   switch (chr) {
@@ -51,7 +52,7 @@ TryAgain:
     goto TryAgain;    // Don't know this packet type
   }
 
- // PrintMavBuffer(pLth); 
+ // printBuffer(pLth); 
   
   
 }
@@ -92,8 +93,8 @@ boolean UnpackAttitude(int lth) {
   if (jHdg<0) jHdg+=360;
   cur.hdg = jHdg;
   hdgGood=1;
-  #if defined Debug_All || defined Debug_LTM
-    PrintMavBuffer(lth); 
+  #if defined DEBUG_All || defined DEBUG_LTM
+    printBuffer(lth); 
     log.print(" Pitch = ");
     log.print(iPitch);
     log.print(" Roll = ");
@@ -133,13 +134,13 @@ boolean UnpackGPS(int lth) {
   if ((!(Lat == 0)) && (!(Lon == 0))) {
     gpsGood=1;
     new_GPS_data = true;
+    gpsGood_millis = millis();                 // Time of last good GPS packet    
   }
 
-  
-  gpsGood_millis = millis();                 // Time of last good GPS packet
 
-  #if defined Debug_All || defined Debug_LTM
-    PrintMavBuffer(lth); 
+
+  #if defined DEBUG_All || defined DEBUG_LTM
+    printBuffer(lth); 
     log.print(" Lat = ");
     log.print(cur.lat,7);
     log.print(" Lon = ");
@@ -183,8 +184,8 @@ boolean UnpackSensors(int lth) {
   iAirspeed = jAirspeed;
   fVBat = jVBat / 1E3;
   fCur = jCur / 1E3;
-  #if defined Debug_All || defined Debug_LTM
-    PrintMavBuffer(lth); 
+  #if defined DEBUG_All || defined DEBUG_LTM
+    printBuffer(lth); 
     log.print(" Bat Volts = ");
     log.print(fVBat,1);
     log.print(" Current = ");

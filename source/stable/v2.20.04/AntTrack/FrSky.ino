@@ -74,12 +74,7 @@
     //0xF101 RSSI 
     uint32_t pt_rssi; 
 
-
 #if (Telemetry_In == 0) || (Telemetry_In == 3) ||  (Telemetry_In == 4)    //  FrSky (Serial, UDP or BT)
-
-  bool lonGood = false;
-  bool latGood = false;
-  bool altGood = false;
 
   bool Passthru = false;
   bool iNav = false;
@@ -186,7 +181,7 @@
       if (mycrcGood) {  
         frGood = true;
         frGood_millis = millis();  
-        #if defined Debug_All || defined Debug_FrSky_Messages_UDP
+        #if defined DEBUG_All || defined DEBUG_FrSky_Messages_UDP
           log.print("CRC Good C "); PrintFrsBuffer(&inBuf[fr_offset], len-fr_offset);
         #endif 
         Frs_Decode(&inBuf[fr_offset]);   
@@ -210,8 +205,8 @@
       }  
       
       if (frport == s_port) {                            // S.Port
-        if ( SPort_Read_A_Frame(&inBuf[0]) ) {
-          #if (defined Debug_FPort_Buffer) 
+        if (SPort_Read_A_Frame(&inBuf[0]) ) {
+          #if (defined DEBUG_FPort_Buffer) 
             log.print("Good FrSky Frame Read: ");
             PrintFrsBuffer(inBuf, 10); //magic, lth, type, prime, payload[6], crc
           #endif           
@@ -221,7 +216,7 @@
   
       if ( (frport == f_port1) || (frport == f_port2) ) {       // F.Port
         if (FPort_Read_A_Frame(&inBuf[0], frport) ) {
-          #if (defined Debug_FPort_Buffer) 
+          #if (defined DEBUG_FPort_Buffer) 
             log.print("Good FrSky Frame Read: ");
             PrintFrsBuffer(inBuf, 11);    // null, lth, type, prime, payload[6], crc
           #endif            
@@ -343,7 +338,7 @@
                 #if defined Derive_PWM_Channesl           
                   pwmGood = BytesToPWM(buf+3, &pwm_ch[0], fr_lth);
                   if (pwmGood) {
-                    #if defined Debug_PWM_Channels
+                    #if defined DEBUG_PWM_Channels
                       Print_PWM_Channels(&pwm_ch[0], num_of_channels);
                     #endif  
                     pwmGood_millis = millis();
@@ -435,7 +430,7 @@
                 #if defined Derive_PWM_Channesl           
                   pwmGood = BytesToPWM(buf+3, &pwm_ch[0], fr_lth);
                   if (pwmGood) {
-                    #if defined Debug_PWM_Channels
+                    #if defined DEBUG_PWM_Channels
                       Print_PWM_Channels(&pwm_ch[0], num_of_channels);
                     #endif  
                     pwmGood_millis = millis();
@@ -487,7 +482,7 @@
        chr = SafeRead();           // this is the crc byte
        *(buf+i) = chr;      
        
-      #if (defined Debug_FPort_Buffer) 
+      #if (defined DEBUG_FPort_Buffer) 
         PrintFrsBuffer(buf, lth+4);
       #endif 
 
@@ -505,7 +500,7 @@
       } else {
         badFrames++; // due to crc
       }
-      #if defined Debug_CRC
+      #if defined DEBUG_CRC
         log.printf("mycrcGood=%d\n\n", mycrcGood);              
       #endif  
       return mycrcGood;   
@@ -541,7 +536,7 @@
       #endif     
       lth--;
       
-      #if (defined Debug_FrPort_Stream)  
+      #if (defined DEBUG_FrPort_Stream)  
         Printbyte(b, true, '<');
       #endif 
       delay(0); // yield to rtos for wifi & bt to get a sniff      
@@ -563,7 +558,7 @@
         b = ReadByte();
         b ^= 0x20;
       }
-      #if (defined Debug_FrPort_Safe_Read)  
+      #if (defined DEBUG_FrPort_Safe_Read)  
         Printbyte(b, true, '<');
       #endif 
       delay(0); // yield to rtos for wifi & bt to get a sniff 
@@ -574,7 +569,7 @@
 
     void crcEnd(int16_t *mycrc)  {
       *mycrc = 0xFF - *mycrc;                  // final 2s complement
-      #if defined Debug_CRC
+      #if defined DEBUG_CRC
         log.printf("crcEnd=%3X %3d\n", *mycrc, *mycrc);             
       #endif  
     }
@@ -584,7 +579,7 @@
        crcin += b;          // add in new byte
        crcin += crcin >> 8;   // add in high byte overflow if any
        crcin &= 0xff;  // mask all but low byte, constrain to 8 bits 
-       #if defined Debug_CRC       
+       #if defined DEBUG_CRC       
          log.printf("AddIn %3d %2X\tcrcin_now=%3d %2X\n", b, b, crcin, crcin);              
        #endif  
     }  
@@ -595,7 +590,7 @@
        *mycrc += *mycrc >> 8;   // add in high byte carry if any
        *mycrc &= 0xff;          // mask all but low byte, constrain to 8 bits
 
-      #if defined Debug_CRC
+      #if defined DEBUG_CRC
          log.printf("CRC Step: b=%3X %3d\  crc=%3X %3d\n", *mycrc, *mycrc);           
       #endif
     }    
@@ -615,7 +610,7 @@
       
       uint8_t mycrc = crcGet(buf, lth);   
       uint8_t fpcrc = *(buf+lth);
-      #if defined Debug_CRC    
+      #if defined DEBUG_CRC    
         log.printf("mycrc=%3X %3d  fpcrc=%3X\ %3d\n", mycrc, mycrc, fpcrc, fpcrc);          
       #endif
     return (mycrc == fpcrc);
@@ -637,21 +632,21 @@
                       altGood=true; 
                       new_GPS_data = true;     
                     }
-                    #if defined Debug_All || defined Debug_FrSky_Messages             
+                    #if defined DEBUG_All || defined DEBUG_FrSky_Messages             
                       log.print(" GPS Altitude 0x01=");
                       log.println(cur.hdg,0);
                     #endif
                     break;
                   case 0x12:                        // Lon BP - before point
                     lonDDMM = uint32Extract(buf, 3);
-                    #if defined Debug_All || defined Debug_FrSky_Messages             
+                    #if defined DEBUG_All || defined DEBUG_FrSky_Messages             
                       log.print(" lonDDMM 0x12=");
                       log.println(lonDDMM);
                     #endif             
                     break;
                   case 0x13:                       // Lat BP
                     latDDMM = uint32Extract(buf, 3);
-                    #if defined Debug_All || defined Debug_FrSky_Messages             
+                    #if defined DEBUG_All || defined DEBUG_FrSky_Messages             
                       log.print(" latDDMM 0x13=");
                       log.println(latDDMM);
                     #endif           
@@ -659,7 +654,7 @@
                   case 0x14:        
                     cur.hdg = uint16Extract(buf, 3);      // Course / Heading BP
                     if (!(cur.hdg==0.000)) hdgGood=true;
-                    #if defined Debug_All || defined Debug_FrSky_Messages             
+                    #if defined DEBUG_All || defined DEBUG_FrSky_Messages             
                       log.print(" Heading 0x14=");
                       log.println(cur.hdg,0);
                     #endif
@@ -673,7 +668,7 @@
                     if (EW==0x57)  cur.lon = 0-cur.lon; //  "W", as opposed to "E"
                     lonGood=true;
                     new_GPS_data = true;  
-                    #if defined Debug_All || defined Debug_FrSky_Messages             
+                    #if defined DEBUG_All || defined DEBUG_FrSky_Messages             
                       log.print(" Lon After Point 0x1A=");
                       log.println(cur.lon,0);
                     #endif
@@ -688,21 +683,21 @@
                     if (NS==0x53) cur.lat = 0-cur.lat;  //  "S", as opposed to "N" 
                     latGood=true;
                     new_GPS_data = true;
-                    #if defined Debug_All || defined Debug_FrSky_Messages             
+                    #if defined DEBUG_All || defined DEBUG_FrSky_Messages             
                       log.print(" Lat After Point 0x1B=");
                       log.println(cur.lat,0);
                     #endif
                     break;
                   case 0x22:                      // Lon E/W
                     EW = uint8Extract(buf, 3);
-                    #if defined Debug_All || defined Debug_FrSky_Messages             
+                    #if defined DEBUG_All || defined DEBUG_FrSky_Messages             
                       log.print(" Lon E/W 0x22=");
                       log.println(EW);
                     #endif
                     break;
                   case 0x23:                      // Lat N/S
                     NS = uint8Extract(buf, 3);  
-                    #if defined Debug_All || defined Debug_FrSky_Messages             
+                    #if defined DEBUG_All || defined DEBUG_FrSky_Messages             
                       log.print(" Lon Lat N/S 0x23=");
                       log.println(NS);
                     #endif
@@ -721,7 +716,7 @@
                       new_GPS_data = true;
                     }
 
-                    #if defined Debug_All || defined Debug_FrSky_Messages
+                    #if defined DEBUG_All || defined DEBUG_FrSky_Messages
                       log.printf("FrSky 0x100 altitude=%3.1fm\n", cur.alt);  
                     #endif                     
 
@@ -731,7 +726,7 @@
                     pt110_climb = uint32Extract(buf, 3);
                     hud_climb = (float)pt110_climb / 10;
                     
-                     #if defined Debug_All || defined Debug_FrSky_Messages
+                     #if defined DEBUG_All || defined DEBUG_FrSky_Messages
                       log.printf("FrSky 0x110 climb=%3.1f degrees\n", (pt110_climb/10));  
                     #endif                      
                     break;
@@ -756,7 +751,7 @@
                     4. 1 is ok to arm, 2 is arming is prevented, 4 is armed
                     */
                     
-                    #if defined Debug_All || defined Debug_FrSky_Messages || defined Debug_FrSkyD_Flight_Mode
+                    #if defined DEBUG_All || defined DEBUG_FrSky_Messages || defined DEBUG_FrSkyD_Flight_Mode
                       log.printf("FrSky 0x400 payload=%u pt400_arm_flag=%u  motArmed=%u\n", pt400_flight_mode, pt400_arm_flag, motArmed);                             
                     #endif  
                     break;   
@@ -795,7 +790,7 @@
                     
                     gpsfixGood = (pt_gps_accuracy > 7);  // 0 thru 9 - 9 best  
                       
-                    #if defined Debug_All || defined Debug_FrSky_Messages
+                    #if defined DEBUG_All || defined DEBUG_FrSky_Messages
                       log.print("FrSky 0x410 gps_status payload = ");  log.print(pt410_gps_status);
                       log.print(" pt_gp_fix="); log.print(pt_gps_fix);     
                       log.print(" pt_gps_homefix ="); log.print(pt_gps_homefix);
@@ -809,7 +804,7 @@
                     pt430_pitch = uint32Extract(buf, 3);
                     hud_pitch = pt430_pitch / 10;
                     
-                     #if defined Debug_All || defined Debug_FrSky_Messages
+                     #if defined DEBUG_All || defined DEBUG_FrSky_Messages
                       log.printf("FrSky 0x430 pt430_pitch=%1.6f degrees\n", (pt430_pitch/10));  
                     #endif                      
                     break;
@@ -818,7 +813,7 @@
                     pt440_roll = uint32Extract(buf, 3);
                     hud_roll = pt440_roll / 10;  
                                      
-                    #if defined Debug_All || defined Debug_FrSky_Messages
+                    #if defined DEBUG_All || defined DEBUG_FrSky_Messages
                       log.printf("FrSky 0x440 pt440_roll=%1.6f degrees\n", (pt440_roll/10));     
                     #endif                       
                     break;   
@@ -827,7 +822,7 @@
                    pt_latlong= uint32Extract(buf, 3); 
                    ms2bits = pt_latlong >> 30;
                    pt_latlong = pt_latlong & 0x3fffffff; // remove ms2bits
-                   #if defined Debug_All     
+                   #if defined DEBUG_All     
                      log.print(" ms2bits=");
                      log.println(ms2bits);
                    #endif   
@@ -835,7 +830,7 @@
                      case 0:   // Latitude Positive
                        pt_lat = pt_latlong;     // lon always comes first   
                        cur.lat = (float)(pt_lat / 6E5);     // lon always comes first                                           
-                       #if defined Debug_All || defined Debug_FrSky_Messages                
+                       #if defined DEBUG_All || defined DEBUG_FrSky_Messages                
                          log.print(" FrSky 0x800 latitude=");
                          log.println(cur.lat,7);
                        #endif
@@ -845,7 +840,7 @@
                      case 1:   // Latitude Negative 
                        pt_lat = pt_latlong;                         
                        cur.lat = (float)(0-(pt_lat / 6E5)); 
-                       #if defined Debug_All || defined Debug_FrSky_Messages           
+                       #if defined DEBUG_All || defined DEBUG_FrSky_Messages           
                          log.print(" FrSky 0x800 latitude=");
                          log.println(cur.lat,7);  
                        #endif   
@@ -858,7 +853,7 @@
                      case 2:   // Longitude Positive
                        pt_lon = pt_latlong;    
                        cur.lon = (float)(pt_lon / 6E5);                                         
-                       #if defined Debug_All || defined Debug_FrSky_Messages   
+                       #if defined DEBUG_All || defined DEBUG_FrSky_Messages   
                          log.print(" FrSky 0x800 longitude=");
                          log.println(cur.lon,7); 
                        #endif                       
@@ -868,7 +863,7 @@
                      case 3:   // Longitude Negative
                        pt_lon = pt_latlong; 
                        cur.lon = (float)(0-(pt_lon / 6E5));                         
-                       #if defined Debug_All                        
+                       #if defined DEBUG_All                        
                          log.print(" FrSky 0x800 longitude=");
                          log.println(cur.lon,7); 
                        #endif                   
@@ -881,7 +876,7 @@
                     pt_speed = uint32Extract(buf, 3);
                     hud_grd_spd = (float)pt_speed / 10;
                     
-                    #if defined Debug_All || defined Debug_FrSky_Messages || defined Debug_FrSky_GPS
+                    #if defined DEBUG_All || defined DEBUG_FrSky_Messages || defined DEBUG_FrSky_GPS
                        log.print(" FrSky 0x830 speed=");
                        log.println(pt_speed); 
                      #endif    
@@ -894,7 +889,7 @@
                       altGood=true; 
                       new_GPS_data = true;
                     }
-                    #if defined Debug_All || defined Debug_FrSky_Messages || defined Debug_FrSky_GPS
+                    #if defined DEBUG_All || defined DEBUG_FrSky_Messages || defined DEBUG_FrSky_GPS
                        log.print(" FrSky 0x820 altitude=");
                        log.println(cur.alt,1); 
                      #endif    
@@ -904,7 +899,7 @@
                     pt_heading= uint32Extract(buf, 3);
                     cur.hdg = (float)(pt_heading / 100);
                     if (!(cur.hdg==0.0000)) hdgGood=true;
-                    #if defined Debug_All || defined Debug_FrSky_Messages   
+                    #if defined DEBUG_All || defined DEBUG_FrSky_Messages   
                        log.print(" FrSky 0x840 heading=");
                        log.println(cur.hdg,1); 
                      #endif               
@@ -917,7 +912,7 @@
                    break;
                  case 0xF101:                        // RSSI  
                    pt_rssi = pt_payload;
-                   #if defined Debug_FrSky
+                   #if defined DEBUG_FrSky
                      log.print(" FrSky F101: RSSI=");
                      log.println(pt_rssi);
                    #endif 
@@ -947,7 +942,7 @@
                     
                     gpsfixGood=(pt_hdop>=3) && (pt_numsats>9);
                     
-                    #if defined Debug_All || defined Debug_FrSky_Messages || defined Debug_FrSky_GPS
+                    #if defined DEBUG_All || defined DEBUG_FrSky_Messages || defined DEBUG_FrSky_GPS
                       log.print(" FrSky 0x5002 Num sats=");
                       log.print(pt_numsats);
                       log.print(" gpsStatus=");
@@ -976,7 +971,7 @@
                    hud_bat1_mAh = pt_bat1_mAh;
                    
                    pt_bat1_amps *= 10;  // prep_number() divided by 10 to get A, but we want dA for consistency
-                   #if defined Debug_FrSky
+                   #if defined DEBUG_FrSky
                      log.print(" FrSky 5003: Battery Volts=");
                      log.print(pt_bat1_volts, 1);
                      log.print("  Battery Amps=");
@@ -1000,7 +995,7 @@
                     if (bit32Extract(pt_home,24,1) == 1) 
                       pt_home_alt *= -1;
                     altGood=true; 
-                    #if (defined Debug_All) || (defined Debug_FrSky_Messages) || (defined Debug_FrSky_Home)
+                    #if (defined DEBUG_All) || (defined DEBUG_FrSky_Messages) || (defined DEBUG_FrSky_Home)
                       log.print(" FrSky 0x5004 Dist to home=");
                       log.print(fHomeDist, 1);  
                       log.print(" pt_home_alt=");
@@ -1017,7 +1012,7 @@
                     cur.hdg = pt_yaw * 0.2F;
       
                     hdgGood=true;
-                    #if defined Debug_All || defined Debug_FrSky_Messages
+                    #if defined DEBUG_All || defined DEBUG_FrSky_Messages
                       log.print(" FrSky 0x5005 Yaw raw=");
                       log.print(pt_yaw);
                       log.print("   Heading=");
@@ -1035,7 +1030,7 @@
                    pt_fpitch = pt_pitch * 0.001F;
                    hud_pitch = pt_fpitch;
                    hud_roll = pt_froll;                   
-                   #if defined Debug_All || defined Debug_FrSky_Messages
+                   #if defined DEBUG_All || defined DEBUG_FrSky_Messages
                      log.print("Frsky 5006: Range=");
                      log.print(pt_range,2);
                      log.print(" Roll=");
@@ -1046,7 +1041,7 @@
                    #endif
                    break;
                   default:                                  
-                    #if defined Debug_All || defined Debug_FrSky_Messages
+                    #if defined DEBUG_All || defined DEBUG_FrSky_Messages
                       log.print("Frsky un-handeled appID=0x");
                       log.println(appID, HEX);             
                     #endif
@@ -1058,7 +1053,7 @@
         if (gpsGood) gpsGood_millis = millis();     // Time of last good GPS packet 
         hbGood_millis= millis();                    // good GPS data is equivalent to a mavlink heartbeat
         
-        #if defined Debug_Frsky_GPS_Status
+        #if defined DEBUG_Frsky_GPS_Status
           log.printf("gpsGood:%u  gpsfixGood:%u  lonGood:%u  latGood:%u  altGood:%u  hdgGood:%u  boxhdgGood:%u \n", gpsGood, gpsfixGood, lonGood, latGood, altGood, hdgGood, boxhdgGood);           
         #endif
         
@@ -1179,4 +1174,4 @@
     }
     //========================================================
    
-#endif
+#endif // end of FrSky

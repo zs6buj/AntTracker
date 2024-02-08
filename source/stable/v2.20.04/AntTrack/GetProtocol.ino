@@ -1,5 +1,5 @@
 // 9600 NMEA
-#if ( (Telemetry_In == 0) || (Heading_Source == 4) )  //  Serial in or have Trackerbox GPS  
+#if ( (Telemetry_In == 0) || (HEADINGSOURCE == 4) )  //  Serial in or have Trackerbox GPS  
 uint16_t Lth=0;
 
 uint8_t Mav1 = 0;
@@ -24,10 +24,10 @@ uint16_t detectProtocol(uint32_t baud) {
 
     #if ( (defined ESP8266) || (defined ESP32) ) 
       delay(100);
-      inSerial.begin(baud, SERIAL_8N1, in_rxPin, in_txPin, rxInvert); 
+      inSerial.begin(baud, SERIAL_8N1, in_rxPin, in_txPin, inInvert); 
     #elif (defined TEENSY3X) 
       inSerial.begin(baud); // Teensy 3.x    tx pin hard wired
-       if (rxInvert) {          // For S.Port not F.Port
+       if (inInvert) {          // For S.Port not F.Port
          UART0_C3 = 0x10;       // Invert Serial1 Tx levels
          UART0_S2 = 0x10;       // Invert Serial1 Rx levels;       
        }
@@ -120,7 +120,7 @@ uint16_t detectProtocol(uint32_t baud) {
         }
       }
 /*
-    #if defined Debug_All || defined Debug_Protocol
+    #if defined DEBUG_All || defined DEBUG_Protocol
       log.print("Mav1=");  log.println(Mav1);
       log.print("Mav2=");  log.println(Mav2);
       log.print("SPort=");  log.println(SPort);
@@ -149,7 +149,7 @@ byte x;
  
     q++;      
     if (q>100) {
-      #if defined Debug_All || defined Debug_Protocol
+      #if defined DEBUG_All || defined DEBUG_Protocol
         log.print("."); 
       #endif     
       LogScreenPrintln("No telemetry");
@@ -166,7 +166,7 @@ byte x;
   
   r++;
   
-  #if defined Debug_All || defined Debug_Protocol
+  #if defined DEBUG_All || defined DEBUG_Protocol
     //log.print((char)x); 
      Printbyte(x, false, ' ');  
    
@@ -229,7 +229,7 @@ uint32_t GetConsistent(uint8_t pin) {
     t_baud[3] = SenseUart(pin);
     delay(10);
     t_baud[4] = SenseUart(pin);
-    #if defined Debug_All || defined Debug_Baud
+    #if defined DEBUG_All || defined DEBUG_BAUD
       log.print("  t_baud[0]="); log.print(t_baud[0]);
       log.print("  t_baud[1]="); log.print(t_baud[1]);
       log.print("  t_baud[2]="); log.print(t_baud[2]);
@@ -239,7 +239,7 @@ uint32_t GetConsistent(uint8_t pin) {
       if (t_baud[1] == t_baud[2]) {
         if (t_baud[2] == t_baud[3]) { 
           if (t_baud[3] == t_baud[4]) {   
-            #if defined Debug_All || defined Debug_Baud    
+            #if defined DEBUG_All || defined DEBUG_BAUD    
               log.print("Consistent baud found="); log.println(t_baud[3]); 
             #endif   
             return t_baud[3]; 
@@ -257,19 +257,18 @@ uint32_t min_pw = 999999;
 uint32_t su_baud = 0;
 const uint32_t su_timeout = 5000; // uS !  Default timeout 1000mS!
 
-  #if defined Debug_All || defined Debug_Baud
-    log.printf("pin:%d  rxInvert:%d\n", pin, rxInvert);        
+  #if defined DEBUG_All || defined DEBUG_BAUD
+    log.printf("pin:%d  inInvert:%d\n", pin, inInvert);        
   #endif  
 
-  if (rxInvert) {
+  if (inInvert) {
     while(digitalRead(pin) == 0){ };  // idle_low, wait for high bit (low pulse) to start
   } else {
-    while(digitalRead(pin) == 1){ };  // idle_high, wait for high bit (high pulse) to start  
+    while(digitalRead(pin) == 1){ };  // idle_high, wait for low bit (high pulse) to start  
   }
-
   for (int i = 0; i < 10; i++) {
 
-    if (rxInvert) {               
+    if (inInvert) {               
       pw = pulseIn(pin,HIGH, su_timeout);     //  Returns the length of the pulse in uS
     } else {
       pw = pulseIn(pin,LOW, su_timeout);    
@@ -280,7 +279,7 @@ const uint32_t su_timeout = 5000; // uS !  Default timeout 1000mS!
       //log.printf("i:%d  pw:%d  min_pw:%d\n", i, pw, min_pw);    
     } 
   } 
-  #if defined Debug_All || defined Debug_Baud
+  #if defined DEBUG_All || defined DEBUG_BAUD
     log.printf("pw:%d  min_pw:%d\n", pw, min_pw);         
   #endif
 

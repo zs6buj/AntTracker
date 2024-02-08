@@ -10,7 +10,7 @@ void EEPROM_Setup() {
       while (true) delay(1000);
     }
 
-    #if defined Debug_EEPROM
+    #if defined DEBUG_EEPROM
       DisplayEEPROM(); 
     #endif 
   #endif   
@@ -34,7 +34,7 @@ uint16_t addr=idx*4;
   #if (defined ESP32) || (defined ESP8266) 
     EEPROM.commit();
   #endif     
-  #if defined Debug_All || defined Debug_EEPROM
+  #if defined DEBUG_All || defined DEBUG_EEPROM
      log.print("EEPROMWriteLong():"); 
      log.print("  composit="); log.print(value);     
      log.print("  one="); log.print(one, HEX);
@@ -55,7 +55,7 @@ uint16_t addr=idx*4;
   uint32_t one = EEPROM.read(addr + 3);
   uint32_t composit = ((four << 0) & 0xFF) + ((three << 8) & 0xFFFF) + ((two << 16) & 0xFFFFFF) + ((one << 24) & 0xFFFFFFFF);
   
-  #if defined Debug_All || defined Debug_EEPROM
+  #if defined DEBUG_All || defined DEBUG_EEPROM
      log.print("EEPROMReadLong():"); 
      log.print("  one="); log.print(one, HEX);
      log.print("  two="); log.print(two, HEX);
@@ -73,7 +73,7 @@ uint16_t addr=idx*4;
     log.println("EEPROM:");
 
     for (int i = 0; i < EEPROM_SIZE; i++) {
-      PrintByte(EEPROM.read(i)); log.print(" ");
+      printByte(EEPROM.read(i)); log.print(" ");
     }
     log.println();
   

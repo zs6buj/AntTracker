@@ -343,7 +343,18 @@ uint16_t  UDP_remotePort = 14550;   // Mav sendPort,  (default 14550) remote hos
   #define BuiltinLed     13
   #undef  displaySupport 
   #define SDA            17  // I2C OLED board and/or Compass - default can be changed in Wire.h 
-  #define SCL            16  // I2C OLED board and/or Compass - default can be changed in Wire.h 
+  #define SCL            16  // I2C OLED board and/or Compass - default can be changed in Wire.h
+  #define displaySupport       // uncomment me if you have a SSD1306 display
+    #if (defined displaySupport)   // Display type defined with # define displaySupport   
+      #define SSD1306_Display         // OLED display type    
+      #define display_i2c_addr      0x3C       // I2C OLED board
+      #define Pup               PB12        // Board Button 1 to scroll the display up
+      #define Pdn               PB12        // Board Button 2 to scroll the display down
+      #define Pinfo             PB12        // Digital pin to toggle information/log page
+      #define Tinfo             PB12        // 02 Touch pin to toggle information/log page
+      #define Tup               PB13        // Touch pin to scroll the display up
+      #define Tdn               PB14        // Touch pin to scroll the display down
+    #endif   
   //=========================================================================   
   
 #elif (Target_Board == 1)         // STM32F1xx Blue Pill

@@ -1615,7 +1615,7 @@ void WiFiEventHandler(WiFiEvent_t event)  {
       case CW0_DEG:
       case ALIGN_DEFAULT:
       case CW180_DEG_FLIP:
-          res = (360-hdg)+180;
+          res = hdg;
           break;
       case CW90_DEG:
           res = hdg + 90;
@@ -1627,13 +1627,13 @@ void WiFiEventHandler(WiFiEvent_t event)  {
           res = hdg + 270;
           break;
       case CW0_DEG_FLIP:
-          res = (360-hdg);
+          res = hdg + 180;
           break;
       case CW90_DEG_FLIP:
-          res = (360-hdg) + 90;
+          res = hdg + 270;
           break;
       case CW270_DEG_FLIP:
-          res = (360-hdg) + 270;
+          res = hdg + 90;
           break;
     }
     

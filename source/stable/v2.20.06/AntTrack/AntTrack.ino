@@ -128,7 +128,8 @@
 #include <ardupilotmega/ardupilotmega.h>
 
 #if (PROTOCOL == 9)
-  CRSF   crsf;          // instantiate crsf object
+ #include <terseCRSF.h>  
+ CRSF   crsf;          // instantiate crsf object
 #endif
 
    String    pgm_path;

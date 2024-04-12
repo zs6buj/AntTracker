@@ -125,7 +125,7 @@ v2.20.4  2024-03-12  Beta - Generic BT input for CRSF (and others in future)
 #define BT_Mode  1           // Master Mode - active, initiate connection with slave (name)
 //#define BT_Mode  2           // Slave Mode - passive, advertise our hostname & wait for master to connect to us
 const char* BT_Slave_Name   =   "btslavename"; 
-const uint8_t BT_mac_address[6] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; // optionally mac address if problem with name
+uint8_t BT_mac_address[6] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; // optionally mac address if problem with name
 
 #define mavBT_Mode  1           // Master Mode - active, initiate connection with slave (name)
 //#define mavBT_Mode  2           // Slave Mode - passive, advertise our hostname & wait for master to connect to us

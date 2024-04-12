@@ -881,7 +881,7 @@ void setup() {
       #else                  // 2 slave mode, advertise slave name
           log.printf("Bluetooth slave mode advertising slave name %s\n", mavBT_Slave_Name);            
           LogScreenPrintln("BT slave ready");   
-          mavSerialBT.begin(BT_Slave_Name);   
+          inSerial.begin(BT_Slave_Name);   
       #endif 
       
       bool bt_connected;

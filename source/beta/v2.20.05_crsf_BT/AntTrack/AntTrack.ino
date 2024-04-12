@@ -892,7 +892,8 @@ void setup() {
         log.print(".");
         LogScreenPrintChar('.');  
         delay(1000);
-        bt_connected = inSerial.connect(BT_Slave_Name);       
+        bt_connected = inSerial.connect(BT_Slave_Name); 
+        bt_connected = inSerial.connect(BT_mac_address);
       }
       
       if(bt_connected) {

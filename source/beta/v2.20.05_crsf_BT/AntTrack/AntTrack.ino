@@ -888,7 +888,7 @@ void setup() {
 
       bt_connected = inSerial.connect(BT_Slave_Name);
 
-      while(bt_connected) {
+      while(!bt_connected) {
         log.print(".");
         LogScreenPrintChar('.');  
         delay(1000);
@@ -903,7 +903,10 @@ void setup() {
         log.println("Bluetooth NOT connected!");
         LogScreenPrintln("BT NOT cnncted");    
       }
-     #endif // end mavBT 
+      #if (PROTOCOL == 9)  // CRSF 
+      crsf.initialise(inSerial);  // initialise pointer to Stream &port
+      #endif
+     #endif // end Generic BT 
          
   #endif // ESP32
   

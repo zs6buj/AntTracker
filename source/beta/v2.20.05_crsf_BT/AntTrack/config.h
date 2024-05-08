@@ -38,8 +38,9 @@ v2.20.4  2024-03-12  Beta - Generic BT input for CRSF (and others in future)
 //=============================================================================================
 //=====================   S E L E C T   E S P   B O A R D   V A R I A N T   ===================
 //=============================================================================================
-#define ESP32_Variant     1    //  ESP32 Dev Module - there are several sub-variants that work
+//#define ESP32_Variant     1    //  ESP32 Dev Module - there are several sub-variants that work
 //#define ESP32_Variant     4    //  Heltec Wifi Kit 32 
+#define ESP32_Variant     5    // LILYGO® TTGO T-Display ESP32 1.14" ST7789 Colour LCD, IDE board = "ESP32 Dev Module"
 //#define ESP32_Variant     6    // LILYGO® TTGO T2 ESP32 OLED Arduino IDE board = "ESP32 Dev Module"
 //#define ESP32_Variant     7    // ESP32 Dev Module with ILI9341 2.8" colour TFT SPI 240x320
 
@@ -56,12 +57,12 @@ v2.20.4  2024-03-12  Beta - Generic BT input for CRSF (and others in future)
 //======================  I N P U T   C H A N N E L       How does telemetry enter the tracker?
 //=============================================================================================
 // Choose one only of these input channels 
-//#define Telemetry_In  0    // Serial Port (default) - all protocols        
+#define Telemetry_In  0    // Serial Port (default) - all protocols        
 //#define Telemetry_In  1    // Mavlink BlueTooth Classic- ESP32 
 //#define Telemetry_In  2    // Mavlink WiFi - ESP only
 //#define Telemetry_In  3    // FrSky UDP - ESP only
 //#define Telemetry_In  4    // FrSky BT classic - ESP32 only
-#define Telemetry_In  5    // Bluetooth classic - CRSF - ESP32 only
+//#define Telemetry_In  5    // Bluetooth classic - CRSF - ESP32 only
 
 //=============================================================================================
 //================================  T E L E M E T R Y   P R O T O C O L  ======================

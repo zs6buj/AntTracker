@@ -354,7 +354,7 @@ uint16_t  UDP_remotePort = 14550;   // Mav sendPort,  (default 14550) remote hos
   #define in_txPin          17 
   int8_t gps_rxPin =        13;  // uart2 for tracker box GPS if applicable
   #define gps_txPin          4  
-  bool in_invert = true;          // ONLY FOR FrSky S.Port, NOT F.Port, NOT MAVLINK
+  bool in_invert = true;          // ONLY FOR FrSky S.Port and CRSF, NOT F.Port, NOT MAVLINK
   #define SetHomePin        12   // LOW == pushed    
   #define StatusLed         25   // Off=No good GPS yet, flashing=good GPS but home not set yet, solid = ready to track
   #define BuiltinLed        -1

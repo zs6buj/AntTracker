@@ -12,11 +12,8 @@
 // Create a shortcut to this file on your desktop to permit quick access for editing.
 // Re-compile and upload after making and saving any changes to this file.
 
-// Customised User_Setup files are stored in the "User_Setups" folder.
-
-// It is also possible for the user tft settings to be included with the sketch, see
-// the "Sketch_with_tft_setup" generic example. This may be more convenient for
-// multiple projects.
+// Example User_Setup files are stored in the "User_Setups" folder. These can be used
+// unmodified or adapted for a particular hardware configuration.
 
 #ifndef USER_SETUP_LOADED //  Lets PlatformIO users define settings in
                           //  platformio.ini, see notes in "Tools" folder.
@@ -58,7 +55,7 @@
 //#include <User_Setups/Setup22_TTGO_T4_v1.3.h>      // Setup file for ESP32 and TTGO T4 version 1.3
 //#include <User_Setups/Setup23_TTGO_TM.h>           // Setup file for ESP32 and TTGO TM ST7789 SPI bus TFT
 //#include <User_Setups/Setup24_ST7789.h>            // Setup file for DSTIKE/ESP32/ESP8266 configured for ST7789 240 x 240
-#include <User_Setups/Setup25_TTGO_T_Display.h>    // Setup file for ESP32 and TTGO T-Display ST7789V SPI bus TFT
+//#include <User_Setups/Setup25_TTGO_T_Display.h>    // Setup file for ESP32 and TTGO T-Display ST7789V SPI bus TFT
 //#include <User_Setups/Setup26_TTGO_T_Wristband.h>  // Setup file for ESP32 and TTGO T-Wristband ST7735 SPI bus TFT
 
 //#include <User_Setups/Setup27_RPi_ST7796_ESP32.h>    // ESP32   RPi MHS-4.0 inch Display-B
@@ -89,9 +86,11 @@
 //#include <User_Setups/Setup51_LilyPi_ILI9481.h>    // Setup file for LilyGo LilyPi with ILI9481 display
 //#include <User_Setups/Setup52_LilyPi_ST7796.h>     // Setup file for LilyGo LilyPi with ST7796 display
 
-//#include <User_Setups/Setup60_RP2040_ILI9341.h>    // Setup file for RP2040 with SPI ILI9341
-//#include <User_Setups/Setup61_RP2040_ILI9341_PIO_SPI.h>    // Setup file for RP2040 with PIO SPI ILI9341
-//#include <User_Setups/Setup62_RP2040_Nano_Connect_ILI9341.h>    // Setup file for RP2040 with SPI ILI9341
+//#include <User_Setups/Setup60_RP2040_ILI9341.h>              // Setup file for RP2040 with SPI ILI9341
+//#include <User_Setups/Setup61_RP2040_ILI9341_PIO_SPI.h>      // Setup file for RP2040 with PIO SPI ILI9341
+//#include <User_Setups/Setup62_RP2040_Nano_Connect_ILI9341.h> // Setup file for RP2040 with SPI ILI9341
+
+//#include <User_Setups/Setup66_Seeed_XIAO_Round.h>     // Setup file for Seeed XIAO with GC9A01 240x240
 
 //#include <User_Setups/Setup70_ESP32_S2_ILI9341.h>     // Setup file for ESP32 S2 with SPI ILI9341
 //#include <User_Setups/Setup70b_ESP32_S3_ILI9341.h>    // Setup file for ESP32 S3 with SPI ILI9341
@@ -110,11 +109,14 @@
 //#include <User_Setups/Setup105_RP2040_ST7796_16bit_parallel.h>  // Setup file for RP2040 16 bit parallel display
 //#include <User_Setups/Setup106_RP2040_ILI9481_16bit_parallel.h> // Setup file for RP2040 16 bit parallel display
 //#include <User_Setups/Setup107_RP2040_ILI9341_16bit_parallel.h> // Setup file for RP2040 16 bit parallel display
+//#include <User_Setups/Setup108_RP2040_ST7735.h> // Setup file for Waveshare RP2040 board with onboard ST7735 0.96" 160x80 display
 
 //#include <User_Setups/Setup135_ST7789.h>           // Setup file for ESP8266 and ST7789 135 x 240 TFT
 
 //#include <User_Setups/Setup136_LilyGo_TTV.h>       // Setup file for ESP32 and Lilygo TTV ST7789 SPI bus TFT  135x240
 //#include <User_Setups/Setup137_LilyGo_TDisplay_RP2040.h>  // Setup file for Lilygo T-Display RP2040 (ST7789 on SPI bus with 135x240 TFT)
+
+//#include <User_Setups/Setup138_Pico_Explorer_Base_RP2040_ST7789.h> // Setup file for Pico Explorer Base by Pimoroni for RP2040 (ST7789 on SPI bus with 240x240 TFT)
 
 //#include <User_Setups/Setup200_GC9A01.h>           // Setup file for ESP32 and GC9A01 240 x 240 TFT
 
@@ -128,22 +130,30 @@
 
 //#include <User_Setups/Setup205_ESP32_TouchDown_S3.h>     // Setup file for the ESP32 TouchDown S3 based on ILI9488 480 x 320 TFT 
 
-//#include <User_Setups/Setup206_LilyGo_T_Display_S3.h>
-//#include <User_Setups/Setup207_LilyGo_T_HMI.h>
+//#include <User_Setups/Setup206_LilyGo_T_Display_S3.h>     // For the LilyGo T-Display S3 based ESP32S3 with ST7789 170 x 320 TFT
+//#include <User_Setups/Setup207_LilyGo_T_HMI.h>            // For the LilyGo T-HMI S3 based ESP32S3 with ST7789 240 x 320 TFT
+//#include <User_Setups/Setup209_LilyGo_T_Dongle_S3.h>      // For the LilyGo T-Dongle S3 based ESP32 with ST7735 80 x 160 TFT
+//#include <User_Setups/Setup210_LilyGo_T_Embed_S3.h>         // For the LilyGo T-Embed S3 based ESP32S3 with ST7789 170 x 320 TFT
+//#include <User_Setups/Setup211_LilyGo_T_QT_Pro_S3.h>         // For the LilyGo T-QT Pro S3 based ESP32S3 with GC9A01 128 x 128 TFT
+// #include <User_Setups/Setup212_LilyGo_T_PicoPro.h>         // For the LilyGo T-PICO-Pro with ST7796 222 x 480 TFT
+// #include <User_Setups/Setup213_LilyGo_T_Beam_Shield.h>         // For the LilyGo T-BEAM V1.x with ST7796 222 x 480 TFT
+
+//#include <User_Setups/Setup250_ESP32_S3_Box_Lite.h>      // For the ESP32 S3 Box Lite
+//#include <User_Setups/Setup251_ESP32_S3_Box.h>            // For the ESP32 S3 Box
 
 //#include <User_Setups/Setup301_BW16_ST7735.h>            // Setup file for Bw16-based boards with ST7735 160 x 80 TFT
 
 //#include <User_Setups/SetupX_Template.h>     // Template file for a setup
 
 
-//#include <User_Setups/Dustin_ILI9488.h>           // Setup file for Dustin Watts PCB with ILI9488
+//#include <User_Setups/Dustin_ILI9488.h>          // Setup file for Dustin Watts PCB with ILI9488
 //#include <User_Setups/Dustin_ST7796.h>           // Setup file for Dustin Watts PCB with ST7796
-//#include <User_Setups/Dustin_ILI9488_Pico.h>        // Setup file for Dustin Watts Pico PCB with ST7796
-//#include <User_Setups/Dustin_ST7789_Pico.h>           // Setup file for Dustin Watts PCB with ST7789 240 x 240 on 3.3V adapter board
-//#include <User_Setups/Dustin_GC9A01_Pico.h>           // Setup file for Dustin Watts PCB with GC9A01 240 x 240 on 3.3V adapter board
-//#include <User_Setups/Dustin_GC9A01_ESP32.h>           // Setup file for Dustin Watts PCB with GC9A01 240 x 240 on 3.3V adapter board
-//#include <User_Setups/Dustin_STT7789_ESP32.h>           // Setup file for Dustin Watts PCB with ST7789 240 x 240 on 3.3V adapter board
-//#include <User_Setups/Dustin_ILI9341_ESP32.h>           // Setup file for Dustin Watts PCB with ILI9341
+//#include <User_Setups/Dustin_ILI9488_Pico.h>     // Setup file for Dustin Watts Pico PCB with ST7796
+//#include <User_Setups/Dustin_ST7789_Pico.h>      // Setup file for Dustin Watts PCB with ST7789 240 x 240 on 3.3V adapter board
+//#include <User_Setups/Dustin_GC9A01_Pico.h>      // Setup file for Dustin Watts PCB with GC9A01 240 x 240 on 3.3V adapter board
+//#include <User_Setups/Dustin_GC9A01_ESP32.h>     // Setup file for Dustin Watts PCB with GC9A01 240 x 240 on 3.3V adapter board
+//#include <User_Setups/Dustin_STT7789_ESP32.h>    // Setup file for Dustin Watts PCB with ST7789 240 x 240 on 3.3V adapter board
+//#include <User_Setups/Dustin_ILI9341_ESP32.h>    // Setup file for Dustin Watts PCB with ILI9341
 //#include <User_Setups/ILI9225.h>
 
 #endif // USER_SETUP_LOADED

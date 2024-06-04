@@ -42,7 +42,7 @@
 //#define RPI_DISPLAY_TYPE // 20MHz maximum SPI
 
 // Only define one driver, the other ones must be commented out
-//#define ILI9341_DRIVER       // Generic driver for common displays
+#define ILI9341_DRIVER       // Generic driver for common displays
 //#define ILI9341_2_DRIVER     // Alternative ILI9341 driver, see https://github.com/Bodmer/TFT_eSPI/issues/1172
 //#define ST7735_DRIVER      // Define additional parameters below for this display
 //#define ILI9163_DRIVER     // Define additional parameters below for this display
@@ -52,7 +52,7 @@
 //#define ILI9481_DRIVER
 //#define ILI9486_DRIVER
 //#define ILI9488_DRIVER     // WARNING: Do not connect ILI9488 display SDO to MISO if other devices share the SPI bus (TFT SDO does NOT tristate when CS is high)
-#define ST7789_DRIVER      // Full configuration option, define additional parameters below for this display
+//#define ST7789_DRIVER      // Full configuration option, define additional parameters below for this display
 //#define ST7789_2_DRIVER    // Minimal configuration option, define additional parameters below for this display
 //#define R61581_DRIVER
 //#define RM68140_DRIVER
@@ -74,7 +74,7 @@
 // Try ONE option at a time to find the correct colour order for your display
 
 //  #define TFT_RGB_ORDER TFT_RGB  // Colour order Red-Green-Blue
-  #define TFT_RGB_ORDER TFT_BGR  // Colour order Blue-Green-Red
+//  #define TFT_RGB_ORDER TFT_BGR  // Colour order Blue-Green-Red
 
 // For M5Stack ESP32 module with integrated ILI9341 display ONLY, remove // in line below
 
@@ -84,11 +84,12 @@
 // #define TFT_WIDTH  80
 // #define TFT_WIDTH  128
 // #define TFT_WIDTH  172 // ST7789 172 x 320
- #define TFT_WIDTH  240 // ST7789 240 x 240 and 240 x 320
+// #define TFT_WIDTH  170 // ST7789 170 x 320
+// #define TFT_WIDTH  240 // ST7789 240 x 240 and 240 x 320
 // #define TFT_HEIGHT 160
 // #define TFT_HEIGHT 128
 // #define TFT_HEIGHT 240 // ST7789 240 x 240
- #define TFT_HEIGHT 320 // ST7789 240 x 320
+// #define TFT_HEIGHT 320 // ST7789 240 x 320
 // #define TFT_HEIGHT 240 // GC9A01 240 x 240
 
 // For ST7735 ONLY, define the type of display, originally this was based on the
@@ -166,10 +167,15 @@
 // ###### EDIT THE PIN NUMBERS IN THE LINES FOLLOWING TO SUIT YOUR ESP8266 SETUP ######
 
 // For NodeMCU - use pin numbers in the form PIN_Dx where Dx is the NodeMCU pin designation
-#define TFT_CS   PIN_D8  // Chip select control pin D8
-#define TFT_DC   PIN_D3  // Data Command control pin
-#define TFT_RST  PIN_D4  // Reset pin (could connect to NodeMCU RST, see next line)
-//#define TFT_RST  -1    // Set TFT_RST to -1 if the display RESET is connected to NodeMCU RST or 3.3V
+#define TFT_MISO  PIN_D6  // Automatically assigned with ESP8266 if not defined
+#define TFT_MOSI  PIN_D7  // Automatically assigned with ESP8266 if not defined
+#define TFT_SCLK  PIN_D5  // Automatically assigned with ESP8266 if not defined
+
+#define TFT_CS    PIN_D8  // Chip select control pin D8
+#define TFT_DC    PIN_D3  // Data Command control pin
+#define TFT_RST   PIN_D4  // Reset pin (could connect to NodeMCU RST, see next line)
+//#define TFT_RST  -1     // Set TFT_RST to -1 if the display RESET is connected to NodeMCU RST or 3.3V
+
 
 //#define TFT_BL PIN_D1  // LED back-light (only for ST7789 with backlight control pin)
 
@@ -327,7 +333,7 @@
 // For RP2040 processor and 8 or 16 bit parallel displays:
 // The parallel interface write cycle period is derived from a division of the CPU clock
 // speed so scales with the processor clock. This means that the divider ratio may need
-// to be increased when overclocking. I may also need to be adjusted dependant on the
+// to be increased when overclocking. It may also need to be adjusted dependant on the
 // display controller type (ILI94341, HX8357C etc). If RP2040_PIO_CLK_DIV is not defined
 // the library will set default values which may not suit your display.
 // The display controller data sheet will specify the minimum write cycle period. The

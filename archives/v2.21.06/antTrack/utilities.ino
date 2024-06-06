@@ -699,15 +699,15 @@ void RestoreHomeFromFlash() {
           #endif
         #endif
         #if (MEDIUM_IN == 2)                // Mavlink 
-          #if (WIFI_PROTOCOL == 2)         // Mav UDP 
-            UDP_object.begin(UDP_localPort);
+          #if (WIFI_PROTOCOL == 2)          // Mav UDP 
+            udp_object.begin(UDP_localPort);
             log.printf("Mav UDP instance started, listening on IP %s, UDP local port %d\n", localIP.toString().c_str(), UDP_localPort);                 
             LogScreenPrint("UDP port = ");  LogScreenPrintln(String(UDP_localPort));
           #endif
         #endif
 
         #if (MEDIUM_IN == 2)               // FrSky
-          UDP_object.begin(UDP_localPort+1);
+          udp_object.begin(UDP_localPort+1);
           log.printf("Frs UDP instance started, listening on IP %s, UDP port %d\n", localIP.toString().c_str(), UDP_localPort+1);                  
           LogScreenPrint("UDP port = ");  LogScreenPrintln(String(UDP_localPort+1));       
         #endif
@@ -740,14 +740,14 @@ void RestoreHomeFromFlash() {
         #endif
         #if (MEDIUM_IN == 2)                // Mavlink 
           #if (WIFI_PROTOCOL == 2)             // Mav UDP 
-            UDP_object.begin(UDP_localPort);
+            udp_object.begin(UDP_localPort);
             log.printf("Mav UDP instance started, listening on IP %s, UDP port %d\n", localIP.toString().c_str(), UDP_localPort);              
             LogScreenPrint("UDP port = ");  LogScreenPrintln(String(UDP_localPort));
           #endif
         #endif
 
         #if (MEDIUM_IN == 2)                // FrSky
-          UDP_object.begin(UDP_localPort);
+          udp_object.begin(UDP_localPort);
           log.printf("Frs UDP instance started, listening on IP %s, UDP port %d\n", localIP.toString().c_str(), UDP_localPort);         
           LogScreenPrint("UDP port = ");  LogScreenPrintln(String(UDP_localPort));       
         #endif

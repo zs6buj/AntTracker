@@ -5,7 +5,7 @@
 
 #define MAJOR_VERSION       2
 #define MINOR_VERSION      21
-#define PATCH_LEVEL         5
+#define PATCH_LEVEL         6
 
 //=============================================================================================
 //================== Please select your options below before compiling ========================
@@ -39,14 +39,14 @@
 // Select only one telemetry PROTOCOL here
 //#define PROTOCOL 0     // AUTO detect protocol
 //#define PROTOCOL 1     // Mavlink 1
-#define PROTOCOL 2     // Mavlink 2
+//#define PROTOCOL 2     // Mavlink 2
 //#define PROTOCOL 3     // FrSky S.Port
 //#define PROTOCOL 4     // FrSky F.Port 1
 //#define PROTOCOL 5     // FrSky F.Port 2
 //#define PROTOCOL 6     // LTM
 //#define PROTOCOL 7     // MSP
 //#define PROTOCOL 8     // GPS NMEA
-//#define PROTOCOL 9     // CRFS / ELRS
+#define PROTOCOL 9     // CRFS
 
 //=============================================================================================
 //==================================  H E A D I N G   S O U R C E  ============================
@@ -160,11 +160,11 @@ const char* BT_Slave_Name   =   "btslavename";
 
 #define Start_WiFi                              // Start WiFi at startup, override startWiFi pin
 
-#define HostName             "Frs2BT"        // This translator's host name
+#define HostName             "AntTrack"        // This translator's host name
 #define APssid               "AntTrackAP"     // The AP SSID that we advertise         ====>
 #define APpw                 "12345678"         // Change me! Must be >= 8 chars
 #define APchannel            9                  // The wifi channel to use for our AP
-#define STAssid              "FrSkyToWiFi"    // Target AP to connect to (in STA mode) <====
+#define STAssid              "AntTrackSTA"    // Target AP to connect to (in STA mode) <====
 #define STApw                "password"         // Target AP password (in STA mode). Must be >= 8 chars      
 
 // Choose one default mode for ESP only - AP means advertise as an access point (hotspot). STA means connect to a known host
@@ -173,7 +173,7 @@ const char* BT_Slave_Name   =   "btslavename";
 //#define WiFi_Mode   3  // (STA>AP) STA failover to AP 
 
 // Choose one default protocol - for ESP only
-//#define WIFI_PROTOCOL 1    // TCP/IP
+//#define WIFI_PROTOCOL 1    // TCP/IP - PRESENTLY ONLY AVAILABLE FOR MAVLINK
 #define WIFI_PROTOCOL 2    // UDP 
 
 //  const char    *STAssid =     "EZ-WifiBroadcast";    
@@ -236,7 +236,7 @@ uint16_t  UDP_remotePort = 14550;   // Mav sendPort,  (default 14550) remote hos
   #endif
 
   #if (Target_Board == 0) 
-    //#error Teensy 3.x not yet supported. 
+    //#error Teensy 3.x 
   #endif  
 
   #if (Target_Board == 1) 
@@ -245,6 +245,12 @@ uint16_t  UDP_remotePort = 14550;   // Mav sendPort,  (default 14550) remote hos
     #endif  
   #endif  
 
+
+  #if (WIFI_PROTOCOL == 1)
+    #if (PROTOCOL != 1) && (PROTOCOL != 2)
+      #error WiFi TCP only works for Mavlink at this time
+    #endif
+  #endif    
   #if not defined HEADINGSOURCE
    #error Please define a HEADINGSOURCE
   #endif
@@ -775,17 +781,17 @@ uint16_t  UDP_remotePort = 14550;   // Mav sendPort,  (default 14550) remote hos
     #define max_clients    5
     uint8_t active_client_idx = 0; 
 
-    IPAddress localIP;                           // tcp and UDP
-    IPAddress TCP_remoteIP(192,168,4,1);         // when we connect to a server in tcp client mode, put the server IP here  
+    IPAddress localIP;                             // tcp and UDP
+    IPAddress TCP_remoteIP(192,168,4,1);           // when we connect to a server in tcp client mode, put the server IP here  
 
     #if (WIFI_PROTOCOL == 1)     // TCP  
       WiFiClient *clients[max_clients] = {NULL};   // pointers to TCP client objects (we only need one in this application    
     #endif 
     
     #if (WIFI_PROTOCOL == 2)    //  UDP 
-      IPAddress UDP_remoteIP(192, 168, 1, 255);    // default to broadcast, but likey to change after connect               
-      uint8_t   UDP_remoteIP_B3;                   // last byte of remote UDP client IP   
-      WiFiUDP   UDP_object;                        // Instantiate UDP object      
+      IPAddress UDP_remoteIP(192, 168, 1, 255);    // default is broadcast, but likey to change after connect               
+      uint8_t   UDP_remoteIP_B3;                   // last byte of remote UDP client IP     
+      WiFiUDP   udp_object;                        // Instantiate UDP object        
     #endif   
 
 #endif  // end of WiFi

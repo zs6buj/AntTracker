@@ -306,7 +306,7 @@ void Mavlink_Receive()
              hud_num_sats = 15; // limit to 15 due to only 4 bits available
           }  else 
               hud_num_sats = ap24_sat_visible;
-                             
+                          
           gpsfixGood = (ap24_fixtype>=4);
           
           #if defined DEBUG_All || defined DEBUG_Mav_GPS 
@@ -345,7 +345,7 @@ void Mavlink_Receive()
           ap_pitch = RadToDeg(ap_pitch);
           ap_yaw = RadToDeg(ap_yaw);
           hud_roll = ap_roll; 
-          hud_pitch = ap_pitch;       
+          hud_pitch = ap_pitch;      
   
           #if defined Mav_DEBUG_All || defined Mav_DEBUG_Attitude   
             log.print("Mavlink from FC #30 Attitude: ");      
@@ -435,7 +435,7 @@ void Mavlink_Receive()
           if (!mavGood) break;      
           ap74_air_spd = mavlink_msg_vfr_hud_get_airspeed(&msg);
           ap74_grd_spd = mavlink_msg_vfr_hud_get_groundspeed(&msg);      //  in m/s
-          ap74_hdg = mavlink_msg_vfr_hud_get_heading(&msg);              //  in degrees
+          ap74_hdg = mavlink_msg_vfr_hud_get_heading(&msg);           //  in degrees
           ap74_throt = mavlink_msg_vfr_hud_get_throttle(&msg);           //  integer percent
           ap74_amsl = mavlink_msg_vfr_hud_get_alt(&msg);                 //  m
           ap74_climb = mavlink_msg_vfr_hud_get_climb(&msg);              //  m/s
@@ -472,10 +472,11 @@ void Mavlink_Receive()
 
           if (ap_battery_id == 0) {  // Battery 1
             hud_bat1_mAh = ap_current_consumed;                       
-          } else if (ap_battery_id == 1) {  // Battery 2
-              hud_bat2_mAh = ap_current_consumed;                              
+          } else 
+          if (ap_battery_id == 1) {  // Battery 2
+            hud_bat2_mAh = ap_current_consumed;                              
           } 
-           
+          
           #if defined Mav_DEBUG_All || defined DEBUG_Batteries
             log.print("Mavlink from FC #147 Battery Status: ");
             log.print(" bat id= "); log.print(ap_battery_id); 
@@ -551,15 +552,15 @@ bool Read_UDP(mavlink_message_t* msgptr)  {
     if (!wifiSuGood) return false;  
     bool msgRcvd = false;
     mavlink_status_t _status;
-    len = UDP_object.parsePacket();
+    len = udp_object.parsePacket();
     int UDP_count = len;
     if(UDP_count > 0) {
         while(UDP_count--)  {
-            int result = UDP_object.read();
+            int result = udp_object.read();
             if (result >= 0)  {
                 msgRcvd = mavlink_parse_char(MAVLINK_COMM_2, result, msgptr, &_status);
                 if(msgRcvd) {   
-                    UDP_remoteIP = UDP_object.remoteIP();  // remember which remote client sent this packet so we can target it
+                    UDP_remoteIP = udp_object.remoteIP();  // remember which remote client sent this packet so we can target it
                     PrintRemoteIP();
                     if(!hb_heard_from) {
                         if(msgptr->msgid == MAVLINK_MSG_ID_HEARTBEAT) {
@@ -720,19 +721,19 @@ void Send_To_FC(uint32_t msg_id) {
    //   log.print("Broadcast heartbeat UDP_remoteIP="); log.println(UDP_remoteIP.toString());     
     } 
 
-    UDP_object.beginPacket(UDP_remoteIP, UDP_remotePort);
+    udp_object.beginPacket(UDP_remoteIP, UDP_remotePort);
 
     uint16_t len = mavlink_msg_to_send_buffer(sendbuf, msgptr);
   
-    size_t sent = UDP_object.write(sendbuf,len);
+    size_t sent = udp_object.write(sendbuf,len);
 
     if (sent == len) {
       msgSent = true;
       link_status.packets_sent++;
-      UDP_object.flush();
+      udp_object.flush();
     }
 
-    bool endOK = UDP_object.endPacket();
+    bool endOK = udp_object.endPacket();
  //   if (!endOK) {
  //       log.printf("msgSent=%d   endOK=%d\n", msgSent, endOK);
  // }

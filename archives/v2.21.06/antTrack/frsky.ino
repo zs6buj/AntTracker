@@ -144,24 +144,23 @@
     //=======================================================================
     void FrSky_Receive(uint8_t proto) {
     #if (PROTOCOL == 3) || (PROTOCOL == 4) || (PROTOCOL == 5)  || (PROTOCOL == 0)  
-      #if (MEDIUM_IN == 1) ||  ((defined btBuiltin) &&  (MEDIUM_IN == 3))       //   FrSky Serial or BT
-        Frs_Receive_Serial_BT(proto);
+      #if (MEDIUM_IN == 1) ||  ((defined btBuiltin) &&  (MEDIUM_IN == 3))       //   FrSky UART or BT
+        Frs_Receive_UART_BT(proto);
       #endif
    
       #if (defined wifiBuiltin) &&  (MEDIUM_IN == 2)  //   FrSky UDP 
         Frs_Receive_UDP(proto);
       #endif
-    #endif  
-      
+    #endif       
     }
     //=======================================================================
     #if (defined wifiBuiltin) &&  (MEDIUM_IN == 2)          // UDP
     void Frs_Receive_UDP(uint8_t proto) {  // proto S.Port only for now
 
-      uint16_t len = UDP_object.parsePacket();   // packet to in buffer
+      uint16_t len = udp_object.parsePacket();   // packet to in buffer
       if (len == 0) return;
       for (int i = 0 ; i < len ; i++) {
-        inBuf[i] = UDP_object.read();
+        inBuf[i] = udp_object.read();
         //log.printf("byte:%X  i:%d\n", inBuf[i], i);
       }
   
@@ -189,11 +188,9 @@
       }
     }
     #endif
-
     //================================================================
   #if (MEDIUM_IN == 1) || ( (defined btBuiltin) &&  (MEDIUM_IN == 3) )  // Serial or BT
-
-    void Frs_Receive_Serial_BT(uint8_t proto){
+    void Frs_Receive_UART_BT(uint8_t proto){
 
       if (proto == 3) {  // proto for protocol detect
         frport = s_port;  

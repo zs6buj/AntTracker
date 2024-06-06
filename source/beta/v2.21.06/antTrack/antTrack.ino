@@ -27,11 +27,10 @@
     
    ========================================================================
    Boards supported:
+    ESP8266
     ESP32 boards - variety of variants
-    STM32 Blue Pill 
-    STM32 Black Pill STM32F104
-    Maple Mini
-   
+    Teensy 3.x
+
    Protocols supported: 
     Mavlink 1
     Mavlink 2
@@ -127,10 +126,10 @@
   #include <ardupilotmega/mavlink.h>
   #include <ardupilotmega/ardupilotmega.h>
 #endif
-#include <terseCRSF.h>  // https://github.com/zs6buj/terseCRSF   use v 0.0.5 or later
-
-CRSF   crsf;            // instantiate crsf object
-
+#if (PROTOCOL == 9) || (PROTOCOL == 0)
+  #include <terseCRSF.h>  // https://github.com/zs6buj/terseCRSF   use v 0.0.5 or later
+  CRSF   crsf;            // instantiate crsf object
+#endif
    String    pgm_path;
    String    pgm_name;
 
@@ -298,8 +297,11 @@ CRSF   crsf;            // instantiate crsf object
   float    hud_grd_spd = 0;
   float    hud_climb = 0;          // m/s
   int16_t  hud_bat1_volts = 0;     // dV (V * 10)
-  int16_t  hud_bat1_amps = 0;      // dA )A * 10)
+  int16_t  hud_bat1_amps = 0;      // dA (A * 10)
   uint16_t hud_bat1_mAh = 0;
+  int16_t  hud_bat2_volts = 0;     // dV (V * 10)
+  int16_t  hud_bat2_amps = 0;      // dA (A * 10)
+  uint16_t hud_bat2_mAh = 0;
   
   // Create Servo objects
   
@@ -350,7 +352,6 @@ CRSF   crsf;            // instantiate crsf object
  float RadToDeg(float);
  uint32_t getBaud(uint8_t);
  uint16_t detectProtocol(uint32_t);
- void setup_nmeaGPS();
 
 //***************************************************
 void setup() {
@@ -778,13 +779,6 @@ void setup() {
         case 8:    // GPS NMEA protocol found 
           LogScreenPrintln("NMEA protocol found"); 
           log.println("NMEA protocol found"); 
-          setup_nmeaGPS(); 
-          if (HEADINGSOURCE == 2) {  // Flight Computer !! If we have found the NMEA protol then FC is unlikely
-            LogScreenPrintln("Check heading source!");
-            LogScreenPrintln("Aborting...");
-            log.println("Check heading source! Aborting...");
-            while (1) delay (1000);  // Wait here forever
-          }
           timeEnabled = true;   
           break; 
         case 9:    // CRSF protocol found 
@@ -921,16 +915,24 @@ void loop() {
           #endif     
           break;
         case 6:    // LTM 
-          LTM_Receive();    
+          #if (PROTOCOL == 6) || (PROTOCOL == 0)        
+            LTM_Receive();    
+          #endif
           break;     
         case 7:    // MSP 
-          // MSP_Receive(); 
+          #if (PROTOCOL == 7) || (PROTOCOL == 0)        
+            // MSP_Receive(); 
+          #endif
           break; 
         case 8:    // GPS NMEA 
-          NMEA_GPS_Receive();   
+          #if (PROTOCOL == 8) || (PROTOCOL == 0)          
+            NMEA_GPS_Receive();   
+          #endif
           break; 
         case 9:    // CRSF 
-          CRSF_Receive(); 
+          #if (PROTOCOL == 9) || (PROTOCOL == 0)          
+            CRSF_Receive(); 
+          #endif  
           break;                    
         default:   // Unknown protocol 
           LogScreenPrintln("Unknown protocol!");

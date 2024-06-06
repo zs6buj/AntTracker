@@ -29,8 +29,8 @@
 //====================  I N P U T   M E D I U M    How does telemetPROTOCOLry enter the tracker?
 //=============================================================================================
 // Choose one only of these input channels 
-//#define MEDIUM_IN  1    // UART (Serial)       
-#define MEDIUM_IN  2    // WiFi - ESP only
+#define MEDIUM_IN  1    // UART (Serial)       
+//#define MEDIUM_IN  2    // WiFi - ESP only
 //#define MEDIUM_IN  3    // Bluetooth (Serial) - ESP32 only
 
 //=============================================================================================
@@ -39,14 +39,14 @@
 // Select only one telemetry PROTOCOL here
 //#define PROTOCOL 0     // AUTO detect protocol
 //#define PROTOCOL 1     // Mavlink 1
-#define PROTOCOL 2     // Mavlink 2
+//#define PROTOCOL 2     // Mavlink 2
 //#define PROTOCOL 3     // FrSky S.Port
 //#define PROTOCOL 4     // FrSky F.Port 1
 //#define PROTOCOL 5     // FrSky F.Port 2
 //#define PROTOCOL 6     // LTM
 //#define PROTOCOL 7     // MSP
 //#define PROTOCOL 8     // GPS NMEA
-//#define PROTOCOL 9     // CRFS / ELRS
+#define PROTOCOL 9     // CRFS / ELRS
 
 //=============================================================================================
 //==================================  H E A D I N G   S O U R C E  ============================
@@ -784,8 +784,13 @@ uint16_t  UDP_remotePort = 14550;   // Mav sendPort,  (default 14550) remote hos
     
     #if (WIFI_PROTOCOL == 2)    //  UDP 
       IPAddress UDP_remoteIP(192, 168, 1, 255);    // default to broadcast, but likey to change after connect               
-      uint8_t   UDP_remoteIP_B3;                   // last byte of remote UDP client IP   
-      WiFiUDP   UDP_object;                        // Instantiate UDP object      
+      uint8_t   UDP_remoteIP_B3;                   // last byte of remote UDP client IP  
+      #if (defined MAVLINK)      
+        WiFiUDP   mav_udp_object;                    // Instantiate Mavlink UDP object    
+      #endif
+      #if (defined FRSKY)
+        WiFiUDP   frs_udp_object;                    // Object for FrSky telemetry input
+      #endif     
     #endif   
 
 #endif  // end of WiFi

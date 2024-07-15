@@ -155,6 +155,21 @@
     #if (defined bleBuiltin) &&  (MEDIUM_IN == 4)          // BLE4
       void Frs_Receive_BLE (uint8_t proto) 
       {  // proto S.Port only for now
+        if (doConnect == true) 
+        {
+          if (connectToServer(*pServerAddress)) 
+          {
+            Serial.printf("fully connected to BLE server %S\n", bleServerName);
+            //Activate the Notify property of each Characteristic
+            recordCharacteristic->getDescriptor(BLEUUID((uint16_t)0x2902))->writeValue((uint8_t*)notificationOn, 2, true);
+            ///humidityCharacteristic->getDescriptor(BLEUUID((uint16_t)0x2902))->writeValue((uint8_t*)notificationOn, 2, true);
+            connected = true;
+          } else 
+          {
+            Serial.println("failed to connect to the server. restart to scan for server again.");
+          }
+          doConnect = false;
+        }
         if(newMsg)
         {
           newMsg = false;

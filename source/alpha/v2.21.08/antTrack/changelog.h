@@ -115,5 +115,6 @@ v2.21.05 2024-06-05 Revert to ESP32 core 2.0.17 (3.0.0 breaks TFT_eSPI lib)
                     Also, UART code fix.
 v2.21.06 2024-06-06 Add general WiFi (UDP) for all protocols except crsf(for now)     
 v2.21.07 2024-07-01 Add and test UDP for CRSF. 
-v2.21.08 2024-07-14 Start adding BLR support for FrSky and CRSF                      
+v2.21.08 2024-07-14 Start adding BLR support for FrSky and CRSF   
+         2024-07-15 add missing logic, if (connectToServer(*pServerAddress))                 
 */               

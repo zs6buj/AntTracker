@@ -153,27 +153,12 @@
     }
     //=======================================================================
     #if (defined bleBuiltin) &&  (MEDIUM_IN == 4)          // BLE4
-      void Frs_Receive_BLE (uint8_t proto) 
-      {  // proto S.Port only for now
-        if (doConnect == true) 
-        {
-          if (connectToServer(*pServerAddress)) 
-          {
-            Serial.printf("fully connected to BLE server %S\n", bleServerName);
-            //Activate the Notify property of each Characteristic
-            recordCharacteristic->getDescriptor(BLEUUID((uint16_t)0x2902))->writeValue((uint8_t*)notificationOn, 2, true);
-            ///humidityCharacteristic->getDescriptor(BLEUUID((uint16_t)0x2902))->writeValue((uint8_t*)notificationOn, 2, true);
-            connected = true;
-          } else 
-          {
-            Serial.println("failed to connect to the server. restart to scan for server again.");
-          }
-          doConnect = false;
-        }
+      void Frs_Receive_BLE (uint8_t proto) // proto S.Port only for now
+      {  
         if(newMsg)
         {
           newMsg = false;
-          log.print("BLE msgBuf:");
+          log.printf("BLE msgBuf len:%u  ", newLen);
           printBuffer(msgBuf, newLen);
           static uint8_t msg_chunk = 1;
           uint8_t msg_offset = 0;
@@ -295,7 +280,7 @@
       #endif  
   
       delay(1);            // I am important!
-      while (inSerial.available()) {
+      while (inlog.available()) {
         if (b == 0x7E) {  // end of frame parse
           if (i == 3) {
             memset(&buf[2], 0x00, inMax-2); // clear the rest
@@ -339,7 +324,7 @@
        We are a slave, and default to receiving status      
        Slave responds with uplink frame immediately if matching ID received
       */
-      lth=inSerial.available();
+      lth=inlog.available();
       if (lth < 10) {
         if (lth > 0) {
           //log.printf("lth=%d\n", lth); 
@@ -556,7 +541,7 @@
       if (lth == 0) {
         while (lth==0) {
           CheckStatusAndTimeouts();
-          lth=inSerial.available();
+          lth=inlog.available();
         }
      //    log.printf("\nlen=%3d\n",len); 
       } 
@@ -564,9 +549,9 @@
       serGood = true;            // We have a good serial connection!
       serGood_millis = millis();
       #if (MEDIUM_IN == 1)   // serial UART
-        b = inSerial.read();
+        b = inlog.read();
       #elif (MEDIUM_IN == 3) // serial BT  
-        b = Serial.read();    
+        b = log.read();    
       #endif     
       lth--;
       

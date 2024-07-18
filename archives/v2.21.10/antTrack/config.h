@@ -5,7 +5,7 @@
 
 #define MAJOR_VERSION       2
 #define MINOR_VERSION      21
-#define PATCH_LEVEL         9
+#define PATCH_LEVEL        10
 
 //=============================================================================================
 //================== Please select your options below before compiling ========================
@@ -364,33 +364,29 @@ uint16_t  udp_send_port = 0;
   //=========================================================================  
    
   #if (ESP32_VARIANT == 1)          // ESP32 Dev Module
-  int8_t in_rxPin =         27;  // uart1
-  #define in_txPin          17 
-  int8_t boxgps_rxPin =     13;  // uart2 for tracker box GPS if applicable
-  #define boxgps_txPin       4  
-  bool in_invert = true;          // ONLY FOR FrSky S.Port and CRSF, NOT F.Port, NOT MAVLINK
-  #define SetHomePin        12   // LOW == pushed    
-  #define StatusLed         25   // Off=No good GPS yet, flashing=good GPS but home not set yet, solid = ready to track
-  #define BuiltinLed        -1
-  #define azPWM_Pin         32   // azimuth servo (can't be 34,35,36,39 because input only !!)
-  #define elPWM_Pin         33   // elevation servo(can't be 34,35,36,39 because input only !!)
-  #define BuiltinLed        02   // PB1   
-
-    #define ESP32_VARIANT       // uncomment me if you have a SSD1306 display
-    #if (defined ESP32_VARIANT)   // Display type defined with # define ESP32_VARIANT   
-      #define SSD1306_Display         // OLED display type    
-      /* Below please choose either Touch pin-pair or Digital pin-pair for display scrolling
-       *  Pin == -1 means the pin-pair is not used
-       */ 
-      #define Pup           -1        // Board Button 1 to scroll the display up
-      #define Pdn           -1        // Board Button 2 to scroll the display down   
-      #define Tup           33        // Touch pin to scroll the display up
-      #define Tdn           32        // Touch pin to scroll the display down   
-          
-      #define SDA           21        // I2C OLED board and/or Compass
-      #define SCL           22        // I2C OLED board and/or Compass
-      #define display_i2c_addr      0x3C       // I2C OLED board
-    #endif   
+    int8_t in_rxPin =         27;  // uart1
+    #define in_txPin          17 
+    int8_t boxgps_rxPin =     13;  // uart2 for tracker box GPS if applicable
+    #define boxgps_txPin       4  
+    bool in_invert = true;          // ONLY FOR FrSky S.Port and CRSF, NOT F.Port, NOT MAVLINK
+    #define SetHomePin        12   // LOW == pushed    
+    #define StatusLed         25   // Off=No good GPS yet, flashing=good GPS but home not set yet, solid = ready to track
+    #define BuiltinLed        -1
+    #define azPWM_Pin         32   // azimuth servo (can't be 34,35,36,39 because input only !!)
+    #define elPWM_Pin         33   // elevation servo(can't be 34,35,36,39 because input only !!)
+    #define BuiltinLed        02   // PB1   
+    #define SSD1306_Display         // OLED display type    
+    /* Below please choose either Touch pin-pair or Digital pin-pair for display scrolling
+      *  Pin == -1 means the pin-pair is not used
+      */ 
+    #define Pup           -1        // Board Button 1 to scroll the display up
+    #define Pdn           -1        // Board Button 2 to scroll the display down   
+    #define Tup           33        // Touch pin to scroll the display up
+    #define Tdn           32        // Touch pin to scroll the display down   
+        
+    #define SDA           21        // I2C OLED board and/or Compass
+    #define SCL           22        // I2C OLED board and/or Compass
+    #define display_i2c_addr      0x3C       // I2C OLED board
     /*  
       SPI/CS                       Pin 05   For optional TF/SD Card Adapter
       SPI/MOSI                     Pin 23   For optional TF/SD Card Adapter
@@ -413,9 +409,6 @@ uint16_t  udp_send_port = 0;
   #define sbus_txPin -1 // ?Optional SBUS out pin
   #define startWiFiPin -1 // Trigger WiFi startup
   #define resetEepromPin -1 // 5, -1=none use non digital touch pin
-  #if !defined ESP32_VARIANT // I2C OLED board is built into Heltec WiFi Kit 32
-    #define ESP32_VARIANT
-  #endif
   #define SSD1306_Display // OLED display type
   #define SCR_ORIENT 1 // 1 Landscape or 0 Portrait
   /* Below please choose either Touch pin-pair or Digital pin-pair for display scrolling
@@ -452,9 +445,6 @@ uint16_t  udp_send_port = 0;
     #define elPWM_Pin         33  // elevation servo(can't be 34,35,36,39 because input only !!)    
     #define startWiFiPin      -1  // -1=none. No input pin available (non touch!) Could use touchpin with a bit of messy work.    
     
-    #if !defined ESP32_VARIANT    // I2C TFT board is built into TTGO T-Display
-      #define ESP32_VARIANT
-    #endif    
     #define ST7789_Display          // TFT display type - if you have a display you must define which type
     #define SCR_ORIENT   1          // 1 Landscape or 0 Portrait    
     
@@ -486,9 +476,7 @@ uint16_t  udp_send_port = 0;
     #define BuiltinLed        -1    
     #define azPWM_Pin         14  // azimuth servo (can't be 34,35,36,39 because input only !!)
     #define elPWM_Pin         16  // elevation servo(can't be 34,35,36,39 because input only !!)    
-    #if !defined ESP32_VARIANT      // I2C OLED board is built into TTGO T2
-      #define ESP32_VARIANT
-    #endif
+
     #if !defined SSD1306_Display    
       #define SSD1306_Display         // OLED display type
     #endif 
@@ -519,9 +507,7 @@ uint16_t  udp_send_port = 0;
     #define azPWM_Pin         32  // azimuth servo (can't be 34,35,36,39 because input only !!)
     #define elPWM_Pin         33  // elevation servo(can't be 34,35,36,39 because input only !!)    
     #define startWiFiPin  -1      // -1=none. No input pin available (non touch!) Could use touchpin with a bit of messy work.
-    #if !defined ESP32_VARIANT     
-      #define ESP32_VARIANT
-    #endif
+f
     #define ILI9341_Display         // ILI9341 2.8" COLOUR TFT SPI 240x320 V1.2  
     #define SCLK          18        // blue wire on my test setup
     #define MOSI          23        // yellow wire
@@ -533,13 +519,11 @@ uint16_t  udp_send_port = 0;
     
     /* Below please choose either Touch pin-pair or Digital pin-pair for display scrolling
      *  Pin == -1 means the pin-pair is not used
-     */ 
-               
+     */        
     #define Pup           -1        // 35 Board Button 1 to scroll the display up
     #define Pdn           -1        //  0 Board Button 2 to scroll the display down     
     #define Tup           12        // Touch pin to scroll the display up
     #define Tdn           14        // Touch pin to scroll the display down   
-
     #define SDA           21        // I2C for tracker box compass
     #define SCL           22        // I2C 
 

@@ -118,5 +118,6 @@ v2.21.07 2024-07-01 Add and test UDP for CRSF.
 v2.21.08 2024-07-14 Start adding BLR support for FrSky and CRSF   
          2024-07-15 add missing logic, if (connectToServer(*pServerAddress)) 
 v2.21.08 2024-07-17 further debugging and testing FrSky BLE   
-v2.21.10 2024-07-18 restore line overwritten in esp32_variant config             
+v2.21.10 2024-07-18 restore line overwritten in esp32_variant config        
+V2.21.10b 2024-07-21 Add some debugging code     
 */               

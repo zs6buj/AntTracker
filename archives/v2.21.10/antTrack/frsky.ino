@@ -643,7 +643,7 @@
     // decode the sensor packets according to appID
         uint16_t appID = uint16Extract(buf, 1 );
         pt_payload = uint32Extract(buf, 3);
-        //log.printf("appID:%4X  cur.alt:%.0f  hom.alt:%.0f  cur.alt_ag:%.0f\n", appID, cur.alt, hom.alt, cur.at_agc);              
+        log.printf("appID:%4X\n", appID);              
         switch(appID) 
         {
 

@@ -32,6 +32,7 @@
 //#define DEBUG_CRC
 
 #define DEBUG_FRSKY
+#define DEBUG_FRSKY_MESSAGES
 //#define DEBUG_FRSKY_GPS           // 0x5002
 //#define DEBUG_FRSKY_HOME          // 0x5004
 //#define DEBUG_FRSKY_GPS_STATUS

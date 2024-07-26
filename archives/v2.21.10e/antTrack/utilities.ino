@@ -1930,9 +1930,9 @@ void WiFiEventHandler(WiFiEvent_t event)  {
   static void recordNotifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, 
                                           uint8_t* pData, size_t length, bool isNotify) {
     //store record value
-    //log.printf("pD len:%u  ", length);
+    log.printf("pD len:%u  ", length);
     //msgBuf = pData;
-    memcpy(msgBuf, pData, length);
+    memcpy(&msgBuf, &pData, length);
     newMsg = true;
     newLen = length;
   }

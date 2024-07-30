@@ -5,7 +5,7 @@
 
 #define MAJOR_VERSION       2
 #define MINOR_VERSION      21
-#define PATCH_LEVEL        10
+#define PATCH_LEVEL        11
 
 //=============================================================================================
 //================== Please select your options below before compiling ========================

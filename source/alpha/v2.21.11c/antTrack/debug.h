@@ -28,7 +28,7 @@
 //#define DEBUG_HOME
 
 //#define DEBUG_BT
-#define DEBUG_BLE
+//#define DEBUG_BLE
 //#define DEBUG_WIFI
 
 //#define DEBUG_CRC

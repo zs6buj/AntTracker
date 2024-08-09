@@ -29,10 +29,10 @@
 //====================  I N P U T   M E D I U M    How does telemetPROTOCOLry enter the tracker?
 //=============================================================================================
 // Choose only one input medium 
-//#define MEDIUM_IN  1    // UART (Serial)       
+#define MEDIUM_IN  1    // UART (Serial)       
 //#define MEDIUM_IN  2    // WiFi UDP - ESP only
 //#define MEDIUM_IN  3    // Bluetooth Classic - ESP32 only
-#define MEDIUM_IN  4    // Bluetooth Low Energy (BLE4)- ESP32 only
+//#define MEDIUM_IN  4    // Bluetooth Low Energy (BLE4)- ESP32 only
 //=============================================================================================
 //================================  T E L E M E T R Y   P R O T O C O L  ======================
 //=============================================================================================

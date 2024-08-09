@@ -319,7 +319,7 @@
       #endif  
   
       delay(1);            // I am important!
-      while (inlog.available()) {
+      while (inSerial.available()) {
         if (b == 0x7E) {  // end of frame parse
           if (i == 3) {
             memset(&buf[2], 0x00, inMax-2); // clear the rest
@@ -363,7 +363,7 @@
        We are a slave, and default to receiving status      
        Slave responds with uplink frame immediately if matching ID received
       */
-      lth=inlog.available();
+      lth=inSerial.available();
       if (lth < 10) {
         if (lth > 0) {
           //log.printf("lth=%d\n", lth); 
@@ -580,7 +580,7 @@
       if (lth == 0) {
         while (lth==0) {
           CheckStatusAndTimeouts();
-          lth=inlog.available();
+          lth=inSerial.available();
         }
      //    log.printf("\nlen=%3d\n",len); 
       } 
@@ -588,7 +588,7 @@
       serGood = true;            // We have a good serial connection!
       serGood_millis = millis();
       #if (MEDIUM_IN == 1)   // serial UART
-        b = inlog.read();
+        b = inSerial.read();
       #elif (MEDIUM_IN == 3) // serial BT  
         b = log.read();    
       #endif     

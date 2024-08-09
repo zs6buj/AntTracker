@@ -202,13 +202,13 @@
   { 
     uint16_t len = 0;
     #if (MEDIUM_IN == 1) ||  ((defined btBuiltin) &&  (MEDIUM_IN == 3))       //   UART or BT
-      len=inlog.available();     //   wait for more data
+      len=inSerial.available();     //   wait for more data
     #endif  
     #if (MEDIUM_IN == 2) && (defined wifiBuiltin)     // WiFi UDP  
       len = udp_object[active_udp_obj_idx]->parsePacket();                 // packet to in_buffer?
     #endif 
     #if (defined bleBuiltin) &&  (MEDIUM_IN == 4)      //   BLE4
-      //len=inlog.available();     //   wait for more data
+      //len=inSerial.available();     //   wait for more data
     #endif  
 
     return len; 
@@ -225,7 +225,7 @@
     // Data is available
     hbGood = 1;                     // We have a good connection!
     #if (MEDIUM_IN == 1) ||  ((defined btBuiltin) &&  (MEDIUM_IN == 3))       //   UART or BT
-      b = inlog.read();
+      b = inSerial.read();
     #endif  
     #if (MEDIUM_IN == 2) && (defined wifiBuiltin)                             // UDP  
       b = udp_object[active_udp_obj_idx]->read();

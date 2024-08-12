@@ -179,7 +179,7 @@ class MoToStepper
                                     // e.g. 10 means, 'angle' is angle in .1 degrees
 	void writeSteps( long stepPos );// Go to position stepPos steps from zeropoint
     void setZero();                 // actual position is set as 0 angle (zeropoint)
-    void setZero( long zeroPoint);  // new zeropoint ist zeroPoint steps apart from actual position
+    void setZero( long zeroPoint);  // new zeropoint 1st zeroPoint steps apart from actual position
     void setZero( long zeroPoint, long stepsPerRotation);  // beside zero point change steps per Rotation too
     int setSpeed(int rpm10 );       // Set movement speed, rpm*10
     uintxx_t setSpeedSteps( uintxx_t speed10 ); // set speed withput changing ramp, returns ramp length

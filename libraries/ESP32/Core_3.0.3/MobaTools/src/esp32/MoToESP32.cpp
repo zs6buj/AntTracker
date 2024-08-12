@@ -47,9 +47,9 @@ void seizeTimerAS() {
 static bool timerInitialized = false;
     // Initiieren des Stepper Timers ------------------------
     if ( !timerInitialized ) {
-        // core 3.0.3 hw_timer_t * timerBegin(uint32_t frequency);   // frequency in Hz    
+        // core 3.0.3 hw_timer_t * timerBegin(uint32_t frequency);   // frequency in Hz
         //stepTimer = timerBegin(STEPPER_TIMER, DIVIDER, true); // true= countup
-        stepTimer = timerBegin(80000000);  // zs6buj
+        stepTimer = timerBegin(2000000);  // zs6buj APB_CLK_FREQ == 80000000  DIVIDER == 40 
         // core 3.0.3void timerAttachInterrupt(hw_timer_t * timer, void (*userFunc)(void));
         //timerAttachInterrupt(stepTimer, &ISR_Stepper, true);  // true= edge Interrupt
         timerAttachInterrupt(stepTimer, &ISR_Stepper); // assume edge - zs6buj

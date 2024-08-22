@@ -133,6 +133,6 @@ v2.21.11e 2024-08-02 maxbuf = 64; (was 24)
 // IMPORTANT - versions below are all built with esp32 core 3.0.3 or later
 v2.21.12  2024-08-07 Replace servo library with MobaTools servo library. 
                      Support servo speed control and asynchronous working.
-v2.21.13             Add support stepper motors. Switch to exButons library 
+v2.21.13             Add support stepper motors. Switch to ezButons library 
 v2.22.00             Clean up udp objects. Testing                    
 */               

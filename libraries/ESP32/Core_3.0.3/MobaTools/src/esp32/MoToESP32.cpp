@@ -29,9 +29,15 @@ void IRAM_ATTR ISR_Stepper(void) {
         CLR_TP1;
 		aktAlarm =  minNextAlarm;
 	}
+	#if (ESP_ARDUINO_VERSION_MAJOR == 2)
+     timerAlarmWrite(stepTimer, aktAlarm , false); // no autorelaod
+     timerAlarmEnable(stepTimer);
+	#elif (ESP_ARDUINO_VERSION_MAJOR == 3)
     //3.0.3 void timerAlarm(hw_timer_t * timer, uint64_t alarm_value, bool autoreload, uint64_t reload_count);
     timerAlarm(stepTimer, aktAlarm , false, 0); // no autorelaod, 0=unlimited - zs6buj
-    //timerAlarmEnable(stepTimer);  // auto from esp32 core 3.0
+	#else
+		 #error "ESP-core version unsupported"
+    #endif
     SET_TP1;
     portEXIT_CRITICAL_ISR(&stepperMux);
     CLR_TP1; // Oszimessung Dauer der ISR-Routine
@@ -47,14 +53,23 @@ void seizeTimerAS() {
 static bool timerInitialized = false;
     // Initiieren des Stepper Timers ------------------------
     if ( !timerInitialized ) {
-        // core 3.0.3 hw_timer_t * timerBegin(uint32_t frequency);   // frequency in Hz
-        //stepTimer = timerBegin(STEPPER_TIMER, DIVIDER, true); // true= countup
-        stepTimer = timerBegin(2000000);  // zs6buj APB_CLK_FREQ == 80000000  DIVIDER == 40 
+		#if (ESP_ARDUINO_VERSION_MAJOR == 2)
+			#warning "Info: using esp core 2.x.x"
+        stepTimer = timerBegin(STEPPER_TIMER, DIVIDER, true); // true= countup
+        timerAttachInterrupt(stepTimer, &ISR_Stepper, true);  // true= edge Interrupt
+        timerAlarmWrite(stepTimer, ISR_IDLETIME*TICS_PER_MICROSECOND , false); // false = no autoreload );
+        timerAlarmEnable(stepTimer);
+		#elif (ESP_ARDUINO_VERSION_MAJOR == 3)
+			#warning "Info: using esp core 3.x.x"
+        // core 3.0.3 hw_timer_t * timerBegin(uint32_t frequency);   // frequency in Hz    
+		stepTimer = timerBegin(2000000);  // frequency
         // core 3.0.3void timerAttachInterrupt(hw_timer_t * timer, void (*userFunc)(void));
-        //timerAttachInterrupt(stepTimer, &ISR_Stepper, true);  // true= edge Interrupt
         timerAttachInterrupt(stepTimer, &ISR_Stepper); // assume edge - zs6buj
         timerAlarm(stepTimer, ISR_IDLETIME*TICS_PER_MICROSECOND , false, 0); // false = no autoreload );
-        //timerAlarmEnable(stepTimer);  // auto from esp32 core 3.0
+		#else
+		 #error "ESP-core version unsupported"
+		#endif
+			
         timerInitialized = true;  
         MODE_TP1;   // set debug-pins to Output
         MODE_TP2;

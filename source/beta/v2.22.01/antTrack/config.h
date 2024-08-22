@@ -5,7 +5,7 @@
 
 #define MAJOR_VERSION       2
 #define MINOR_VERSION      22
-#define PATCH_LEVEL         0
+#define PATCH_LEVEL         1
 
 //=============================================================================================
 //================== Please select your options below before compiling ========================
@@ -117,8 +117,12 @@
 
   //#define AZ_SERVO_360   // Means the azimuth servo can point in a 360 deg circle, elevation servo 90 deg
                            // Default (comment out #define above) is 180 deg azimuth and flip over 180 deg elevation 
-                           
-  #define azStart  90       // 0 deg = left, 90 deg = straight ahead, 180 deg = right, 270 deg = behind
+  #if (defined STEPPERS)
+    #define azMidFront  0   // 270 deg = left, 0 deg = straight ahead, 90 deg = right, 180 deg = behind
+  #endif 
+  #if (defined SERVOS)                   
+    #define azMidFront  90  // 0 deg = left, 90 deg = straight ahead, 180 deg = right, 270 deg = behind
+  #endif
   #define elStart   0       // 0 = horizontal, 90 = vertical
 
   /*    See SERVO_SPEED below     */
@@ -688,7 +692,6 @@ uint16_t  udp_send_port = 0;
     bool infoNewPress = false;         
     bool infoPressed = false;
     bool show_log = true;    
-    uint32_t info_debounce_millis = 0; 
     uint32_t  info_millis = 0; 
     uint32_t  last_log_millis = 0;
     const uint16_t db_period = 1000; // debounce period mS
@@ -708,7 +711,7 @@ uint16_t  udp_send_port = 0;
 
     static const uint16_t threshold = 40;
     volatile bool up_button = false;
-    volatile bool dn_button = false;
+    volatile bool scroll_display = false;
 
     #if (not defined Tup) 
       #define Tup         -1

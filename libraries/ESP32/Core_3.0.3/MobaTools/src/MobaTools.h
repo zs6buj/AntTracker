@@ -183,11 +183,8 @@
 
 // servo related defines
 #if defined ARDUINO_ARCH_ESP32 || defined ARDUINO_ARCH_ESP8266 
-//#define MINPULSEWIDTH   550U     // there is no general limit on ESP
-//#define MAXPULSEWIDTH   2600U    // there is no general limit on ESP
-#define MINPULSEWIDTH   620
-#define MAXPULSEWIDTH   2210  
-
+#define MINPULSEWIDTH   550U     // there is no general limit on ESP
+#define MAXPULSEWIDTH   2600U    // there is no general limit on ESP
 #else // all other ( no ESP )
 #define MINPULSEWIDTH   700U      // don't make it shorter than 700
 #define MAXPULSEWIDTH   2300U     // don't make it longer than 2300

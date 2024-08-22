@@ -4,8 +4,8 @@
 //                                    C O N F I G U R A T I O N 
 
 #define MAJOR_VERSION       2
-#define MINOR_VERSION      21
-#define PATCH_LEVEL        12
+#define MINOR_VERSION      22
+#define PATCH_LEVEL         0
 
 //=============================================================================================
 //================== Please select your options below before compiling ========================

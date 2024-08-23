@@ -135,6 +135,5 @@ v2.21.12  2024-08-07 Replace servo library with MobaTools servo library.
                      Support servo speed control and asynchronous working.
 v2.21.13             Add support stepper motors. Switch to ezButons library 
 v2.22.00  2024-08-20 Clean up udp objects. Testing   
-v2.22.01  2024-08-22 Make Stepper midfront position = zero (0 degrees)  
-                     For steppers, first adjust for and set midfront, then testMotors              
+v2.22.01  2024-08-22              
 */               

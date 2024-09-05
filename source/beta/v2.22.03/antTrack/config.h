@@ -109,6 +109,7 @@
 // Insert the six numbers between the curly brackets below
 #if (MEDIUM_IN == 5)
   const uint8_t my_hashed_mac[6] = {0, 0, 0 , 0 , 0, 0}; // derived from your binding phrase
+  //const uint8_t my_hashed_mac[6] = {208,200,225,230,184,24}; // this is my test hashed mac. It will not work for you
 #endif
 //=============================================================================================
 //=================================  O T H E R   S E T T I N G S   ============================

@@ -812,11 +812,19 @@ void setup()
       // ===================   Setup ESPNOW (ELRS Backpack)  ======================   
   #if defined ESP32
     #if (MEDIUM_IN == 5)  // ESPNOW
+      if ((my_hashed_mac[0] == 0) && (my_hashed_mac[1] == 0) && (my_hashed_mac[2] == 0) && 
+      (my_hashed_mac[3] == 0) && (my_hashed_mac[4] == 0) && (my_hashed_mac[5] == 0)) 
+      {
+        log.println("Your my_hashed_mac IS ZERO. Please enter valid MAC values and recompile");
+        while(1) delay(1000);
+      }
       uint8_t offset = espnow_eeprom_offset;  // ==24, "home" uses 0 thru 19
       have_eeprom_mac = EEPROM.readByte(offset);
-      if (have_eeprom_mac != 0xfd)
+      if ( (have_eeprom_mac != 0xfd) || ((soft_mac[0] == 0) && 
+         (soft_mac[1] == 0) && (soft_mac[2] == 0) && (soft_mac[3] == 0) && 
+         (soft_mac[4] == 0) && (soft_mac[5] == 0) ) )
       {
-        log.println("No soft_mac in eeprom");
+        log.println("No valid soft_mac in eeprom");
         macToEeprom(my_hashed_mac);
       }
       eepromToMac(soft_mac);

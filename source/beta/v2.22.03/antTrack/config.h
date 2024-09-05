@@ -5,7 +5,7 @@
 
 #define MAJOR_VERSION       2
 #define MINOR_VERSION      22
-#define PATCH_LEVEL         2
+#define PATCH_LEVEL         3
 
 //=============================================================================================
 //================== Please select your options below before compiling ========================
@@ -38,7 +38,7 @@
 //#define MEDIUM_IN  2    // WiFi UDP - ESP only
 //#define MEDIUM_IN  3    // Bluetooth Classic - ESP32 only
 //#define MEDIUM_IN  4    // Bluetooth Low Energy (BLE4)- ESP32 only
-#define MEDIUM_IN  5    // ESP_NOW
+#define MEDIUM_IN  5    // ESPNOW
 
 //=============================================================================================
 //================================  T E L E M E T R Y   P R O T O C O L  ======================
@@ -103,10 +103,13 @@
   #define bleServerName "Hello"  // use me for Frsky Tandem
 #endif
 //=============================================================================================
-//====================================    ESP_NOW SETTINGS   ================================== 
+//====================================    ESPNOW SETTINGS   ================================== 
 //=============================================================================================
+// Please use ExpressLRS Configurator to obtain your unique hashed (from binding_phrase) MAC address
+// Insert the six numbers between the curly brackets below
 #if (MEDIUM_IN == 5)
-// future?
+  //const uint8_t my_hashed_mac[6] = {0, 0, 0 , 0 , 0, 0}; // derived from your binding phrase
+  const uint8_t my_hashed_mac[6] = {208,200,225,230,184,24};
 #endif
 //=============================================================================================
 //=================================  O T H E R   S E T T I N G S   ============================
@@ -578,15 +581,22 @@ uint16_t  udp_send_port = 0;
 
   #if ((not defined ESP32) && (not defined ESP8266))
     #if (MEDIUM_IN == 5)
-      #error "ESP_NOW requires an ESP32 or ESP8266"
+      #error "ESPNOW requires an ESP32 or ESP8266"
     #endif
   #endif
 
-  #if (MEDIUM_IN == 5)  // ESP_NOW
+  #if (MEDIUM_IN == 5)  // ESPNOW
     #if (PROTOCOL != 9)
-      #error "Sorry ESP_NOW only works with CRSF backpack protocol at present"
+      #error "Sorry ESPNOW only works with CRSF backpack protocol at present"
     #endif
   #endif
+  //=================================================================================================   
+  //==================================   E E P R O M   S U P P O R T  =============================== 
+  //================================================================================================= 
+
+  #include <EEPROM.h>
+  const uint8_t home_eeprom_offset = 0;      // ESPNOW uses 7B, 24  thru 30
+  const uint8_t espnow_eeprom_offset = 24;   // "home" uses (6 x 4B), 0  thru 23
   //=================================================================================================   
   //==================================   B U T T O N   S U P P O R T  =============================== 
   //=================================================================================================  
@@ -899,13 +909,19 @@ uint16_t  udp_send_port = 0;
 #endif  // end of WiFi
 
   //=================================================================================================   
-  //=========================  ESP_NOW   S U P P O R T - ESP32 and ES8266 Only ======================
+  //==============================   ESPNOW   S U P P O R T - ESP32 Only  ===========================
   //================================================================================================= 
 #if (MEDIUM_IN == 5)
-  #include <esp_now.h>
+  #include <ESP_NOW.h>
+  #include <esp_wifi.h>
   #include <WiFi.h>
+
+  esp_now_peer_info_t peerInfo;
   bool espnow_received = false;
   int16_t  espnow_len = 0;
+  int16_t  crsf_len = 0;
+  uint8_t soft_mac[6];
+  uint8_t have_eeprom_mac = 0xcc; // initial value
 #endif
   //================================================================================================= 
   //================================   U A R T and  B T  S U P P O R T   ============================    

@@ -291,8 +291,13 @@ void IRAM_ATTR stepperISR(nextCycle_t cyclesLastIRQ) {
                             //DB_PRINT( "scnt=%ld, sIR=%u\n\r", stepperDataP->stepCnt, stepperDataP->stepsInRamp );
                             //SET_TP2;
                         }
-                        stepperDataP->aCycSteps = stepperDataP->cyctXramplen / ( --stepperDataP->stepsInRamp + RAMPOFFSET ) ;// +1 ;
-                        #ifndef IS_32BIT
+						// check if we can decrement steps in Ramp
+ 						if ( stepperDataP->stepsInRamp > 0 ) --stepperDataP->stepsInRamp;
+ 						#ifdef debugPrint
+ 						//else stepperDataP->errorFlg = 1; // must not be reached!!
+ 						#endif
+                         stepperDataP->aCycSteps = stepperDataP->cyctXramplen / ( stepperDataP->stepsInRamp + RAMPOFFSET ) ;// +1 ;
+                          #ifndef IS_32BIT
                         stepperDataP->aCycRemain += stepperDataP->cyctXramplen % (stepperDataP->stepsInRamp + RAMPOFFSET);
                         if ( stepperDataP->aCycRemain > (stepperDataP->stepsInRamp + RAMPOFFSET) ) {
                             stepperDataP->aCycSteps++;
@@ -348,8 +353,9 @@ void IRAM_ATTR stepperISR(nextCycle_t cyclesLastIRQ) {
                     }
                     #endif
                     // do we have to start the deceleration
-                    if ( stepperDataP->stepCnt <= stepperDataP->stepRampLen+1U ) {
+                    if ( stepperDataP->stepCnt <= stepperDataP->stepRampLen+1U && stepperDataP->stepRampLen != 0 ) {
                         // in mode without ramp ( stepRampLen == 0 ) , this can never be true
+						// V2.6.2 - added explicit check of ramplen to be 0
                         stepperDataP->rampState = rampStat::RAMPDECEL;
                     }
                     

@@ -22,6 +22,9 @@
   MobaTools V2.6.1
    
   History:
+  V2.6.2 9-2024
+    - ESP32 core version 3.x is supported ( V2.x is still supported too )
+	- fixed endless rotating when setting moveTo very quickly. (issue#34 on github) 
   V2.6.1 12-2023
     - bugfix with UNO R4Wifi and steppers (with Wifi active)
     - 2 more examples ( button matrix and UNO R4 Wifi and stepper )

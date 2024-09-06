@@ -17,7 +17,7 @@ Released versions can be installed by means of the library manager in arduino ID
 - AVR ATtiny, if it has the 16-bit timer 1 and a SPI or USI hardware
 - Renesas RA4M1 ( UNO R4 )
 - STM32F103x processors ( the [core of Roger Clark](https://github.com/rogerclarkmelbourne/Arduino_STM32) must be used )
-- ESP32 ( minimum core version is 1.0.6 )
+- ESP32 ( core versions 2.x and 3.x )
 - ESP8266 ( with some restrictions, Stepper via SPI does not work )
 
 A documentation file in [german](MobaTools-260-de.pdf) and [english](MobaTools-260-en.pdf) is provided.
@@ -26,6 +26,9 @@ A documentation file in [german](MobaTools-260-de.pdf) and [english](MobaTools-2
 
 | Version |  Release Date  | Description
 | ------- |  ------------  | -----------
+| 2.6.2 | 2024-09-05| support V3.x of ESP32 core ( V2.x is still supported too )
+| | | fixed endless rotating when moveTo is called very frequently in quick sequence (issue #34 on github )
+| | | 
 | 2.6.1 | 2023-12-17| bugfix with UNO R4Wifi and steppers (with Wifi active)
 | | | 2 more examples:
 | | | + 20 buttons in a matrix via I2C IO expander PCF8575

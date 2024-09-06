@@ -1,13 +1,14 @@
+#include <WiFi.h>
+#include <WiFiAP.h>
 #include <WebServer.h>
-#include <ArduinoOTA.h> // Programm hochladen Over The Air, siehe IDE Werkzeuge/Port
 #include <MobaTools.h>  // ab 2.4.0: https://github.com/MicroBahner/MobaTools
 
 const char *ssid = "Esp32AP";      // frei zu vergebener Name des Access Points, kann bis zu 32 Zeichen haben
 const char *password = "12345678"; // frei zu vergebenes Passwort, mindestens 8 Zeichen jedoch nicht länger als 64 Zeichen
 
-const byte dirPin       = 33; // verbinden mit DIR des Schrittmotortreibers
-const byte stepPin      = 32; // verbinden mit STEP des Schrittmotortreibers
-const byte enaPin       = 13; // verbinden mit ENA des Schrittmotortreibers
+const byte dirPin       = 32; // verbinden mit DIR des Schrittmotortreibers
+const byte stepPin      = 33; // verbinden mit STEP des Schrittmotortreibers
+const byte enaPin       = 25; // verbinden mit ENA des Schrittmotortreibers
 
 enum class Aktionen {STOP, LINKS, RECHTS, CONTL, CONTR};  // Aktionen des endlichen Automaten
 const int STEPS_REVOLUTION = 3200;                         // 1/16 Microstep -> 3200 Schritte / Umdrehung
@@ -37,7 +38,7 @@ void setup() {
   DEBUG_F("\nSketchname: %s\nBuild: %s\t\tIDE: %d.%d.%d\n\n", __FILE__, __TIMESTAMP__, ARDUINO / 10000, ARDUINO % 10000 / 100, ARDUINO % 100 / 10 ? ARDUINO % 100 : ARDUINO % 10);
 
   WiFi.mode(WIFI_AP);                                // Der ESP32 bildet als Access Point sein eigenes WLAN
-  if (WiFi.softAP(ssid, password)) {
+  if (WiFi.softAP(ssid,password)) {
     DEBUG_F("Verbinde dich mit dem Netzwerk \"%s\"\nGib \"%s/stepper\" im Browser ein\n\n", ssid, WiFi.softAPIP().toString().c_str());
   } else {
     DEBUG_P("Fehler beim erstellen.");
@@ -45,14 +46,11 @@ void setup() {
 
   server.on ( "/stepper", handleStepper );           // Im Browser "http://192.168.4.1/stepper" ruft diese Funktion auf.
 
-  ArduinoOTA.begin();                                // OTA starten
-
   server.begin();                                    // Webserver starten
   DEBUG_P("HTTP Server gestartet\n\n");
 }
 
 void loop() {
-  ArduinoOTA.handle();                               // OTA abhandeln
   server.handleClient();                             // Anfragen an den Server abhandeln
 }
 

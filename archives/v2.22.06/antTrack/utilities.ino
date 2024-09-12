@@ -128,57 +128,74 @@
   /*
        ========= Support for ESPNOW (ELRS_Backpack) =======
   */
-bool eepromToMac(uint8_t _mac[6])
-{
-  log.println("eepromToMac()");
-  uint8_t offset = espnow_eeprom_offset;  // ==24, "home" uses 0 thru 19
-  have_eeprom_mac = EEPROM.readByte(offset);
-  if (have_eeprom_mac != 0xfd)
-  {
-    log.println("No soft_mac in eeprom");
-    return false;
-  }
-  offset += sizeof(byte);
-  for (auto i = 0; i < 6; i++)
-  {
-    _mac[i] = EEPROM.readByte(offset);
-    //log.printf("%u:%u,", offset, _mac[i]);    
-    offset += sizeof(byte);
-  }
-  //log.println();   
-  return true;
-}
+  #if (MEDIUM_IN  == 5)   
+    bool eepromToMac(uint8_t _mac[6])
+    {
+      log.println("eepromToMac()");
+      uint8_t offset = espnow_eeprom_offset;  // ==24, "home" uses 0 thru 19
+      #if (defined ESP32) || (defined ESP8266)
+        have_eeprom_mac = EEPROM.readByte(offset);
+      #else //stm32, teensy
+        have_eeprom_mac = EEPROM.read(offset); // assumes byte
+      #endif
+      if (have_eeprom_mac != 0xfd)
+      {
+        log.println("No soft_mac in eeprom");
+        return false;
+      }
+      offset += sizeof(byte);
+      for (auto i = 0; i < 6; i++)
+      {
+        #if (defined ESP32) || (defined ESP8266)
+          _mac[i] = EEPROM.readByte(offset);
+        #else //stm32, teensy
+          _mac[i] = EEPROM.read(offset); // assumes byte
+        #endif
+        //log.printf("%u:%u,", offset, _mac[i]);    
+        offset += sizeof(byte);
+      }
+      //log.println();   
+      return true;
+    }
 
-void macToEeprom(const uint8_t addr[6])
-{
-  log.println("macToEeprom()");
-  uint8_t offset = espnow_eeprom_offset;  // ==24, "home" uses 0 thru 19
-  have_eeprom_mac = 0xfd;
-  EEPROM.writeByte(offset, have_eeprom_mac);
-  //log.printf("eeprom[%u]:%2x\n", offset, have_eeprom_mac);
-  offset += sizeof(have_eeprom_mac);
-  for (auto i = 0; i < 6; i++)
-  {
-    EEPROM.writeByte(offset, addr[i]);
-    //log.printf("%u:%u,", offset, addr[i]);    
-    offset += sizeof(byte);
-  }
-  //log.println();  
-  EEPROM.commit();
-}
-void setSoftMACAddress()
-{
-    // MAC address can only be set with unicast, so first byte must be even, not odd
-  soft_mac[0] = soft_mac[0] & ~0x01;
-  WiFi.mode(WIFI_STA);
-  WiFi.setTxPower(WIFI_POWER_19_5dBm);
-  esp_wifi_set_protocol(WIFI_IF_STA, WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G | WIFI_PROTOCOL_11N | WIFI_PROTOCOL_LR);
-  WiFi.begin("network-name", "pass-to-network", 1);
-  WiFi.disconnect();
-  log.println("Soft MAC address set"); 
-  esp_wifi_set_mac(WIFI_IF_STA, soft_mac);
-}
-
+    void macToEeprom(const uint8_t addr[6])
+    {
+      log.println("macToEeprom()");
+      uint8_t offset = espnow_eeprom_offset;  // ==24, "home" uses 0 thru 19
+      have_eeprom_mac = 0xfd;
+      #if (defined ESP32) || (defined ESP8266)
+        EEPROM.writeByte(offset, have_eeprom_mac);
+      #else //stm32, teensy
+        EEPROM.write(offset, have_eeprom_mac);
+      #endif  
+      //log.printf("eeprom[%u]:%2x\n", offset, have_eeprom_mac);
+      offset += sizeof(have_eeprom_mac);
+      for (auto i = 0; i < 6; i++)
+      {
+        #if (defined ESP32) || (defined ESP8266)
+          EEPROM.writeByte(offset, addr[i]);
+        #else //stm32, teensy
+          EEPROM.write(offset, addr[i]); // assumes byte
+        #endif   
+        //log.printf("%u:%u,", offset, addr[i]);    
+        offset += sizeof(byte);
+      }
+      //log.println();  
+      EEPROM.commit();
+    }
+    void setSoftMACAddress()
+    {
+        // MAC address can only be set with unicast, so first byte must be even, not odd
+      soft_mac[0] = soft_mac[0] & ~0x01;
+      WiFi.mode(WIFI_STA);
+      WiFi.setTxPower(WIFI_POWER_19_5dBm);
+      esp_wifi_set_protocol(WIFI_IF_STA, WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G | WIFI_PROTOCOL_11N | WIFI_PROTOCOL_LR);
+      WiFi.begin("network-name", "pass-to-network", 1);
+      WiFi.disconnect();
+      log.println("Soft MAC address set"); 
+      esp_wifi_set_mac(WIFI_IF_STA, soft_mac);
+    }  // end ESP_NOW
+  #endif
   #if (MEDIUM_IN  == 2)      // WiFi UDP select
   //========================================================
   void printRemoteIP()
@@ -273,7 +290,11 @@ void setSoftMACAddress()
     #if (defined bleBuiltin) &&  (MEDIUM_IN == 4)      //   BLE4
       //len=inSerial.available();     //   wait for more data
     #endif  
-
+    if (len > 0) 
+    {
+      telem_millis = millis();
+      telemGood = true;
+    }
     return len; 
   }
   //====================================================
@@ -508,45 +529,47 @@ void setSoftMACAddress()
     }
     log.println();
   }
-//=======================================
-  void scanI2C()
-  // 0x03C for SSD1306_DISPLAY, 0x1E for HMC5883L, 0x0D for QMC5883
-  {
-    uint8_t found = 0;
-    log.print("Scanning I2C bus: ");
-    for(int addr = 1; addr < 127; addr++ ) 
+  //=======================================
+  # if defined NEED_I2C
+    void scanI2C()
+    // 0x03C for SSD1306_DISPLAY, 0x1E for HMC5883L, 0x0D for QMC5883
     {
-      Wire.beginTransmission(addr);
+      uint8_t found = 0;
+      log.print("Scanning I2C bus: ");
+      for(int addr = 1; addr < 127; addr++ ) 
+      {
+        Wire.beginTransmission(addr);
         uint8_t err = Wire.endTransmission();
-      if (err == 0) 
-      {
-        log.print("I2C device found at 0x");
-        printByte(addr);
-        if (addr == 0x0C)
+        if (err == 0) 
         {
-          log.println("likely SSD1306_DISPLAY");
-        } else
-        if (addr == 0x0D)
-        {
-          log.println("likely QMC5883L compass");
-        } else
-        if (addr == 0x0E)
-        {
-          log.println("likely HMC5883L compass");
+          log.print("I2C device found at 0x");
+          printByte(addr);
+          if (addr == 0x0C)
+          {
+            log.println("likely SSD1306_DISPLAY");
+          } else
+          if (addr == 0x0D)
+          {
+            log.println("likely QMC5883L compass");
+          } else
+          if (addr == 0x0E)
+          {
+            log.println("likely HMC5883L compass");
+          }
+          found++;
         }
-        found++;
+        else if (err==4) 
+        {
+          log.print("Unknown error at addr 0x");
+          printByte(addr);
+        }    
       }
-      else if (err==4) 
+      if (found == 0) 
       {
-        log.print("Unknown error at addr 0x");
-        printByte(addr);
-      }    
+        log.println("No I2C devices found");
+      }
     }
-    if (found == 0) 
-    {
-      log.println("No I2C devices found");
-    }
-  }
+  #endif  
   //=======================================
   bool PacketGood() 
   {
@@ -659,6 +682,10 @@ void serviceTheStatusLed()
   //=================================================================================================  
   void checkStatusAndTimeouts() 
   {
+    if ((millis() - telem_millis) > ((timeout_secs-1) * 1000) ) 
+    {
+      telemGood = false;        // if no telemetry
+    }       
     if ((millis() - btGood_millis) > ((timeout_secs-1) * 1000) ) 
     {
       btGood = false;        // If no BT traffic 
@@ -693,6 +720,17 @@ void serviceTheStatusLed()
     //===================================================================     
   void reportOnlineStatus() 
   {
+      if (telemGood != telemPrev) 
+      {  
+        telemPrev = telemGood;
+        if (telemGood) {
+           log.println("Good telemetry stream");
+           logScreenPrintln("Good telem stream");         
+         } else {
+          log.println("Telemetry timeout *");
+          logScreenPrintln("Telem timeout *");         
+        }
+      } 
       if (btGood != btPrev) 
       {  
         btPrev = btGood;
@@ -797,7 +835,7 @@ void lostPowerCheckAndRestore(uint32_t epoch_now)
 void displayEEPROM() {
   log.println("EEPROM:");
 
-  for (int i = 0; i < EEPROM_SIZE; i++) {
+   for (int i = 0; i < EEPROM_SIZE; i++) {
     printByte(EEPROM.read(i)); log.print(" ");
   }
   log.println();
@@ -811,16 +849,36 @@ void displayEEPROM() {
 void saveHomeToFlash() 
 {
   uint8_t offset = home_eeprom_offset;  // 0
-  EEPROM.writeULong(offset, epochNow());   // epochHome
-  offset += sizeof(unsigned long); //4
-  EEPROM.writeFloat(offset, hom.lon);
-  offset += sizeof(float);
-  EEPROM.writeFloat(offset, hom.lat);
-  offset += sizeof(float);
-  EEPROM.writeFloat(offset, hom.alt);
-  offset += sizeof(float);
-  EEPROM.writeFloat(offset, hom.hdg);  
-  offset += sizeof(float);
+  #if (defined ESP32) || (defined ESP8266)
+    EEPROM.writeULong(offset, epochNow());   // epochHome
+    offset += sizeof(unsigned long); //4
+    EEPROM.writeFloat(offset, hom.lon);
+    offset += sizeof(float);
+    EEPROM.writeFloat(offset, hom.lat);
+    offset += sizeof(float);
+    EEPROM.writeFloat(offset, hom.alt);
+    offset += sizeof(float);
+    EEPROM.writeFloat(offset, hom.hdg);  
+    offset += sizeof(float);
+    EEPROM.commit();
+  #else //stm32, teensy
+    struct myObject 
+    {
+      uint32_t  epoch_now;
+      float lon;
+      float lat;
+      float alt;
+      float hdg;
+    };
+    myObject homeVar;
+    homeVar.epoch_now = epochNow();
+    homeVar.lon = hom.lon;
+    homeVar.lat = hom.lat;
+    homeVar.alt = hom.alt;
+    homeVar.hdg = hom.hdg;   
+    EEPROM.put(offset, homeVar);
+  #endif  
+
 #if defined DEBUG_ALL || defined DEBUG_EEPROM || defined DEBUG_TIME || defined DEBUG_HOME
   log.print("  firstHomeStored="); log.print(firstHomeStored);
   log.print("  home.lon="); log.print(hom.lon, 6);
@@ -832,12 +890,28 @@ void saveHomeToFlash()
 //=================================================================================================  
 void storeEpochPeriodic() 
 {
-  uint8_t offset = home_eeprom_offset + 20;  
-  uint32_t epochPeriodic = epochNow();
-  EEPROM.writeULong(offset, epochPeriodic); // Seconds
-  offset += sizeof(unsigned long);
-  if (finalHomeStored) {
-    EEPROM.writeLong(0, epochPeriodic); // UPDATE epochHome
+  uint8_t offset = home_eeprom_offset + 20;  //displaced by 20B
+  #if (defined ESP32) || (defined ESP8266)
+    uint32_t epochPeriodic = epochNow();
+    EEPROM.writeULong(offset, epochPeriodic); // Seconds
+    offset += sizeof(unsigned long);
+    EEPROM.commit();
+  #else // stm32, teensy
+    uint32_t epochPeriodic = epochNow();
+    EEPROM.put(offset, epochPeriodic); // Seconds
+    offset += sizeof(unsigned long);
+  #endif
+  if (finalHomeStored) 
+  {
+    offset = home_eeprom_offset;  //displaced by 0 bytes
+    #if (defined ESP32) || (defined ESP8266)
+      EEPROM.writeULong(offset, epochPeriodic); // UPDATE epochHome
+      offset += sizeof(unsigned long);
+      EEPROM.commit();
+    #else // stm32, teensy
+      EEPROM.put(offset, epochPeriodic); // Seconds
+      offset += sizeof(unsigned long);
+    #endif  
     #if defined DEBUG_ALL || defined DEBUG_EEPROM || defined DEBUG_TIME || defined DEBUG_HOME
       log.print("epochHome stored="); log.println(TimeString(epochPeriodic));
     #endif  
@@ -850,8 +924,13 @@ void storeEpochPeriodic()
 //=================================================================================================  
 uint32_t epochHome() 
 {
+  uint32_t epHome = 0;
   uint8_t offset = home_eeprom_offset + 20;  
-  uint32_t epHome = EEPROM.readULong(offset);
+  #if (defined ESP32) || (defined ESP8266)
+    epHome = EEPROM.readULong(offset);
+  #else  // teensy, stm32f103
+    EEPROM.get(offset, epHome);
+  #endif
   offset += sizeof(unsigned long); //4
  #if defined DEBUG_ALL || defined DEBUG_EEPROM
    log.print("epochHome="); log.println(TimeString(epHome));
@@ -862,14 +941,35 @@ uint32_t epochHome()
 void restoreHomeFromFlash() 
 {
   uint8_t offset = home_eeprom_offset;  // 0
-  hom.lon = EEPROM.readFloat(offset); 
-  offset += sizeof(float); //4
-  hom.lat = EEPROM.readFloat(offset);
-   offset += sizeof(float); 
-  hom.alt = EEPROM.readFloat(offset);
-   offset += sizeof(float); 
-  hom.hdg = EEPROM.readFloat(offset);
-   offset += sizeof(float); 
+  #if (defined ESP32) || (defined ESP8266)
+    uint32_t epoch_now = EEPROM.readULong(offset);
+    offset += sizeof(unsigned long); //4
+    hom.lon = EEPROM.readFloat(offset); 
+    offset += sizeof(float); //4
+    hom.lat = EEPROM.readFloat(offset);
+    offset += sizeof(float); 
+    hom.alt = EEPROM.readFloat(offset);
+    offset += sizeof(float); 
+    hom.hdg = EEPROM.readFloat(offset);
+    offset += sizeof(float); 
+  #else  // stm32, teensy
+    struct myObject 
+    {
+      uint32_t  epoch_now;
+      float lon;
+      float lat;
+      float alt;
+      float hdg;
+    };
+    myObject homeVar;
+    EEPROM.get(offset, homeVar);
+    uint32_t epoch_now = homeVar.epoch_now;
+    hom.lon = homeVar.lon;
+    hom.lat = homeVar.lat;
+    hom.alt = homeVar.alt;
+    hom.hdg = homeVar.hdg;;   
+  #endif
+
   #if defined DEBUG_ALL || defined DEBUG_EEPROM || defined DEBUG_TIME || defined DEBUG_HOME
     log.print("  home.lon="); log.print(hom.lon, 6);
     log.print("  home.lat="); log.print(hom.lat, 6);
@@ -1212,7 +1312,7 @@ void WiFiEventHandler(WiFiEvent_t event)  {
 //                           D I S P L A Y   S U P P O R T   -   ESP Only - for now
 //================================================================================================= 
 
-  #if defined ESP32_VARIANT  
+  #if defined DISPLAY_PRESENT  
     void handleDisplayButtons() 
     {
       if (millis() - last_log_millis > 15000) { // after 15 seconds default to flight info screen
@@ -1284,7 +1384,7 @@ void WiFiEventHandler(WiFiEvent_t event)  {
       }   
     }
     //===================================================================  
-    #if defined ESP32_VARIANT       
+    #if defined DISPLAY_PRESENT       
     void setScreenSizeOrient(uint8_t txtsz, uint8_t scr_orient) 
     {
 
@@ -1372,7 +1472,7 @@ void WiFiEventHandler(WiFiEvent_t event)  {
     //===================================
     void logScreenPrintln(String S) 
     {
-    #if defined ESP32_VARIANT   
+    #if defined DISPLAY_PRESENT   
       if (display_mode != logg) 
       {
           SetupLogDisplayStyle();
@@ -1421,7 +1521,7 @@ void WiFiEventHandler(WiFiEvent_t event)  {
    
     void logScreenPrint(String S)
     {
-    #if defined ESP32_VARIANT   
+    #if defined DISPLAY_PRESENT   
     
       if (display_mode != logg) {
           SetupLogDisplayStyle();
@@ -1463,7 +1563,7 @@ void WiFiEventHandler(WiFiEvent_t event)  {
     //===================================
     void logScreenPrintChar(char ch) 
     {
-    #if defined ESP32_VARIANT   
+    #if defined DISPLAY_PRESENT   
 
       if (display_mode != logg) {
           SetupLogDisplayStyle();
@@ -1494,7 +1594,7 @@ void WiFiEventHandler(WiFiEvent_t event)  {
     
     //===================================
     
-    #if defined ESP32_VARIANT 
+    #if defined DISPLAY_PRESENT 
     
     void displayFlightInfo() 
     {
@@ -1757,7 +1857,7 @@ void WiFiEventHandler(WiFiEvent_t event)  {
     #endif    
     
     //===================================
-   #if defined ESP32_VARIANT  
+   #if defined DISPLAY_PRESENT  
     
     void SetupLogDisplayStyle() 
     {
@@ -1802,7 +1902,7 @@ void WiFiEventHandler(WiFiEvent_t event)  {
     }
    #endif
    //===================================
-   #if defined ESP32_VARIANT  
+   #if defined DISPLAY_PRESENT  
     void SetupInfoDisplayStyle()
     {
       setScreenSizeOrient(TEXT_SIZE, SCR_ORIENT);
@@ -1840,7 +1940,7 @@ void WiFiEventHandler(WiFiEvent_t event)  {
      }
     #endif        
     //=================================================================== 
-  #if (defined ESP32_VARIANT) && (defined ILI9341_DISPLAY)
+  #if (defined DISPLAY_PRESENT) && (defined ILI9341_DISPLAY)
     uint32_t draw_horizon(float roll, float pitch, int16_t width, int16_t height) 
     {
       int16_t x0, y0, x1, y1, xc, yc, ycp, lth, tick_lean;

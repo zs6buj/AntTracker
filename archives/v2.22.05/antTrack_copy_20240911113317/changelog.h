@@ -90,7 +90,7 @@ v2.19.7  2022-01-20 Add iNav speed, pitch and roll for HUD
 v2.19.7             Add climb  
 v2.19.8  2022-03-09 Merge Bohan's code for box compass alignment.
                     Arrange Library folders  
-v2.19.9  2022-09-01 Add option macro for NoGenericSerial  
+v2.19.9  2022-09-01 Add option macro for NO_GENERIC_SERIAL  
          2023-04-03 Config.h and binary for tibean    
 v2.19.10 2023-04-06 Refined BOX_COMPASS_ALIGN routine     
                     Fixed "E (2613) gpio" 
@@ -139,5 +139,7 @@ v2.22.01  2024-08-22 Make Stepper midfront position = zero (0 degrees)
                      For steppers, first adjust for and set midfront, then testMotors 
 v2.22.02  2024-08-23 First test version of ESPNOW crsf backpack      
 v2.22.03  2024-09-05 Add support for hashed binding_phrase to soft_mac  
-v2.22.04  2024-09-06 Adopt ELRS terminology e.g UID for hashed_mac. Tidy up and test Backpack.                         
+v2.22.04  2024-09-06 Adopt ELRS terminology e.g UID for hashed_mac. Tidy up and test Backpack. 
+v2.22.05  2024-09-09 Fix eeprom write offset typo         
+               
 */               

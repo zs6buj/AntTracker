@@ -2,7 +2,7 @@
   void CRSF_Receive() 
   {
   #if (MEDIUM_IN  == 1) || (MEDIUM_IN  == 3)     // UART or BT select
-    if (crsf.readCrsfFrame(crsf.frame_lth))  // exposes discovered frame_lth if needed
+    if (crsf.readCrsfFrame(crsf.frame_lth))      // exposes discovered frame_lth if needed
     {
       uint8_t len = crsf.frame_lth;
   #endif
@@ -60,10 +60,11 @@
   #if defined DEBUG_CRSF_BAT        
         log.print("BATTERY id:");
         crsf.printByte(crsf_id, ' ');
-        log.printf("volts:%2.1f", crsf.batF_voltage);
-        log.printf("  amps:%3.1f", crsf.batF_current);
-        log.printf("  Ah_drawn:%3.1f", crsf.batF_fuel_drawn);
-        log.printf("  remaining:%3u%%\n", crsf.bat_remaining);
+        log.print("volts:"); log.println(crsf.batF_voltage, 1);
+        //log.printf("volts:%2.1f", crsf.batF_voltage);
+        //log.printf("  amps:%3.1f", crsf.batF_current);
+        //log.printf("  Ah_drawn:%3.1f", crsf.batF_fuel_drawn);
+       //log.printf("  remaining:%3u%%\n", crsf.bat_remaining);
   #endif 
       }
      

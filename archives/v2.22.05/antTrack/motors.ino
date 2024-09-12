@@ -49,10 +49,9 @@ void moveMotors(uint16_t az, uint16_t el)
     if (el_reversed) log.print("el reversed ");
     log.printf("Servo write az=%u  el=%u\n", az, el);
   #endif
-
   #if defined SERVOS
-    azServo.write(az);       // async non-blocking
-    elServo.write(el);       // async non-blocking
+    azServo.write(az);       // async non-blocking for ESP
+    elServo.write(el);  
   #endif
   #if defined STEPPERS
     azStepper.write(az, 1);  // async non-blocking
@@ -93,34 +92,42 @@ void pointMotors(int16_t worldAz, int16_t ourEl, int16_t boxHdg)
 //=====================================================
 void waitForComplete()
 {   
-  #if defined SERVOS
-    while ((azServo.moving()) || (elServo.moving())) {delay(100);};
-  #endif
-  #if defined STEPPERS
-    while ((azStepper.moving()) || (elStepper.moving())) {delay(100);};
-  #endif
+  #if (defined ESP32) || (defined ESP8266)
+    #if defined SERVOS
+      while ((azServo.moving()) || (elServo.moving())) {delay(100);};
+    #endif
+    #if defined STEPPERS
+      while ((azStepper.moving()) || (elStepper.moving())) {delay(100);};
+    #endif
+  #endif  
 }
 //=====================================================
 void testMotors() {
   delay(1500);
   moveMotors(0, 0);  // az, el asynch no block
-  waitForComplete();
+
+    waitForComplete();
+
   delay(1500);
   moveMotors(90, 0);
   delay(1500);
-  waitForComplete();
+
+    waitForComplete();
+
   delay(1500);
   moveMotors(90, 90);
-  waitForComplete();
+
+    waitForComplete();
+
   delay(1500); 
   moveMotors(90, 180);
   waitForComplete();
   delay(1500);
   moveMotors(90, 0);
-  waitForComplete();  
+  waitForComplete();
   delay(1500);
   moveMotors(180, 0);
-  waitForComplete();  
+  waitForComplete();
   delay(1500);
   moveMotors(azMidFront, elStart);
  /*

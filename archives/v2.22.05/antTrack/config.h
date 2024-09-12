@@ -5,7 +5,7 @@
 
 #define MAJOR_VERSION       2
 #define MINOR_VERSION      22
-#define PATCH_LEVEL         4
+#define PATCH_LEVEL         5
 
 //=============================================================================================
 //================== Please select your options below before compiling ========================
@@ -34,11 +34,11 @@
 //====================  I N P U T   M E D I U M    How does telemetry enter the tracker?
 //=============================================================================================
 // Choose only one input medium 
-//#define MEDIUM_IN  1    // UART (Serial)       
+#define MEDIUM_IN  1    // UART (Serial)   Teensy, STM32F103, ESP8266 and ESP32   
 //#define MEDIUM_IN  2    // WiFi UDP - ESP only
 //#define MEDIUM_IN  3    // Bluetooth Classic - ESP32 only
 //#define MEDIUM_IN  4    // Bluetooth Low Energy (BLE4)- ESP32 only
-#define MEDIUM_IN  5    // ESPNOW
+//#define MEDIUM_IN  5    // ESPNOW - ESP32 only
 
 //=============================================================================================
 //================================  T E L E M E T R Y   P R O T O C O L  ======================
@@ -187,7 +187,6 @@
     const int aStepRev = 1600 * st_gear_ratio;    // 1600 steps per revolution
     std::string s_dir; 
   #endif
-  #include <MobaTools.h>  // should work with Teensy and STM32 - test this
 
 //=============================================================================================
 //================================   W I F I   S E T T I N G S  ===============================  
@@ -228,100 +227,82 @@ uint16_t  udp_send_port = 0;
 //                Don't change anything here
 //
 #if defined (__MK20DX128__) || defined(__MK20DX256__)
-  #define TEENSY3X
-  #define TARGET_BOARD   0      // Teensy 3.1 and 3.2    
-
-
+  #define TEENSY3X    
+  #define TARGET_BOARD   0      // Teensy 3.1 and 3.2  
+#elif defined(__IMXRT1052__) || defined(__IMXRT1062__)
+  #define TEENSY4X  
+  #define TARGET_BOARD   1      // Teensy 4.2   
 // Using official stmicroelectronics lib: https://github.com/stm32duino/BoardManagerFiles/raw/main/package_stmicroelectronics_index.json 
 #elif defined (STM32F1xx)   // in boards.txt / build.variant, like GenF1.menu.pnum.BLUEPILL_F103C8.build.variant=STM32F1xx/F103C8T_F103CB(T-U)
-  #define TARGET_BOARD   1      // Blue Pill STM32F103C8  
-
+  #define TARGET_BOARD   2      // Blue Pill STM32F103C8  
 #elif defined ESP32
   #define TARGET_BOARD   3      // Espressif ESP32 Dev Module
-
 #elif defined ESP8266
   #define TARGET_BOARD   4      // Espressif ESP8266
-  
 #else
   #error "No board type defined!"
 #endif
-
-
-  #if (defined ESP32 || defined ESP8266) && (MEDIUM_IN == 2) 
-    #define wifiBuiltin   //  for this feature we need wifi support compiled in
-  #endif    
-
-  #if (defined ESP32) && (MEDIUM_IN == 3) 
-    #define btBuiltin   //  for this feature we need BT support compiled in
+#if (defined ESP32 || defined ESP8266) && (MEDIUM_IN == 2) 
+  #define wifiBuiltin   //  for this feature we need wifi support compiled in
+#endif    
+#if (defined ESP32) && (MEDIUM_IN == 3) 
+  #define btBuiltin   //  for this feature we need BT support compiled in
+#endif
+#if (defined ESP32) && (MEDIUM_IN == 4)
+  #define bleBuiltin   //  for this feature we need BLEsupport compiled in
+#endif
+#if ( (defined ESP32) && (MEDIUM_IN  == 3) )
+  #if ( (BT_MODE != 1) && (BT_MODE != 2) )
+      #error "Please define a bluetooth mode"
   #endif
-  #if (defined ESP32) && (MEDIUM_IN == 4)
-    #define bleBuiltin   //  for this feature we need BLEsupport compiled in
-  #endif
-
- #if ( (defined ESP32) && (MEDIUM_IN  == 3) )
-   #if ( (BT_MODE != 1) && (BT_MODE != 2) )
-       #error "Please define a bluetooth mode"
-   #endif
- #endif  
-
+#endif  
 
 //=============================================================================================  
 //======================= P L A T F O R M   D E P E N D E N T   S E T U P S ===================
 //=============================================================================================
 
 #if (TARGET_BOARD == 0)           //   (TEENSY3X) 
-  #include <PWMServo.h>     
   #define in_rxPin        0       // rx1 tx1 - Serial1
   #define in_txPin        1
   int8_t boxgps_rxPin =   9;      // rx2 tx2 - Serial2 for tracker box GPS if applicable
   #define boxgps_txPin   10  
-  bool in_invert = true;           // ONLY FOR FrSky S.Port, NOT F.Port, NOT MAVLINK     
+  bool in_invert = true;          // ONLY FOR FrSky S.Port, NOT F.Port, NOT MAVLINK     
   #define frOneWire     true      // ONLY FOR FrSky S.Port
   #define setPin         11
   #define StatusLed      14
   #define azPWM_Pin       5
   #define elPWM_Pin       6
   #define BuiltinLed     13
-  #undef   
+  #define SSD1306_DISPLAY         // Optional OLED display type    
+  /* Below please choose either Touch pin-pair or Digital pin-pair for display scrolling
+    *  Pin == -1 means the pin-pair is not used
+    */ 
   #define SDA            17  // I2C OLED board and/or Compass - default can be changed in Wire.h 
   #define SCL            16  // I2C OLED board and/or Compass - default can be changed in Wire.h 
   //=========================================================================   
   
-#elif (TARGET_BOARD == 1)         // STM32F1xx Blue Pill
-
-
-  #include <Wire.h>
-                         // PA10  // rx1 Serial(0) flash and monitor    
-                         // PA9   // tx1 Serial(0) flash and monitor
-  int8_t in_rxPin =         PA3;  // rx2 Serial1
-  #define in_txPin          PA2   // tx2 Serial1
+#elif (TARGET_BOARD == 2)         // STM32F1xx Blue Pill
+// There are three USART peripherals on the STM32F103, rx1/tx1 (flash, monitor), rx2/tx2, rx3/tx3
+                         // PA10   // rx1 Serial(0) flash and monitor    
+                         // PA9    // tx1 Serial(0) flash and monitor
+  int8_t in_rxPin =         PA3;   // rx2 Serial1
+  #define in_txPin          PA2    // tx2 Serial1
   int8_t boxgps_rxPin =     PB11;  // rx3 Serial2
-  #define boxgps_txPin      PB10   // tx3 Serial2
-  bool in_invert = false;           // ONLY FOR FrSky S.Port, NOT F.Port, NOT MAVLINK    
-  #define setPin        PA5    //PA0    
-  #define StatusLed         PA6  // Off=No good GPS yet, flashing=good GPS but home not set yet, solid = ready to track
-  #define azPWM_Pin         PA7  // azimuth servo 
-  #define elPWM_Pin         PA8  // elevation servo
+  #define boxgps_txPin      -1     // not needed tx3 Serial2
+  bool in_invert = false;          // ONLY FOR FrSky S.Port, NOT F.Port, NOT MAVLINK    
+  #define setPin            PA5    //PA0    
+  #define StatusLed         PA6    // Off=No good GPS yet, flashing=good GPS but home not set yet, solid = ready to track
+  #define azPWM_Pin         PA7    // azimuth servo 
+  #define elPWM_Pin         PA8    // elevation servo
   #define BuiltinLed        PC13  
-  #define SDA               PB7  // I2C OLED board and/or Compass - default can be changed in Wire.h 
-  #define SCL               PB6  // I2C OLED board and/or Compass - default can be changed in Wire.h 
+  //#define SSD1306_DISPLAY          // Optional OLED display type  
+  #define Pup               PA4    // Button 1 to scroll the display up
+  #define Pdn               PA5    // Board Button 2 to scroll the display down   
+  // PIN_WIRE_SDA:2  PIN_WIRE_SCL:3
+  #define SDA               PB11  // I2C OLED board and/or Compass - default can be changed in Wire.h 
+  #define SCL               PB10  // I2C OLED board and/or Compass - default can be changed in Wire.h 
   //=========================================================================  
    
-#elif (TARGET_BOARD == 2)    // Maple Mini
-
-  int8_t in_rxPin =        26;  // rx1 Serial1
-  #define in_txPin         25   // tx1 Serial1
-  int8_t boxgps_rxPin =     8;  // rx2 Serial2
-  #define boxgps_txPin      9   // tx2 Serial2
-   bool in_invert = true;        // ONLY FOR FrSky S.Port, NOT F.Port, NOT MAVLINK    
-  #define setPin        5    
-  #define StatusLed         6   // Off=No good GPS yet, flashing=good GPS but home not set yet, solid = ready to track
-  #define azPWM_Pin         4   // azimuth servo 
-  #define elPWM_Pin         5   // elevation servo  consider pin 10  this pin=rx2 (9=tx2)
-  #define BuiltinLed       33   // PB1   
-  #define SDA              15   // I2C OLED board and/or Compass - default must be changed in Wire.h 
-  #define SCL              16   // I2C OLED board and/or Compass - default must be changed in Wire.h 
-  
 #elif (TARGET_BOARD == 3)         // ESP32 Platform
   // For info: Avoid SPI pins - generally   CS=5    MOSI=23   MISO=19   SCK=18  
   //=========================================================================  
@@ -354,14 +335,13 @@ uint16_t  udp_send_port = 0;
     /* Below please choose either Touch pin-pair or Digital pin-pair for display scrolling
       *  Pin == -1 means the pin-pair is not used
       */ 
-    #define Pup            0        // Board Button 1 to scroll the display up
+    #define Pup            0        // 34 Board Button 1 to scroll the display up
     #define Pdn           35        // Board Button 2 to scroll the display down   
     #define Tup           -1        // Touch pin to scroll the display up
     #define Tdn           -1        // Touch pin to scroll the display down   
         
     #define SDA           21        // I2C OLED board and/or Compass
     #define SCL           22        // I2C OLED board and/or Compass
-    #define display_i2c_addr      0x3C       // I2C OLED board
     /*  
       SPI/CS                       Pin 05   For optional TF/SD Card Adapter
       SPI/MOSI                     Pin 23   For optional TF/SD Card Adapter
@@ -443,7 +423,6 @@ uint16_t  udp_send_port = 0;
  
     #define SDA           21        // I2C TFT board and/or Compass (grey wire)
     #define SCL           22        // I2C TFT board and/or Compass (brown wire)
-    //#define display_i2c_addr      0x3C     
     //#define compass_i2c_addr      0x1E   // 0x1E for HMC5883L   0x0D for QMC5883
   #endif
    //========================================================================= 
@@ -473,7 +452,6 @@ uint16_t  udp_send_port = 0;
      
     #define SDA           13        // I2C OLED board 
     #define SCL           14        // I2C OLED board
-    #define display_i2c_addr      0x3C       // I2C OLED board
   #endif 
   //========================================================================= 
    
@@ -537,14 +515,12 @@ uint16_t  udp_send_port = 0;
     #error Please choose at least one target board
   #endif
 
-  #if (TARGET_BOARD == 0) 
-    //#error Teensy 3.x 
+  #if (TARGET_BOARD == 0) || (TARGET_BOARD == 1)
+    //#error Teensy 3.x/4.x 
   #endif  
 
-  #if (TARGET_BOARD == 1) 
-    #if defined 
-  //   #error STM32F1xx  version does not yet support a display
-    #endif  
+  #if (TARGET_BOARD == 2) // STM32F1xx
+  //   #error STM32F1xx  
   #endif  
 
   #if (WIFI_PROTOCOL == 1)
@@ -590,6 +566,24 @@ uint16_t  udp_send_port = 0;
   #endif 
 
   #if ((not defined ESP32) && (not defined ESP8266))
+    #if (MEDIUM_IN == 2)
+      #error "WiFi UDP requires a ESP32 or ESP8266"
+    #endif
+  #endif
+
+  #if (not defined ESP32) 
+    #if (MEDIUM_IN == 3)
+      #error "Bluetooth requires an ESP32"
+    #endif
+  #endif
+
+  #if (not defined ESP32)
+    #if (MEDIUM_IN == 4)
+      #error "BLE 4.2 requires an ESP32 
+    #endif
+  #endif
+
+  #if ((not defined ESP32) && (not defined ESP8266))
     #if (MEDIUM_IN == 5)
       #error "ESPNOW requires an ESP32 or ESP8266"
     #endif
@@ -600,45 +594,55 @@ uint16_t  udp_send_port = 0;
       #error "Sorry ESPNOW only works with CRSF backpack protocol at present"
     #endif
   #endif
+
+  #if ( (defined SSD1306_DISPLAY) || (defined SSD1331_DISPLAY) || (defined ST7789_DISPLAY) || (defined ILI9341_DISPLAY) )
+    #define DISPLAY_PRESENT
+  #endif  
   //=================================================================================================   
   //==================================   E E P R O M   S U P P O R T  =============================== 
   //================================================================================================= 
 
-  #include <EEPROM.h>
+  #include <EEPROM.h>                        // same lib name for esp, stm32
   const uint8_t home_eeprom_offset = 0;      // ESPNOW uses 7B, 24  thru 30
   const uint8_t espnow_eeprom_offset = 24;   // "home" uses (6 x 4B), 0  thru 23
   //=================================================================================================   
   //==================================   B U T T O N   S U P P O R T  =============================== 
   //=================================================================================================  
   #include <ezButton.h>
+  #if defined DISPLAY_PRESENT
     #if ( (Pup != -1) && (Pdn != -1) ) 
       ezButton upButton(Pup);
       ezButton dnButton(Pdn);
-    #endif   
+    #endif 
+  #endif    
   ezButton setButton(setPin);
   #if defined STEPPERS
     ezButton adjustButton(adjustPin);       // instantiate ezButton objects
   #endif  
   //=================================================================================================   
+  //==================================   M O T O R   S U P P O R T    ===============================  
+  //=================================================================================================  
+    #if defined TEENSY3X            // Teensy 3.2
+      #include <PWMServo.h>     
+    #elif defined STM32F1xx
+      #include <Servo.h>           
+    #elif defined ESP32   
+      #include <MobaTools.h>      
+    #endif
+  //=================================================================================================   
   //==================================  C O M P A S S    S U P P O R T ==============================  
   //=================================================================================================  
   #if (HEADINGSOURCE  == 3) || (HEADINGSOURCE  == 4)     // 3 = TracerBox_Compass 4=Trackerbox_GPS_And_Compass
-    #define Wire_Loaded
+    #define WIRE_LOADED
     #include <Wire.h>
   #endif
   //=================================================================================================   
   //=================================   D I S P L A Y   S U P P O R T  ============================ 
   //=================================================================================================  
 
-  #if defined ESP32_VARIANT
-    #if (!( (defined SSD1306_DISPLAY) || (defined SSD1331_DISPLAY) || (defined ST7789_DISPLAY) || (defined ILI9341_DISPLAY) ))
-      #error please define a display type in your board variant configuration, or disable 
-    #endif   
-
-    #if not defined SD_Libs_Loaded    // by SD block
-      #include <SPI.h>                // for SD card and/or Display
-    #endif  
-    #if not defined Wire_Loaded
+  #if defined DISPLAY_PRESENT
+    #include <SPI.h>                // for Display
+    #if not defined WIRE_LOADED
       #include <Wire.h>
     #endif  
     
@@ -668,8 +672,8 @@ uint16_t  udp_send_port = 0;
       #elif (SCR_ORIENT == 1)         // landscape
         #define TEXT_SIZE     2                       
       #endif 
-      #define SCR_BACKGROUND TFT_BLACK  
-      
+      #define SCR_BACKGROUND        TFT_BLACK  
+      //#define display_i2c_addr      0x3C       // I2C OLED board
     //==========================================================
     
     #elif (defined SSD1306_DISPLAY)    // SSD1306 OLED display     (128 x 64) 
@@ -689,7 +693,8 @@ uint16_t  udp_send_port = 0;
         #define OLED_RESET    -1 // Reset pin # (or -1 if sharing Arduino reset pin)
       #endif  
       Adafruit_SSD1306 display(SCR_H_PX, SCR_W_PX, &Wire, OLED_RESET); // 128, 64
-      #define SCR_BACKGROUND BLACK      
+      #define SCR_BACKGROUND BLACK    
+      #define display_i2c_addr      0x3C       // I2C OLED board
     //==========================================================  
     #elif (defined SSD1331_DISPLAY)    // SSD1331 0.95" TTGO T2 colour TFT display (96 x 64)
       #include <Adafruit_GFX.h>

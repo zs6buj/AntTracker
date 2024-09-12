@@ -1,5 +1,3 @@
-
-
 /*================================================================================================= 
 
     ZS6BUJ's Antenna Tracker
@@ -327,9 +325,12 @@
     #if defined TEENSY3X            // Teensy 3.2
       PWMServo azServo;             // Azimuth
       PWMServo elServo;             // Elevation   
+    #elif defined STM32F1xx
+      Servo azServo;               
+      Servo elServo;                  
     #elif defined ESP32   
-      MoToServo azServo;            // Azimuth
-      MoToServo elServo;            // Elevation
+      MoToServo azServo;            
+      MoToServo elServo;            
     #endif
   #endif
   #if defined STEPPERS
@@ -339,18 +340,17 @@
   //=================================================================================================   
   //                     F O R W A R D    D E C L A R A T I O N S
   //=================================================================================================
-
-  #if (defined ESP32_VARIANT)
+  #if (defined DISPLAY_PRESENT)
     void setScreenSizeOrient(uint8_t, uint8_t);
-    void PaintDisplay(uint8_t, last_row_t);
+    void paintLogScreen(uint8_t, last_row_t);
     void scrollDisplay(scroll_t);
     void SetupLogDisplayStyle();    
     void logScreenPrintln(String S);   
     void logScreenPrint(String S);     
     void displayFlightInfo();
     void handleDisplayButtons();         
-  #endif  
-    
+  #endif
+
   #if (defined ESP32) || (defined ESP8266)   
     void setupWiFi();
     bool NewOutboundTCPClient();  
@@ -435,15 +435,17 @@
   //====================================
   void buttonEvents()
   {
-    #if ( (Pup != -1) && (Pdn != -1) ) 
-      if (upButton.isPressed())
-      {
-        up_button = true;
-      }
-      if(dnButton.isPressed())
-      {
-        scroll_display = true;
-      }
+    #if defined DISPLAY_PRESENT
+      #if ( (Pup != -1) && (Pdn != -1) ) 
+        if (upButton.isPressed())
+        {
+          up_button = true;
+        }
+        if(dnButton.isPressed())
+        {
+          scroll_display = true;
+        }
+      #endif  
     #endif
     #if defined STEPPERS
       if (phase == set_midfront)
@@ -484,14 +486,22 @@
 
 //===========================================================
 void setup() 
-{
+{ 
   log.begin(115200);
   delay(2000);
-  log.println();
-  pgm_path = __FILE__;  // ESP8266 __FILE__ macro returns pgm_name and no path
-  pgm_name = pgm_path.substring(pgm_path.lastIndexOf("\\")+1);  
-  pgm_name = pgm_name.substring(0, pgm_name.lastIndexOf('.'));  // remove the extension
-  log.print("Starting ");  log.println(pgm_name);
+  #if defined ESP32
+    pgm_path = __FILE__;  // ESP8266 __FILE__ macro returns pgm_name and no path
+    pgm_name = pgm_path.substring(pgm_path.lastIndexOf("\\")+1);  
+    pgm_name = pgm_name.substring(0, pgm_name.lastIndexOf('.'));  // remove the extension
+  #elif defined ESP8266  
+    pgm_name = __FILE__;  // ESP8266 __FILE__ macro returns pgm_name and no path
+  #endif
+  log.print("\nStarting ");  
+    #if (defined ESP32) || (defined ESP8266)
+    log.println(pgm_name);
+  #elif defined STM32F1xx
+     log.println("antTrack");  
+  #endif  
   log.printf("Version:%d.%02d.%02d\n", MAJOR_VERSION,  MINOR_VERSION, PATCH_LEVEL);
 
   #if (defined ESP32) && (MEDIUM_IN == 2) && (defined DEBUG_WIFI)
@@ -507,9 +517,8 @@ void setup()
   #endif  
 
 // =======================  S E T U P   E E P R O M   =======================
-
-  #if (defined ESP32) || (defined ESP8266)  
-    #define EEPROM_SIZE 32    // 0 thru 30 used (31B) 
+  #define EEPROM_SIZE 32    // 0 thru 30 used (31B) 
+  #if (defined ESP32) || (defined ESP8266)  // no eeprom setup for stm32f103, teensy(?)
     if (!EEPROM.begin(EEPROM_SIZE)) { // We use 0 thru 4 for "home", and 5 thru 11 for ESPNOW
       log.println("EEPROM failed to initialise"); 
       logScreenPrintln("EEPROM init failed!");
@@ -520,37 +529,39 @@ void setup()
     #endif 
   #endif   
   // =======================  S E T U P   B U T T O N S   =======================
-  #if ( (Pup != -1) && (Pdn != -1) ) 
-    ezButton upButton(Pup);
-    upButton.setDebounceTime(200); // mS
-    ezButton dnButton(Pdn);
-    dnButton.setDebounceTime(200); 
-  #endif   
+  #if defined DISPLAY_PRESENT
+    #if ( (Pup != -1) && (Pdn != -1) ) 
+      ezButton upButton(Pup);
+      upButton.setDebounceTime(200); // mS
+      ezButton dnButton(Pdn);
+      dnButton.setDebounceTime(200); 
+    #endif   
+  #endif  
   ezButton setButton(setPin);
   setButton.setDebounceTime(200); // mS
   #if defined STEPPERS
     ezButton adjustButton(adjustPin);
-    adjustButton.setDebounceTime(200);  
+    adjustButton.setDebounceTime(2000);  
   #endif  
   // ======================== Setup I2C ==============================
-  #if (( defined ESP32 ) || (defined ESP8266) )
-    #if ((defined ESP32_VARIANT) && (defined SSD1306_DISPLAY) )   // SSD1306 display
+  #if (defined SSD1306_DISPLAY) ||  (HEADINGSOURCE == 3) || (HEADINGSOURCE == 4)
+    #define NEED_I2C
+  #endif
+  #if (( defined ESP32 ) || (defined ESP8266) || (defined STM32F1xx))
+    #if (defined NEED_I2C)   
       log.printf("Setting up Wire I2C: SDA:%u, SCL:%u\n", SDA, SCL); 
       Wire.begin(SDA, SCL);  
-    #elif ( (HEADINGSOURCE == 3) || (HEADINGSOURCE == 4) )        // Compass
-      log.printf("Setting up wire I2C   SDA:%u  SCL:%u\n", SDA, SCL); 
-      Wire.begin(SDA, SCL); 
-      scanI2C(); 
+      //scanI2C(); 
     #endif
-  #else
-    #if ( (defined ) || (HEADINGSOURCE == 3) || (HEADINGSOURCE == 4) )
+  #else  // Teensy
+    #if (NEED_I2C)
       log.println("Default I2C pins are defined in Wire.h");
     #endif
   #endif  
   //=================================================================================================   
   //                                   S E T U P   D I S P L A Y
   //=================================================================================================
-  #if (defined ESP32_VARIANT) 
+  #if (defined DISPLAY_PRESENT) 
     #if (defined ESP32)
       if ( (Tup != -1) && (Tdn != -1) ) 
       {   // enable touch pin-pair
@@ -564,8 +575,7 @@ void setup()
       #define SCR_BACKGROUND TFT_BLACK
       
     #elif (defined SSD1306_DISPLAY)            // all  boards with SSD1306 OLED display (128 x 64)
-      #if not defined TEENSY3X                 // Teensy uses default SCA and SCL in teensy "pins_arduino.h"
-         Wire.begin(SDA, SCL);  
+      #if not defined TEENSY3X                 // Teensy uses default SCA and SCL in teensy "pins_arduino.h" 
       #endif   
       display.begin(SSD1306_SWITCHCAPVCC, display_i2c_addr);         
       #define SCR_BACKGROUND BLACK   
@@ -614,10 +624,10 @@ void setup()
   #if (defined TEENSY3X) // Teensy3x
     log.println("Teensy 3.x");
     logScreenPrintln("Teensy 3.x");
-
+  #elif (defined TEENSY4X)
+    log.println("Teensy 4.x");  
   #elif (defined STM32F1xx)
     log.println("STM32F1xx");  
-        
   #elif (defined ESP32) //  ESP32 Board
   delay(10);
     log.print("ESP32/Variant is ");
@@ -656,12 +666,12 @@ void setup()
     logScreenPrintln("UART Telem In");
   #endif  
 
-  #if (MEDIUM_IN  == 2)  // Generic UDP - ESP only
+  #if (MEDIUM_IN  == 2)  // UDP - ESP only
     log.println("Expecting UDP In");
     logScreenPrintln("UDP In");
   #endif  
 
-  #if (MEDIUM_IN == 3)  // Generic Bluetooth Serial - ESP32 only
+  #if (MEDIUM_IN == 3)  // Bluetooth Serial - ESP32 only
     log.println("Expecting Bluetooth In");
     logScreenPrintln("Expect BT In");
   #endif  
@@ -739,21 +749,27 @@ void setup()
   log.printf("midFront is assumed to be %u deg\n", azMidFront); 
   #if defined SERVOS
     azServo.attach(azPWM_Pin); 
-    azServo.setSpeed(SERVO_SPEED);   
     elServo.attach(elPWM_Pin); 
-    elServo.setSpeed(SERVO_SPEED); 
+    #if (defined ESP32) || (defined ESP8266)
+      azServo.setSpeed(SERVO_SPEED);   
+      elServo.setSpeed(SERVO_SPEED); 
+    #endif  
+  
     phase = set_home;
     log.println("Starting set_home phase");
+    delay(100);
     logScreenPrintln("Set_home phase");
-    if (SERVO_SPEED > 0) 
-    {
-      log.printf("Servo speed is %u\n", SERVO_SPEED);       
-    } else
-    {
-      log.println("Servo speed is default");
-    }
+    #if (defined ESP32) || (defined ESP8266)
+      if (SERVO_SPEED > 0) 
+      {
+        log.printf("Servo speed is %u\n", SERVO_SPEED);       
+      } else
+      {
+        log.println("Servo speed is default");
+      }
+    #endif  
   #endif
-  #if defined STEPPERS
+  #if (defined STEPPERS) && ((defined ESP32) || (defined ESP8266))
     azStepper.attach(azStepPin, azDirPin);
     azStepper.setSpeedSteps((st_speed * 1e4),  (uint32_t)(aStepRev * st_ramp_ratio)); // speed10== steps in 10s, ramp
     //azStepper.attachEnable(azEnaPin, 200, LOW ); // (pinEna, delay ms before start, active hi or low);
@@ -767,7 +783,7 @@ void setup()
   // ======================== Setup Bluetooth Serial ==========================    
   #if defined ESP32
     #if (MEDIUM_IN == 3)  // Bluetooth Serial
-      if (!btSuGood)  // not already set up by auto protocol detect
+      if (!btSuGood)      // not already set up by auto protocol detect
       {
         #if (BT_MODE == 1)     // 1 master mode, connect to slave name
           log.printf("Bluetooth master mode, looking for slave name \"%s\"\n", BT_Slave_Name);          
@@ -965,7 +981,7 @@ void setup()
       #endif // end of MEDIUM_IN == 1 UART
 
       // ======================== Optionally Detect Protocol ==============================
-      #if (MEDIUM_IN ==1) || (MEDIUM_IN == 3) || (MEDIUM_IN == 4)// UART or BT or BLE 4.2
+      #if (MEDIUM_IN == 1) || (MEDIUM_IN == 3) || (MEDIUM_IN == 4)// UART or BT or BLE 4.2
 
         protocol = detectProtocol(inBaud);
         switch(protocol) { 
@@ -1032,14 +1048,9 @@ void setup()
     #if (MEDIUM_IN == 1)
       delay(100);
       inSerial.begin(inBaud, SERIAL_8N1, in_rxPin, in_txPin, in_invert); 
-      log.printf("inSerial baud:%u  rxPin:%u  txPin:%u  invert:%u\n", inBaud, in_rxPin, in_txPin, in_invert);
-      logScreenPrint("UART in ok, baud:");  logScreenPrintln(String(inBaud)); 
-      delay(50); 
-      #if (PROTOCOL == 9)  // CRSF 
-        crsf.initialise(inSerial);  // initialise pointer to Stream &port     
-      #endif       
+      log.printf("inSerial baud:%u  rxPin:%d  txPin:%d  invert:%u\n", inBaud, in_rxPin, in_txPin, in_invert);
+      logScreenPrint("UART in ok, baud:");  logScreenPrintln(String(inBaud));     
     #endif
-   
   #elif (defined TEENSY3X) 
     inSerial.begin(inBaud); // Teensy 3.x    rx tx pins hard wired
       if (in_invert) {          // For S.Port not F.Port
@@ -1051,8 +1062,15 @@ void setup()
       #endif    
   #elif (defined STM32F1xx) 
     inSerial.begin(inBaud);
+    log.printf("inSerial baud:%u\n", inBaud);
+    //logScreenPrintln("UARTin baud:");  
+    //logScreenPrintln(String(inBaud));  
   #endif   
-
+  delay(50); 
+  #if (PROTOCOL == 9)  // CRSF 
+    crsf.initialise(inSerial);  // initialise pointer to Stream &port    
+    log.println("CRSF initialised");
+  #endif   
   // ================================  Setup WiFi  ====================================
   #if (defined ESP32)  || (defined ESP8266)
     #if (MEDIUM_IN == 2)  //  WiFi
@@ -1065,6 +1083,8 @@ void setup()
     log.println("Please use adjust button then set midFront position");
     logScreenPrintln("Adjust midfront pos");
   #endif
+  log.println("Waiting for input telemetry");
+  logScreenPrint("Waiting for telem"); 
 } // end of setup()
 //===========================================================================================
 //===========================================================================================
@@ -1112,10 +1132,13 @@ void setup()
 //===========================================================================================
 //===========================================================================================
 void loop() 
-{       
+{     
+  //log.print(".");
+  #if defined DISPLAY_PRESENT
+    upButton.loop();
+    dnButton.loop();
+  #endif
   setButton.loop();
-  upButton.loop();
-  dnButton.loop();
   #if defined STEPPERS
     adjustButton.loop(); 
   #endif  
@@ -1132,7 +1155,6 @@ void loop()
     #endif 
     moveMotors(azMidFront, elStart);   // Move Motors to "midfront/start position
   }
-
   checkStatusAndTimeouts();          // and service status LED
 
   #if (MEDiUM_IN == 2)              // WiFi
@@ -1267,7 +1289,7 @@ void loop()
   #endif
   */
   //====================  Check For Display Button Touch / Press
-  #if defined ESP32_VARIANT
+  #if defined DISPLAY_PRESENT
     handleDisplayButtons();
   #endif   
   //==================== Data Streaming Option

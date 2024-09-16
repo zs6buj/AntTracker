@@ -151,7 +151,8 @@
     typedef enum polarity_set { idle_low = 0, idle_high = 1, no_traffic = 2 } pol_t;
     typedef enum phase_set {set_midfront = 0, set_home = 1, set_done = 3} phase_t;
     phase_t phase;
-    typedef enum BOX_COMPASS_ALIGN 
+
+    enum BOX_COMPASS_ALIGN 
     {
       ALIGN_DEFAULT = 0,
       CW0_DEG = 1,
@@ -331,7 +332,7 @@
     #elif defined STM32F1xx
       Servo azServo;               
       Servo elServo;                  
-    #elif defined ESP32   
+    #elif (defined ESP32) || (defined ESP8266)   
       MoToServo azServo;            
       MoToServo elServo;            
     #endif
@@ -521,16 +522,19 @@ void setup()
 
 // =======================  S E T U P   E E P R O M   =======================
   #define EEPROM_SIZE 32    // 0 thru 30 used (31B) 
-  #if (defined ESP32) || (defined ESP8266)  // no eeprom setup for stm32f103, teensy(?)
-    if (!EEPROM.begin(EEPROM_SIZE)) { // We use 0 thru 4 for "home", and 5 thru 11 for ESPNOW
+  #if (defined ESP32)   // no eeprom setup for stm32f103, teensy(?)
+      if (!EEPROM.begin(EEPROM_SIZE)) { // We use 0 thru 4 for "home", and 5 thru 11 for ESPNOW
       log.println("EEPROM failed to initialise"); 
       logScreenPrintln("EEPROM init failed!");
       while (true) delay(1000);
     }
+  #elif defined ESP8266
+    EEPROM.begin(EEPROM_SIZE);
+  #endif  
     #if defined DEBUG_EEPROM
       displayEEPROM(); 
     #endif 
-  #endif   
+
   // =======================  S E T U P   B U T T O N S   =======================
   #if defined DISPLAY_PRESENT
     #if ( (Pup != -1) && (Pdn != -1) ) 
@@ -567,7 +571,7 @@ void setup()
   #if (defined DISPLAY_PRESENT) 
     #if (defined ESP32)
       if ( (Tup != -1) && (Tdn != -1) ) 
-      {   // enable touch pin-pair
+      {   // enable touch gpio-pair
         touchAttachInterrupt(digitalPinToInterrupt(Tup), gotButtonUp, threshold);
         touchAttachInterrupt(digitalPinToInterrupt(Tdn), gotButtonDn, threshold);   
       } 
@@ -658,7 +662,7 @@ void setup()
   #elif (defined ESP8266) 
     log.print("ESP8266 / Variant is ");
     logScreenPrintln("ESP8266 / Variant is");  
-    #if (ESP8266_Variant == 1)
+    #if (ESP8266_VARIANT == 1)
       log.println("Lonlin Node MCU 12F");
       logScreenPrintln("Node MCU 12");
     #endif      (MEDIUM_IN == 1)
@@ -799,7 +803,7 @@ void setup()
         #endif 
         bt_connected = inSerial.connect(BT_Slave_Name);
         while(!bt_connected) {
-          log.print("midFront is "); log.print(azMidFront); log.println("degrees");.";
+          log.print("midFront is "); log.print(azMidFront); log.println("degrees");
           logScreenPrintChar('.');  
           delay(1000);
           bt_connected = inSerial.connect(BT_Slave_Name);       
@@ -847,7 +851,7 @@ void setup()
         while(1) delay(1000);  
       }
       uint8_t offset = espnow_eeprom_offset;  // ==24, "home" uses 0 thru 19
-      have_eeprom_mac = EEPROM.readByte(offset);
+      have_eeprom_mac = EEPROMreadByte(offset);
       //if (have_eeprom_mac != 0xfd) for future
       //{
       //  log.println("No valid soft_mac in eeprom");
@@ -886,14 +890,18 @@ void setup()
       String s_baud=String(boxgpsBaud);   // integer to string. "String" overloaded
       logScreenPrintln("Box GPS at "+ s_baud);
       delay(100);
-      boxgpsSerial.begin(boxgpsBaud, SERIAL_8N1, boxgps_rxPin, boxgps_txPin); //GPS on Serial2
+      #ifdef SWSERIAL_INCLUDED
+        boxgpsSerial.begin(boxgpsBaud);
+      #else
+        boxgpsSerial.begin(boxgpsBaud, SERIAL_8N1, boxgps_rxPin, boxgps_txPin); //GPS on Serial2
+      #endif  
       delay(10);
     #else
       boxgpsSerial.begin(boxgpsBaud);                                   // GPS on default Serial2 (UART3)
     #endif 
   #endif // end of Tracker box  
   
-  // ======================== S e t u p   U A R T   S e r i a l ==============================
+  // ==================    S e t u p   U A R T   S e r i a l   ==============
   #if (MEDIUM_IN == 1)    //UART
     #if (PROTOCOL == 1)   // Mavlink 1
       in_invert = false;
@@ -944,7 +952,7 @@ void setup()
         while ( (pol == no_traffic) && (cdown) )
         {
           if (ftp) {
-            log.printf("No telem on rx pin:%d. Retrying ", in_rxPin);
+            log.printf("No telem on rx gpio:%d. Retrying ", in_rxPin);
             String s_in_rxPin=String(in_rxPin);   // integer to string
             logScreenPrintln("No telem on rxpin:"+ s_in_rxPin); 
             ftp = false;
@@ -964,10 +972,10 @@ void setup()
           if (pol == idle_low) 
           {
             in_invert = true;
-            log.printf("Serial port rx pin %d is IDLE_LOW, inverting rx polarity\n", in_rxPin);
+            log.printf("Serial port rx gpio %d is IDLE_LOW, inverting rx polarity\n", in_rxPin);
           } else {
             in_invert = false;
-            log.printf("Serial port rx pin %d is IDLE_HIGH, regular rx polarity retained\n", in_rxPin);     
+            log.printf("Serial port rx gpio %d is IDLE_HIGH, regular rx polarity retained\n", in_rxPin);     
           }  
 
           // Determine Baud ===========================================
@@ -1046,46 +1054,51 @@ void setup()
       #endif // end of protocol selection 
 
   #endif // end of AUTO PROTOCOL == 0
-
-  #if ( (defined ESP8266) || (defined ESP32) )
-    #if (MEDIUM_IN == 1)
-      delay(100);
-      inSerial.begin(inBaud, SERIAL_8N1, in_rxPin, in_txPin, in_invert); 
-      log.printf("inSerial baud:%u  rxPin:%d  txPin:%d  invert:%u\n", inBaud, in_rxPin, in_txPin, in_invert);
-      logScreenPrint("UART in ok, baud:");  logScreenPrintln(String(inBaud));     
-    #endif
-  #elif (defined TEENSY3X) 
-    inSerial.begin(inBaud); // Teensy 3.x    rx tx pins hard wired
-      if (in_invert) {          // For S.Port not F.Port
-        UART0_C3 = 0x10;       // Invert Serial1 Tx levels
-        UART0_S2 = 0x10;       // Invert Serial1 Rx levels;       
-      }
-      #if (defined frOneWire )  // default
-        UART0_C1 = 0xA0;        // Switch Serial1 to single wire (half-duplex) mode  
-      #endif    
-  #elif (defined STM32F1xx) 
-    inSerial.begin(inBaud);
-    log.printf("inSerial baud:%u\n", inBaud);
-    //logScreenPrintln("UARTin baud:");  
-    //logScreenPrintln(String(inBaud));  
-  #endif   
-  delay(50); 
-  #if (PROTOCOL == 9)  // CRSF 
-    crsf.initialise(inSerial);  // initialise pointer to Stream &port    
-    log.println("CRSF initialised");
-  #endif   
+//========================  S e t u p   U A R T ==============================
+  #if (MEDIUM_IN == 1)
+    delay(100);
+    #if (defined ESP32) 
+        inSerial.begin(inBaud, SERIAL_8N1, in_rxPin, in_txPin, in_invert); 
+        log.printf("inSerial baud:%u  rxPin:%d  txPin:%d  invert:%u\n", inBaud, in_rxPin, in_txPin, in_invert);
+        logScreenPrint("UART_in ok, baud:");  logScreenPrintln(String(inBaud));     
+    #elif (defined ESP8266)
+      inSerial.begin(inBaud);
+      log.printf("Softwareserial: inSerial baud:%u\n", inBaud);
+      logScreenPrint("Serial_in ok, baud:");  logScreenPrintln(String(inBaud));    
+    #elif (defined TEENSY3X) 
+      inSerial.begin(inBaud); // Teensy 3.x    rx tx pins hard wired
+        if (in_invert) {          // For S.Port not F.Port
+          UART0_C3 = 0x10;       // Invert Serial1 Tx levels
+          UART0_S2 = 0x10;       // Invert Serial1 Rx levels;       
+        }
+        #if (defined frOneWire )  // default
+          UART0_C1 = 0xA0;        // Switch Serial1 to single wire (half-duplex) mode  
+        #endif    
+    #elif (defined STM32F1xx) 
+      inSerial.begin(inBaud);
+      log.printf("inSerial baud:%u\n", inBaud);
+      //logScreenPrintln("UARTin baud:");  
+      //logScreenPrintln(String(inBaud));  
+    #endif   
+    delay(50); 
+    #if (PROTOCOL == 9)  // CRSF 
+      crsf.initialise(inSerial);  // initialise pointer to Stream &port    
+      log.println("CRSF initialised");
+    #endif   
+  #endif  
   // ================================  Setup WiFi  ====================================
   #if (defined ESP32)  || (defined ESP8266)
     #if (MEDIUM_IN == 2)  //  WiFi
       setupWiFi();    
     #endif  
   #endif   
-
  //===========================================================================================
+
   #if defined STEPPERS
     log.println("Please use adjust button then set midFront position");
     logScreenPrintln("Adjust midfront pos");
   #endif
+
   log.println("Waiting for input telemetry");
   logScreenPrintln("Waiting for telem"); 
 } // end of setup()
@@ -1314,9 +1327,9 @@ void loop()
 
   //       D Y N A M I C   H O M E   L O C A T I O N
   //log.printf("HEADINGSOURCE:%u  hbG:%u  gpsG:%u  boxgpsG:%u  PacketG:%u  new_GPS_data:%u  new_boxGPS_data:%u \n", 
-  //         HEADINGSOURCE, hbGood, gpsGood, boxgpsGood, PacketGood(), new_GPS_data, new_boxGPS_data);          
+  //         HEADINGSOURCE, telemGood, gpsGood, boxgpsGood, PacketGood(), new_GPS_data, new_boxGPS_data);          
   #if (HEADINGSOURCE == 4)        // Trackerbox_GPS_And_Compass - possible moving home location
-      if (hbGood && gpsGood && boxgpsGood && PacketGood() && new_GPS_data && new_boxGPS_data) 
+      if (telemGood && gpsGood && boxgpsGood && PacketGood() && new_GPS_data && new_boxGPS_data) 
       {  //  every time there is new GPS data 
         static bool first_dynamic_home = true;
         new_boxGPS_data = false; 
@@ -1371,43 +1384,45 @@ void loop()
         }  // end of check for button push  
 
       } else  // end of heading source == FC GPS
-
-      if ( ((headingsource == 2) && (hdgGood)) || ( ((headingsource == 3) || (headingsource == 4)) && (boxhdgGood) ) ) 
-      {  // if FC compass or Trackerbox compass 
+      {
         bool sh_armFlag = false;
         #if defined SET_HOME_AT_ARM_TIME  
           sh_armFlag = true;
         #endif
-        
-        //log.printf("sh_armFlag:%u  motArmed:%u  gpsfixGood:%u  ft:%u  hbp:%u\n", sh_armFlag, motArmed, gpsfixGood, ft, homeButtonPushed());              
-        if (sh_armFlag) // if set home at arm time
-        {                    
-          if ( motArmed && gpsfixGood ) 
-          { 
-            finalStoreHome();         // if motors armed for the first time, and good GPS fix, then mark this spot as home
-          } 
-        } else                        // if not set home at arm time 
-        if (gpsfixGood) 
-        {                                  
-          static bool ft = true;                         
-          if (ft) 
-          {
-            ft=false;           
-            log.printf("GPS lock good! Push set-home button (pin:%d) anytime to start tracking \n", setPin);  
-            logScreenPrintln("GPS lock good! Push");
-            logScreenPrintln("home button");        
-          } else 
-          {
-            if ((setButton.isPressed()) && (phase == set_home))
+        //log.printf("headingsource:%u  hdgGood:%u sh_armFlag:%u\n", headingsource, hdgGood, sh_armFlag);
+        if ( ((headingsource == 2) && (hdgGood)) || ( ((headingsource == 3) || (headingsource == 4)) && (boxhdgGood) ) ) 
+        {  // if FC compass or Trackerbox compass 
+
+          //log.printf("sh_armFlag:%u  motArmed:%u  gpsfixGood:%u  ft:%u  hbp:%u\n", sh_armFlag, motArmed, gpsfixGood, ft, homeButtonPushed());              
+          if (sh_armFlag) // if set home at arm time
+          {                    
+            if ( motArmed && gpsfixGood ) 
+            { 
+              finalStoreHome();         // if motors armed for the first time, and good GPS fix, then mark this spot as home
+            } 
+          } else                        // if not set home at arm time 
+          if (gpsfixGood) 
+          {                                  
+            static bool ft = true;                         
+            if (ft) 
             {
-              finalStoreHome(); 
-              phase == set_done; 
-              log.print("Ending set-home phase" );    
-              logScreenPrintln("Set_home phase end");                 
-            }  
-          }
-        }      
-      } 
+              ft=false;           
+              log.printf("GPS lock good! Push set-home button (gpio:%d) anytime to start tracking *************\n", setPin);  
+              logScreenPrintln("GPS lock good! Push");
+              logScreenPrintln("home button");        
+            } else 
+            {
+              if ((setButton.isPressed()) && (phase == set_home))
+              {
+                finalStoreHome(); 
+                phase == set_done; 
+                log.println("Ending set-home phase" );    
+                logScreenPrintln("Set_home phase end");                 
+              }  
+            }
+          }      
+        } 
+      }
     } // final home already stored
     #endif   // end of static home
   
@@ -1415,7 +1430,7 @@ void loop()
     //=======================>
     if (finalHomeStored) 
     {
-      if (hbGood && gpsGood && PacketGood() && new_GPS_data) 
+      if (telemGood && gpsGood && PacketGood() && new_GPS_data) 
       {  //  every time there is new GPS data 
         getAzEl(hom, cur);
         if ( (hc_vector.dist >= minDist) || ((int)cur.alt_ag >= minAltAg) ) 

@@ -141,6 +141,7 @@ v2.22.02  2024-08-23 First test version of ESPNOW crsf backpack
 v2.22.03  2024-09-05 Add support for hashed binding_phrase to soft_mac  
 v2.22.04  2024-09-06 Adopt ELRS terminology e.g UID for hashed_mac. Tidy up and test Backpack. 
 v2.22.05  2024-09-09 Fix eeprom write offset typo    
-v2.22.06  2024-09-12 STM32F103 supported, including display     
+v2.22.06  2024-09-12 STM32F103 supported, including display   
+V2.22.07  2022-09-16 Ongoing development. Add full support for ESP8266  
                
 */               

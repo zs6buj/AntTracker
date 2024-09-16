@@ -206,8 +206,7 @@ void Mavlink_Receive()
           ap_base_mode = mavlink_msg_heartbeat_get_base_mode(&msg);
           ap_custom_mode = mavlink_msg_heartbeat_get_custom_mode(&msg);
           ap_system_status = mavlink_msg_heartbeat_get_system_status(&msg);
-          ap_mavlink_version = mavlink_msg_heartbeat_get_mavlink_version(&msg);
-          hbGood_millis = millis();    
+          ap_mavlink_version = mavlink_msg_heartbeat_get_mavlink_version(&msg);   
 
           motArmed = ap_base_mode >> 7;  // motors armed!
                     

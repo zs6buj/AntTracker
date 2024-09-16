@@ -26,7 +26,6 @@
       {
         if (inGPS.location.isValid())  
         {
-          hbGood = true;
           cur.lat = inGPS.location.lat();
           cur.lon = inGPS.location.lng();
           cur.alt = inGPS.altitude.meters();
@@ -38,8 +37,7 @@
           if (inGPS.satellites.isValid()) sats = inGPS.satellites.value();
           gpsGood = (sats >= 8);       // or maybe hdop < 2.0
           new_GPS_data = true;
-          gpsGood_millis = millis();     // Time of last good GPS packet
-          hbGood_millis= millis();       // good GPS data is equivalent to a mavlink heartbeat      
+          gpsGood_millis = millis();     // Time of last good GPS packet     
           got_data = true;
         }
         

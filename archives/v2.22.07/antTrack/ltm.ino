@@ -30,8 +30,6 @@ tryAgain:
   chr = nextByte();                 // start2 should be 0x54 
   if (!chr==0x54) goto tryAgain;   // otherwise reject the start signals
   inBuf[1] = chr;
-  hbGood=true; 
-  hbGood_millis = millis();
   chr = nextByte();    // Packet type
   inBuf[2] = chr;
   switch (chr) {

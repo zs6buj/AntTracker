@@ -10,7 +10,7 @@
 //#define DEBUG_BAUD
 //#define DEBUG_AZEL
 //#define DEBUG_MOTORS 
-//#define DEBUG_LEDs
+#define DEBUG_LEDS
 
 //#define DEBUG_BOXCOMPASS   
 
@@ -54,9 +54,9 @@
 //#define DEBUG_ESPNOW
 //#define DEBUG_CRSF_BUF
 #define DEBUG_CRSF_GPS
-#define DEBUG_CRSF_BAT
-#define DEBUG_CRSF_ATTI
-#define DEBUG_CRSF_FLIGHT_MODE
+//#define DEBUG_CRSF_BAT
+//#define DEBUG_CRSF_ATTI
+//#define DEBUG_CRSF_FLIGHT_MODE
 //#define DEBUG_GOODFLAGS  // includes all the goodFlags
 #define SHOW_BAD_PACKETS // resonability test
 

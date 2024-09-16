@@ -1104,10 +1104,9 @@
               #endif
               break;                   
         }
-        gpsGood = hbGood = gpsfixGood & lonGood & latGood & altGood;    
+        gpsGood = telemGood = gpsfixGood & lonGood & latGood & altGood;    
 
         if (gpsGood) gpsGood_millis = millis();     // Time of last good GPS packet 
-        hbGood_millis= millis();                    // good GPS data is equivalent to a mavlink heartbeat
         
         #if defined DEBUG_GOODFLAGS
           log.printf("gpsGood:%u  gpsfixGood:%u  lonGood:%u  latGood:%u  altGood:%u  hdgGood:%u  boxhdgGood:%u \n", gpsGood, gpsfixGood, lonGood, latGood, altGood, hdgGood, boxhdgGood);           

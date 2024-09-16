@@ -133,11 +133,7 @@
     {
       log.println("eepromToMac()");
       uint8_t offset = espnow_eeprom_offset;  // ==24, "home" uses 0 thru 19
-      #if (defined ESP32) || (defined ESP8266)
-        have_eeprom_mac = EEPROM.readByte(offset);
-      #else //stm32, teensy
-        have_eeprom_mac = EEPROM.read(offset); // assumes byte
-      #endif
+      have_eeprom_mac = EEPROMreadByte(offset);
       if (have_eeprom_mac != 0xfd)
       {
         log.println("No soft_mac in eeprom");
@@ -146,11 +142,7 @@
       offset += sizeof(byte);
       for (auto i = 0; i < 6; i++)
       {
-        #if (defined ESP32) || (defined ESP8266)
-          _mac[i] = EEPROM.readByte(offset);
-        #else //stm32, teensy
-          _mac[i] = EEPROM.read(offset); // assumes byte
-        #endif
+      _mac[i] = EEPROMreadByte(offset);
         //log.printf("%u:%u,", offset, _mac[i]);    
         offset += sizeof(byte);
       }
@@ -163,20 +155,12 @@
       log.println("macToEeprom()");
       uint8_t offset = espnow_eeprom_offset;  // ==24, "home" uses 0 thru 19
       have_eeprom_mac = 0xfd;
-      #if (defined ESP32) || (defined ESP8266)
-        EEPROM.writeByte(offset, have_eeprom_mac);
-      #else //stm32, teensy
-        EEPROM.write(offset, have_eeprom_mac);
-      #endif  
+      EEPROMwriteByte(offset, have_eeprom_mac);
       //log.printf("eeprom[%u]:%2x\n", offset, have_eeprom_mac);
       offset += sizeof(have_eeprom_mac);
       for (auto i = 0; i < 6; i++)
       {
-        #if (defined ESP32) || (defined ESP8266)
-          EEPROM.writeByte(offset, addr[i]);
-        #else //stm32, teensy
-          EEPROM.write(offset, addr[i]); // assumes byte
-        #endif   
+        EEPROMwriteByte(offset, addr[i]);
         //log.printf("%u:%u,", offset, addr[i]);    
         offset += sizeof(byte);
       }
@@ -308,7 +292,6 @@
       iLth = getNextPacket();
     }  
     // Data is available
-    hbGood = 1;                     // We have a good connection!
     #if (MEDIUM_IN == 1) ||  ((defined btBuiltin) &&  (MEDIUM_IN == 3))       //   UART or BT
       b = inSerial.read();
     #endif  
@@ -633,51 +616,81 @@
   return true;
   }
 //===========================================================================================
-void blinkLED(uint16_t period) 
-{
+void blinkLED(uint16_t period)
+{ 
   uint32_t cMillis = millis();
-     if (cMillis - millisLED >= period) {    // blink period
-        millisLED = cMillis;
-        if (ledState == LOW) {
-          ledState = HIGH; }   
-        else {
-          ledState = LOW;  } 
-      }
+  if (cMillis - millisLED >= period) 
+  {    // blink period
+    millisLED = cMillis;
+    if (ledState == LOW) 
+    {
+      ledState = HIGH; 
+    } else 
+    {
+      ledState = LOW;  
+    }
+  }
 }  
 //===========================================================================================
 void serviceTheStatusLed() 
 {
-  #ifdef DEBUG_LEDs
-    log.print("hbGood = ");
-    log.print(hbGood);
-    log.print("   gpsGood = ");
-    log.print(gpsGood);
-    log.print("   boxgpsGood = ");
-    log.print(boxgpsGood);   
-    log.print("   boxmagGood = ");
-    log.print(boxmagGood);       
-    log.print("   finalHomeStored = ");
-    log.println(finalHomeStored);
+  #ifdef DEBUG_LEDS
+    static bool telemPrev = false;
+    static bool gpsPrev = false;   
+    static bool boxgpsPrev = false;
+    static bool finalHomePrev = false;
+    bool linefeed = false;  
+    if (telemGood != telemPrev)
+    {
+      log.printf("telemGood:%u  ", telemGood);
+      telemPrev = telemGood;
+      linefeed = true;
+    } 
+    if (gpsGood != gpsPrev)
+    {
+      log.printf("gpsGood:%u  ", gpsGood);
+      gpsPrev = gpsGood;
+      linefeed = true;  
+    } 
+    if (boxgpsGood != boxgpsPrev)
+    {
+      log.printf("boxgpsGood:%u  ", boxgpsGood);
+      boxgpsPrev = boxgpsGood;
+      linefeed = true;  
+    } 
+    if (finalHomeStored != finalHomePrev)
+    {
+      log.printf("finalHomeStored:%u  ", finalHomeStored);
+      finalHomePrev = finalHomeStored;
+      linefeed = true;  
+    } 
+    if(linefeed) log.println();
+    linefeed = false;
  #endif
-  if (gpsGood) {
+  if (gpsGood) 
+  {
     if ( (finalHomeStored) || ( (boxgpsGood) && boxmagGood) )
       ledState = HIGH;
     else 
       blinkLED(500);
-    }
-  else 
-     if (hbGood) 
+  } else 
+  {
+    if (telemGood) 
        blinkLED(1300);
      else
        ledState = LOW;
     if (StatusLed != -1)
     {
+      #if defined INVERT_LED
+        ledState = (ledState == LOW) ? HIGH : LOW; // ternary
+      #endif
       digitalWrite(StatusLed, ledState);     
     }
     if (BuiltinLed != -1)
     {    
     digitalWrite(BuiltinLed, ledState);
     }
+  }
 }
   //=================================================================================================  
   void checkStatusAndTimeouts() 
@@ -833,15 +846,10 @@ void lostPowerCheckAndRestore(uint32_t epoch_now)
 }
 //================================================================================================= 
 void displayEEPROM() {
-  log.println("EEPROM:");
-
-   for (int i = 0; i < EEPROM_SIZE; i++) {
-    printByte(EEPROM.read(i)); log.print(" ");
-  }
-  log.println();
-
-  for (int i = 0; i < EEPROM_SIZE; i++) {
-    log.print(byte(EEPROM.read(i))); log.print(" ");
+  log.print("EEPROM:");
+  for (int i = 0; i < EEPROM_SIZE; i++) 
+  {
+    printByte(EEPROMreadByte(i)); 
   }
   log.println();
 }
@@ -849,67 +857,48 @@ void displayEEPROM() {
 void saveHomeToFlash() 
 {
   uint8_t offset = home_eeprom_offset;  // 0
-  #if (defined ESP32) || (defined ESP8266)
-    EEPROM.writeULong(offset, epochNow());   // epochHome
+
+    EEPROMwriteULong(offset, epochNow());// epochHome
     offset += sizeof(unsigned long); //4
-    EEPROM.writeFloat(offset, hom.lon);
+    EEPROMwriteFloat(offset, hom.lon ); 
     offset += sizeof(float);
-    EEPROM.writeFloat(offset, hom.lat);
+    EEPROMwriteFloat(offset, hom.lat);
     offset += sizeof(float);
-    EEPROM.writeFloat(offset, hom.alt);
+    EEPROMwriteFloat(offset, hom.alt);
     offset += sizeof(float);
-    EEPROM.writeFloat(offset, hom.hdg);  
+    EEPROMwriteFloat(offset, hom.hdg);  
     offset += sizeof(float);
-    EEPROM.commit();
-  #else //stm32, teensy
-    struct myObject 
-    {
-      uint32_t  epoch_now;
-      float lon;
-      float lat;
-      float alt;
-      float hdg;
-    };
-    myObject homeVar;
-    homeVar.epoch_now = epochNow();
-    homeVar.lon = hom.lon;
-    homeVar.lat = hom.lat;
-    homeVar.alt = hom.alt;
-    homeVar.hdg = hom.hdg;   
-    EEPROM.put(offset, homeVar);
-  #endif  
+    #if (defined ESP32) || (defined ESP8266)
+      EEPROM.commit();
+    #endif  
 
 #if defined DEBUG_ALL || defined DEBUG_EEPROM || defined DEBUG_TIME || defined DEBUG_HOME
-  log.print("  firstHomeStored="); log.print(firstHomeStored);
-  log.print("  home.lon="); log.print(hom.lon, 6);
-  log.print("  home.lat="); log.print(hom.lat, 6);
-  log.print("  home.alt="); log.print(hom.alt, 1);
-  log.print("  home.hdg="); log.println(hom.hdg, 1);
+  log.print("  firstHomeStored:"); log.print(firstHomeStored);
+  log.print("  home.lon:"); log.print(hom.lon, 6);
+  log.print("  home.lat:"); log.print(hom.lat, 6);
+  log.print("  home.alt:"); log.print(hom.alt, 1);
+  log.print("  home.hdg:"); log.println(hom.hdg, 1);
 #endif   
 }
 //=================================================================================================  
 void storeEpochPeriodic() 
 {
   uint8_t offset = home_eeprom_offset + 20;  //displaced by 20B
-  #if (defined ESP32) || (defined ESP8266)
     uint32_t epochPeriodic = epochNow();
-    EEPROM.writeULong(offset, epochPeriodic); // Seconds
+    EEPROMwriteULong(offset, epochPeriodic); // Seconds
     offset += sizeof(unsigned long);
-    EEPROM.commit();
-  #else // stm32, teensy
-    uint32_t epochPeriodic = epochNow();
-    EEPROM.put(offset, epochPeriodic); // Seconds
-    offset += sizeof(unsigned long);
-  #endif
+    #if (defined ESP32) || (defined ESP8266)
+      EEPROM.commit();
+    #endif  
   if (finalHomeStored) 
   {
     offset = home_eeprom_offset;  //displaced by 0 bytes
     #if (defined ESP32) || (defined ESP8266)
-      EEPROM.writeULong(offset, epochPeriodic); // UPDATE epochHome
+      EEPROMwriteULong(offset, epochPeriodic); // UPDATE epochHome
       offset += sizeof(unsigned long);
       EEPROM.commit();
     #else // stm32, teensy
-      EEPROM.put(offset, epochPeriodic); // Seconds
+      EEPROMwriteULong(offset, epochPeriodic);  // Seconds
       offset += sizeof(unsigned long);
     #endif  
     #if defined DEBUG_ALL || defined DEBUG_EEPROM || defined DEBUG_TIME || defined DEBUG_HOME
@@ -926,11 +915,7 @@ uint32_t epochHome()
 {
   uint32_t epHome = 0;
   uint8_t offset = home_eeprom_offset + 20;  
-  #if (defined ESP32) || (defined ESP8266)
-    epHome = EEPROM.readULong(offset);
-  #else  // teensy, stm32f103
-    EEPROM.get(offset, epHome);
-  #endif
+  epHome = EEPROMreadULong(offset);
   offset += sizeof(unsigned long); //4
  #if defined DEBUG_ALL || defined DEBUG_EEPROM
    log.print("epochHome="); log.println(TimeString(epHome));
@@ -941,34 +926,16 @@ uint32_t epochHome()
 void restoreHomeFromFlash() 
 {
   uint8_t offset = home_eeprom_offset;  // 0
-  #if (defined ESP32) || (defined ESP8266)
-    uint32_t epoch_now = EEPROM.readULong(offset);
+    uint32_t epoch_now = EEPROMreadULong(offset);
     offset += sizeof(unsigned long); //4
-    hom.lon = EEPROM.readFloat(offset); 
+    hom.lon = EEPROMreadFloat(offset); 
     offset += sizeof(float); //4
-    hom.lat = EEPROM.readFloat(offset);
+    hom.lat = EEPROMreadFloat(offset);
     offset += sizeof(float); 
-    hom.alt = EEPROM.readFloat(offset);
+    hom.alt = EEPROMreadFloat(offset);
     offset += sizeof(float); 
-    hom.hdg = EEPROM.readFloat(offset);
+    hom.hdg = EEPROMreadFloat(offset);
     offset += sizeof(float); 
-  #else  // stm32, teensy
-    struct myObject 
-    {
-      uint32_t  epoch_now;
-      float lon;
-      float lat;
-      float alt;
-      float hdg;
-    };
-    myObject homeVar;
-    EEPROM.get(offset, homeVar);
-    uint32_t epoch_now = homeVar.epoch_now;
-    hom.lon = homeVar.lon;
-    hom.lat = homeVar.lat;
-    hom.alt = homeVar.alt;
-    hom.hdg = homeVar.hdg;;   
-  #endif
 
   #if defined DEBUG_ALL || defined DEBUG_EEPROM || defined DEBUG_TIME || defined DEBUG_HOME
     log.print("  home.lon="); log.print(hom.lon, 6);
@@ -2163,4 +2130,98 @@ void displayHeadingSource(uint8_t hs)
   }  
 #endif  
 }
- 
+//============================================================================
+//                             EEPROM Routines 
+//============================================================================
+
+uint8_t EEPROMreadByte(uint16_t addr)
+{
+  #if defined ESP32
+    uint8_t temp = EEPROM.readByte(addr);
+  #else // stm32, teensy
+    uint8_t temp = EEPROM.read(addr);
+  #endif  
+  return temp;
+}
+
+void EEPROMwriteByte(uint16_t addr, uint8_t byt)
+{
+  #if defined ESP32
+    EEPROM.writeByte(addr, byt);
+  #else // stm32, teensy
+    EEPROM.write(addr, byt);
+  #endif  
+}
+
+void EEPROMwriteULong(uint16_t addr, int32_t value) 
+{ 
+  #if defined ESP32
+    EEPROM.writeULong(addr, epochNow());  
+    #if defined DEBUG_EEPROM
+      log.print("EEPROMwriteULong():"); 
+      log.print("epochNow() 0x"); log.println(epochNow(), HEX);    
+    #endif 
+  #elif (defined ESP8266)     
+    //one = most significant , four = least significant byte
+    byte four = (value & 0xFF);
+    byte three = ((value >> 8) & 0xFF);
+    byte two = ((value >> 16) & 0xFF);
+    byte one = ((value >> 24) & 0xFF);
+    EEPROMwriteByte(addr, four);
+    EEPROMwriteByte(addr + 1, three);
+    EEPROMwriteByte(addr + 2, two);
+    EEPROMwriteByte(addr + 3, one);
+    #if defined DEBUG_EEPROM
+      log.print("EEPROMwriteULong():"); 
+      log.print("  composit="); log.print(value);     
+      log.print("  one="); log.print(one, HEX);
+      log.print("  two="); log.print(two, HEX);
+      log.print("  three="); log.print(three, HEX);
+      log.print("  four="); log.println(four, HEX);    
+    #endif 
+  #endif
+  EEPROM.commit();  
+
+       
+} 
+//======================================================  
+int32_t EEPROMreadULong(uint16_t addr) { 
+  //One = Most significant , Four = Least significant byte
+  uint32_t four = EEPROMreadByte(addr);
+  uint32_t three = EEPROMreadByte(addr + 1);
+  uint32_t two = EEPROMreadByte(addr + 2);
+  uint32_t one = EEPROMreadByte(addr + 3);
+  uint32_t composit = ((four << 0) & 0xFF) + ((three << 8) & 0xFFFF) + ((two << 16) & 0xFFFFFF) + ((one << 24) & 0xFFFFFFFF);
+  
+  #if defined DEBUG_ALL || defined DEBUG_EEPROM
+     log.print("EEPROMReadLong():"); 
+     log.print("  one="); log.print(one, HEX);
+     log.print("  two="); log.print(two, HEX);
+     log.print("  three="); log.print(three, HEX);
+     log.print("  four="); log.print(four, HEX);    
+     log.print("  composit="); log.println(composit);      
+  #endif     
+  return composit;
+}
+//======================================================
+void EEPROMwriteFloat(uint16_t idx, float value) 
+{
+  uint32_t temp = uint32_t(value);
+  EEPROMwriteULong(idx, temp);
+  #if defined DEBUG_EEPROM
+    log.print("EEPROMwriteFloat():"); 
+    log.printf("float:%5.7f uint32_t:%u\n", value, temp);   
+  #endif      
+}
+//====================================================== 
+ float EEPROMreadFloat(uint16_t idx) 
+ { 
+    uint32_t temp1 =  EEPROMreadULong(idx);
+    float temp2 = (float)temp1;
+    #if defined DEBUG_EEPROM
+      log.print("EEPROMreadFloat():"); 
+      log.printf("uint32_t:%u  float:%5.7f\n", temp1, temp2);   
+    #endif  
+    return temp2;
+ }
+

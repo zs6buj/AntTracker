@@ -32,11 +32,11 @@
         cur.lon = crsf.gpsF_lon;
         cur.lat = crsf.gpsF_lat;    
         cur.alt = crsf.gps_altitude;
-        gpsfixGood = (crsf.gps_sats >=5);  // with 4 sats, altitude can be bad
+        gpsfixGood = (crsf.gps_sats >=4);  // with 4 sats, altitude can be bad
         lonGood = (crsf.gpsF_lon != 0.0);
         latGood = (crsf.gpsF_lat != 0.0);
         altGood = (crsf.gps_altitude != 0);
-        hdgGood = 1;
+        hdgGood = true;
         cur.alt_ag = cur.alt - hom.alt;
         hud_num_sats = crsf.gps_sats;         // these for the display
         hud_grd_spd = crsf.gpsF_groundspeed;
@@ -52,7 +52,8 @@
         log.printf("  hdg:%.2fdeg", crsf.gpsF_heading);
         log.printf("  alt:%dm", crsf.gps_altitude);
         log.printf("  sats:%d", crsf.gps_sats); 
-        log.printf("  gpsfixGood:%d\n", gpsfixGood); 
+        log.printf("  gpsfixGood:%d", gpsfixGood); 
+        log.printf("  hdgGood:%d\n", hdgGood); 
   #endif          
       }
       if (crsf_id == BATTERY_ID) 
@@ -90,9 +91,8 @@
         crsf.printByte(crsf_id, ' ');
         log.printf("lth:%u %s motArmed:%u\n", crsf.flight_mode_lth, crsf.flightMode.c_str(), motArmed);
   #endif
-      gpsGood = hbGood = (gpsfixGood & lonGood & latGood & altGood);    
+      gpsGood = telemGood = (gpsfixGood & lonGood & latGood & altGood);    
       if (gpsGood) gpsGood_millis = millis();     // Time of last good GPS packet 
-      hbGood_millis= millis();                    // good GPS data is equivalent to a mavlink heartbeat
       }
     }      
     

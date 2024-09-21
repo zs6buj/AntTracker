@@ -1,0 +1,37 @@
+
+#Die Befehle können z.B. mit Copy/Paste in den ser. Monitor kopiert werden
+
+eep  0  -     0  sss  8500   500 
+eep  1  -     0  wrs  6880    -1 
+eep  2  m    50  sss 12500   500 
+eep  3  >  6000  srl  1000    -1 
+eep  4  m     0  nop     0    -1 
+eep  5  t  4000  wrs     0    -1 
+eep  6  <   299  srl   500    -1 
+----
+eep  8  -     0  sss  8500  2000 
+eep  9  -     0  wrs  3440    -1 
+eep 10  >   100  srl   400    -1 
+eep 11  >  3400  wrs  3420    -1 
+eep 12  m     0  rds     0    -1 
+eep 13  t   100  rds     0    -1 
+eep 14  t  1000  wrs     0    -1 
+----
+eep 20  -     0  sss  8500  2000 
+eep 21  -     0  wrs  5000    -1 
+eep 22  >  2000  srl   400    -1 
+eep 23  >  4598  srl  2000    -1 
+eep 24  m     0  rds     0    -1 
+eep 25  t   100  srl  2000    -1 
+eep 26  t  1000  wrs     0    -1 
+eep 27  m    50  srl   200    -1 
+----
+eep 32  -     0  sss 10000  2000 
+eep 33  -     0  wrs  6000    -1 
+eep 34  >  2000  sss  5000  2000 
+eep 35  >  2500  sss  4000   400 
+eep 36  m     0  rds     0    -1 
+eep 37  t   100  nop  8000  1000 
+eep 38  t  1000  wrs     0    -1 
+eep 39  m    50  srl   200    -1 
+----

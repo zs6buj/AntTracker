@@ -156,7 +156,10 @@
   #include <mavlink.cpp>
   #include <motors.cpp>
   #include <nmeaGPS.cpp>
-  
+#else 
+  void IRAM_ATTR gotButtonUp();
+  void IRAM_ATTR gotButtonDn();
+#endif 
 
   //================================================================
   #if (MEDIUM_IN == 4)  // BLE 4.2

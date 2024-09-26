@@ -156,10 +156,11 @@
   #include <mavlink.cpp>
   #include <motors.cpp>
   #include <nmeaGPS.cpp>
-#else
+#else           / Arduino build
   void IRAM_ATTR gotButtonUp();
   void IRAM_ATTR gotButtonDn();
-#endif
+  void checkStatusAndTimeouts();
+#endif  
   //================================================================
   #if (MEDIUM_IN == 4)  // BLE 4.2
     class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks 

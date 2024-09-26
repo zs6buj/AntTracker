@@ -31,9 +31,9 @@
 //#define TEENSY_VARIANT    1    //   (TEENSY3x) 
 //#define TEENSY_VARIANT    2    //   (TEENSY4x
 //#define STM32_VARIANT     1    // STM32 Blue Pill F103C8 with 128k
-//#define ESP32_VARIANT     1    //  ESP32 Dev Module
+#define ESP32_VARIANT     1    //  ESP32 Dev Module
 //#define ESP32_VARIANT     4    // Heltec Wifi Kit 32 V3 (S3) (thanks to Marc Dornan)
-#define ESP32_VARIANT     5    //  LILYGO® TTGO T-DISPLAY ESP32 1.14" ST7789 Colour LCD, IDE board = "ESP32 Dev Module"
+//#define ESP32_VARIANT     5    //  LILYGO® TTGO T-DISPLAY ESP32 1.14" ST7789 Colour LCD, IDE board = "ESP32 Dev Module"
 //#define ESP32_VARIANT     6    // LILYGO® TTGO T2 ESP32 OLED Arduino IDE board = "ESP32 Dev Module"
 //#define ESP32_VARIANT     7    // ESP32 Dev Module with ILI9341 2.8" colour TFT SPI 240x320 NOT TESTED _ DON'T USE YET
 //#define ESP32_VARIANT     8    // Lilygo T-Display-S3 ESP32-S3 1.9 in ST7789V LCD no touch screen 

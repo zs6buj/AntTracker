@@ -159,8 +159,11 @@
 #else 
   void IRAM_ATTR gotButtonUp();
   void IRAM_ATTR gotButtonDn();
-#endif  
-
+#else           / Arduino build
+  void IRAM_ATTR gotButtonUp();
+  void IRAM_ATTR gotButtonDn();
+  void checkStatusAndTimeouts();
+#endif    
   //================================================================
   #if (MEDIUM_IN == 4)  // BLE 4.2
     class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks 

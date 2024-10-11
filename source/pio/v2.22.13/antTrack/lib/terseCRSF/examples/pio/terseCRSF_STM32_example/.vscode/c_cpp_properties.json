@@ -1,0 +1,118 @@
+//
+// !!! WARNING !!! AUTO-GENERATED FILE!
+// PLEASE DO NOT MODIFY IT AND USE "platformio.ini":
+// https://docs.platformio.org/page/projectconf/section_env_build.html#build-flags
+//
+{
+    "configurations": [
+        {
+            "name": "PlatformIO",
+            "includePath": [
+                "C:/Users/erics/_myprojects/arduino/libraries/terseCRSF/examples/pio/terseCRSF_STM32_example/include",
+                "C:/Users/erics/_myprojects/arduino/libraries/terseCRSF/examples/pio/terseCRSF_STM32_example/src",
+                "C:/Users/erics/_myprojects/arduino/libraries/terseCRSF/examples/pio/terseCRSF_STM32_example/lib/terseCRSF/src",
+                "C:/Users/erics/.platformio/packages/framework-arduinoststm32/cores/arduino/avr",
+                "C:/Users/erics/.platformio/packages/framework-arduinoststm32/cores/arduino/stm32",
+                "C:/Users/erics/.platformio/packages/framework-arduinoststm32/cores/arduino/stm32/LL",
+                "C:/Users/erics/.platformio/packages/framework-arduinoststm32/cores/arduino/stm32/usb",
+                "C:/Users/erics/.platformio/packages/framework-arduinoststm32/cores/arduino/stm32/OpenAMP",
+                "C:/Users/erics/.platformio/packages/framework-arduinoststm32/cores/arduino/stm32/usb/hid",
+                "C:/Users/erics/.platformio/packages/framework-arduinoststm32/cores/arduino/stm32/usb/cdc",
+                "C:/Users/erics/.platformio/packages/framework-arduinoststm32/system/Drivers/STM32F1xx_HAL_Driver/Inc",
+                "C:/Users/erics/.platformio/packages/framework-arduinoststm32/system/Drivers/STM32F1xx_HAL_Driver/Src",
+                "C:/Users/erics/.platformio/packages/framework-arduinoststm32/system/STM32F1xx",
+                "C:/Users/erics/.platformio/packages/framework-arduinoststm32/system/Middlewares/ST/STM32_USB_Device_Library/Core/Inc",
+                "C:/Users/erics/.platformio/packages/framework-arduinoststm32/system/Middlewares/ST/STM32_USB_Device_Library/Core/Src",
+                "C:/Users/erics/.platformio/packages/framework-arduinoststm32/system/Middlewares/OpenAMP",
+                "C:/Users/erics/.platformio/packages/framework-arduinoststm32/system/Middlewares/OpenAMP/open-amp/lib/include",
+                "C:/Users/erics/.platformio/packages/framework-arduinoststm32/system/Middlewares/OpenAMP/libmetal/lib/include",
+                "C:/Users/erics/.platformio/packages/framework-arduinoststm32/system/Middlewares/OpenAMP/virtual_driver",
+                "C:/Users/erics/.platformio/packages/framework-cmsis/CMSIS/Core/Include",
+                "C:/Users/erics/.platformio/packages/framework-arduinoststm32/system/Drivers/CMSIS/Device/ST/STM32F1xx/Include",
+                "C:/Users/erics/.platformio/packages/framework-arduinoststm32/system/Drivers/CMSIS/Device/ST/STM32F1xx/Source/Templates/gcc",
+                "C:/Users/erics/.platformio/packages/framework-cmsis/CMSIS/DSP/Include",
+                "C:/Users/erics/.platformio/packages/framework-cmsis/CMSIS/DSP/PrivateInclude",
+                "C:/Users/erics/.platformio/packages/framework-arduinoststm32/cores/arduino",
+                "C:/Users/erics/.platformio/packages/framework-arduinoststm32/variants/STM32F1xx/F103C8T_F103CB(T-U)",
+                "C:/Users/erics/.platformio/packages/framework-arduinoststm32/libraries/CMSIS_DSP/src",
+                "C:/Users/erics/.platformio/packages/framework-arduinoststm32/libraries/EEPROM/src",
+                "C:/Users/erics/.platformio/packages/framework-arduinoststm32/libraries/IWatchdog/src",
+                "C:/Users/erics/.platformio/packages/framework-arduinoststm32/libraries/Keyboard/src",
+                "C:/Users/erics/.platformio/packages/framework-arduinoststm32/libraries/Mouse/src",
+                "C:/Users/erics/.platformio/packages/framework-arduinoststm32/libraries/RGB_LED_TLC59731/src",
+                "C:/Users/erics/.platformio/packages/framework-arduinoststm32/libraries/SPI/src",
+                "C:/Users/erics/.platformio/packages/framework-arduinoststm32/libraries/Servo/src",
+                "C:/Users/erics/.platformio/packages/framework-arduinoststm32/libraries/SoftwareSerial/src",
+                "C:/Users/erics/.platformio/packages/framework-arduinoststm32/libraries/SrcWrapper/src",
+                "C:/Users/erics/.platformio/packages/framework-arduinoststm32/libraries/Wire/src",
+                ""
+            ],
+            "browse": {
+                "limitSymbolsToIncludedHeaders": true,
+                "path": [
+                    "C:/Users/erics/_myprojects/arduino/libraries/terseCRSF/examples/pio/terseCRSF_STM32_example/include",
+                    "C:/Users/erics/_myprojects/arduino/libraries/terseCRSF/examples/pio/terseCRSF_STM32_example/src",
+                    "C:/Users/erics/_myprojects/arduino/libraries/terseCRSF/examples/pio/terseCRSF_STM32_example/lib/terseCRSF/src",
+                    "C:/Users/erics/.platformio/packages/framework-arduinoststm32/cores/arduino/avr",
+                    "C:/Users/erics/.platformio/packages/framework-arduinoststm32/cores/arduino/stm32",
+                    "C:/Users/erics/.platformio/packages/framework-arduinoststm32/cores/arduino/stm32/LL",
+                    "C:/Users/erics/.platformio/packages/framework-arduinoststm32/cores/arduino/stm32/usb",
+                    "C:/Users/erics/.platformio/packages/framework-arduinoststm32/cores/arduino/stm32/OpenAMP",
+                    "C:/Users/erics/.platformio/packages/framework-arduinoststm32/cores/arduino/stm32/usb/hid",
+                    "C:/Users/erics/.platformio/packages/framework-arduinoststm32/cores/arduino/stm32/usb/cdc",
+                    "C:/Users/erics/.platformio/packages/framework-arduinoststm32/system/Drivers/STM32F1xx_HAL_Driver/Inc",
+                    "C:/Users/erics/.platformio/packages/framework-arduinoststm32/system/Drivers/STM32F1xx_HAL_Driver/Src",
+                    "C:/Users/erics/.platformio/packages/framework-arduinoststm32/system/STM32F1xx",
+                    "C:/Users/erics/.platformio/packages/framework-arduinoststm32/system/Middlewares/ST/STM32_USB_Device_Library/Core/Inc",
+                    "C:/Users/erics/.platformio/packages/framework-arduinoststm32/system/Middlewares/ST/STM32_USB_Device_Library/Core/Src",
+                    "C:/Users/erics/.platformio/packages/framework-arduinoststm32/system/Middlewares/OpenAMP",
+                    "C:/Users/erics/.platformio/packages/framework-arduinoststm32/system/Middlewares/OpenAMP/open-amp/lib/include",
+                    "C:/Users/erics/.platformio/packages/framework-arduinoststm32/system/Middlewares/OpenAMP/libmetal/lib/include",
+                    "C:/Users/erics/.platformio/packages/framework-arduinoststm32/system/Middlewares/OpenAMP/virtual_driver",
+                    "C:/Users/erics/.platformio/packages/framework-cmsis/CMSIS/Core/Include",
+                    "C:/Users/erics/.platformio/packages/framework-arduinoststm32/system/Drivers/CMSIS/Device/ST/STM32F1xx/Include",
+                    "C:/Users/erics/.platformio/packages/framework-arduinoststm32/system/Drivers/CMSIS/Device/ST/STM32F1xx/Source/Templates/gcc",
+                    "C:/Users/erics/.platformio/packages/framework-cmsis/CMSIS/DSP/Include",
+                    "C:/Users/erics/.platformio/packages/framework-cmsis/CMSIS/DSP/PrivateInclude",
+                    "C:/Users/erics/.platformio/packages/framework-arduinoststm32/cores/arduino",
+                    "C:/Users/erics/.platformio/packages/framework-arduinoststm32/variants/STM32F1xx/F103C8T_F103CB(T-U)",
+                    "C:/Users/erics/.platformio/packages/framework-arduinoststm32/libraries/CMSIS_DSP/src",
+                    "C:/Users/erics/.platformio/packages/framework-arduinoststm32/libraries/EEPROM/src",
+                    "C:/Users/erics/.platformio/packages/framework-arduinoststm32/libraries/IWatchdog/src",
+                    "C:/Users/erics/.platformio/packages/framework-arduinoststm32/libraries/Keyboard/src",
+                    "C:/Users/erics/.platformio/packages/framework-arduinoststm32/libraries/Mouse/src",
+                    "C:/Users/erics/.platformio/packages/framework-arduinoststm32/libraries/RGB_LED_TLC59731/src",
+                    "C:/Users/erics/.platformio/packages/framework-arduinoststm32/libraries/SPI/src",
+                    "C:/Users/erics/.platformio/packages/framework-arduinoststm32/libraries/Servo/src",
+                    "C:/Users/erics/.platformio/packages/framework-arduinoststm32/libraries/SoftwareSerial/src",
+                    "C:/Users/erics/.platformio/packages/framework-arduinoststm32/libraries/SrcWrapper/src",
+                    "C:/Users/erics/.platformio/packages/framework-arduinoststm32/libraries/Wire/src",
+                    ""
+                ]
+            },
+            "defines": [
+                "PLATFORMIO=60115",
+                "STM32F1",
+                "STM32F103xB",
+                "STM32F1xx",
+                "ARDUINO=10808",
+                "ARDUINO_ARCH_STM32",
+                "ARDUINO_BLUEPILL_F103C8",
+                "BOARD_NAME=\"BLUEPILL_F103C8\"",
+                "HAL_UART_MODULE_ENABLED",
+                "USE_FULL_LL_DRIVER",
+                "VARIANT_H=\"variant_PILL_F103Cx.h\"",
+                ""
+            ],
+            "cStandard": "gnu11",
+            "cppStandard": "gnu++14",
+            "compilerPath": "C:/Users/erics/.platformio/packages/toolchain-gccarmnoneeabi@1.90201.191206/bin/arm-none-eabi-gcc.exe",
+            "compilerArgs": [
+                "-mcpu=cortex-m3",
+                "-mthumb",
+                ""
+            ]
+        }
+    ],
+    "version": 4
+}

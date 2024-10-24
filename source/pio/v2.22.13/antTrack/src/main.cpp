@@ -600,7 +600,7 @@ void setup()
       BLEDevice::init("");
       // Retrieve a Scanner and set the callback we want to use to be informed when we
       // have detected a new device.  Specify that we want active scanning and start the
-      // scan to run asynchronously allways
+      // scan to run asynchronously always
       log.println("Starting BLE Client");
       log.printf("Scanning for device \"%s\" forever\n", bleServerName);
       logScreenPrintln("BLE scanning..");

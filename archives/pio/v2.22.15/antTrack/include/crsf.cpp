@@ -36,7 +36,7 @@
         cur.alt = crsf.gps_altitude;
         gpsfixGood = (crsf.gps_sats >=5);  // with 4 sats, altitude value can be bad
 
-        hdgGood = altGood = lonGood = latGood = gpsfixGood;
+        new_GPS_data = hdgGood = altGood = lonGood = latGood = gpsfixGood;
 
         if ((finalHomeStored) || (headingsource == 4))  
         {

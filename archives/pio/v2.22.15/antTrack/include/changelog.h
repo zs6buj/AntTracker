@@ -153,5 +153,7 @@ v2.22.12  2024-09-30  if ((finalHomeStored) || (headingsource == 4))  cur.alt_ag
 v2.22.13  2024-10-11  Set minAltAg = 0       
 v2.22.14  2024-10-24  Remove minAltAg completely as it hampers testing. 
 v2.22.15  2024-10-26  For CRSF, we assume all sat values are good if (gpsfixGood)
-                      For CRSF, ensure telemGood set when receive Backpack packet       
+                          ensure telemGood set when receive Backpack packet     
+v2.22.15c  2024-10-29     new_GPS_data = hdgGood = altGood = lonGood = latGood = gpsfixGood; 
+                          Acknowledements to HKR1987         
 */                     

@@ -1344,7 +1344,8 @@ void storeEpochPeriodic()
         log.print(".");
       }
       
-      if (WiFi.status() == WL_CONNECTED) {
+      if (WiFi.status() == WL_CONNECTED) 
+      {
         wifiStaConnected = true;
         localIP = WiFi.localIP();
         log.println();

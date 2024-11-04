@@ -167,7 +167,7 @@
 
   /*    See SERVO_SPEED below     */
 
-  // Set the degree range of the motors here. Do not adjust servo mechanical limits here. See MIN/MAXPULSEWIDTH below.                        
+  // Set the degree range of the motors here. Do not adjust servo mechanical limits here. See servo movement limits below.
   #if defined AZ_SERVO_360   // 1 x 360, 1 x 90 (or 180) motors  
     int16_t minAz = 0;          // Az lower limit in degrees, left of tracker facing flying field
     int16_t maxAz = 359;        // Az upper limit in degrees
@@ -191,11 +191,13 @@
   // ADJUST THE MECHANICAL LIMITS OF MOVEMENT OF YOUR SERVOS/STEPPERS HERE BELOW
 
   #if defined STM32F1xx      // my STM32 based tracker has different servos
+    /* adjust your servo movement limits here
     const uint16_t minAzPWM = 600;   // right (because mine is reversed)
     const uint16_t maxAzPWM = 2300;  // left   
     const uint16_t minElPWM = 700;   // front 
     const uint16_t maxElPWM = 2300;  // back
   #else
+    /* adjust your servo movement limits here
     const uint16_t minAzPWM = 625;   // right (because mine is reversed)
     const uint16_t maxAzPWM = 2235;  // left 
     const uint16_t minElPWM = 600;   // front
@@ -203,12 +205,8 @@
   #endif
 
   #if defined SERVOS
-    /* adjust your servo movement limits here
-       Find these settings in MobaTools.h and change them, or comment them out
-       and insert below
-      #define MINPULSEWIDTH   613   
-      #define MAXPULSEWIDTH   2215
-    */  
+
+
     #define SERVO_SPEED     100  // Default = 0 - Try 5, 20, 50, 100, 300
   #endif
   #if defined STEPPERS

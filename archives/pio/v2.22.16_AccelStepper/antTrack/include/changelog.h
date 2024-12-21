@@ -158,6 +158,6 @@ v2.22.15c 2024-10-29      new_GPS_data = hdgGood = altGood = lonGood = latGood =
                           Acknowledements to HKR1987    
 v2.22.16  2024-12-11  Try MobaTools upgrade for C3 and S3 again   
                       ESP32_VARIANT == 8 
-          2024-12-21  BETA - Add support for ESP32 C3, S3, S6 using AccelStepper                      
+          2024-12-21                        
                       
 */                     

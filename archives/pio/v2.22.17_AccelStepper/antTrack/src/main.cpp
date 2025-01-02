@@ -1052,19 +1052,22 @@ void loop()
   #endif  
   buttonEvents();
 
+  #if defined STEPPERS
   if (adjustButtonActive)
-  {
-    if ((millis() - button_millis) > 50)
     {
-      button_millis = millis();
-      my_deg += direction;
-      my_deg = my_deg > 360 ? 1 : my_deg;
-      my_deg = my_deg < 1 ? 360 : my_deg;
-      az_step = my_deg * steps_per_degree;
-      azStepper.moveTo(az_step);
-      log.printf("my_deg:%d  my_step:%d\n", my_deg, az_step);
+      if ((millis() - button_millis) > 50)
+      {
+        button_millis = millis();
+        my_deg += direction;
+        my_deg = my_deg > 360 ? 1 : my_deg;
+        my_deg = my_deg < 1 ? 360 : my_deg;
+        az_step = my_deg * steps_per_degree;
+        azStepper.moveTo(az_step);
+        log.printf("my_deg:%d  my_step:%d\n", my_deg, az_step);
+      }
     }
-  }
+  #endif
+  
   static bool testedMotors = false;
   if ((phase == set_home) && (!testedMotors))
   {

@@ -159,6 +159,6 @@ v2.22.15c 2024-10-29      new_GPS_data = hdgGood = altGood = lonGood = latGood =
 v2.22.16  2024-12-11  Try MobaTools upgrade for C3 and S3 again   
                       ESP32_VARIANT == 8 
           2024-12-21  BETA - Add support for ESP32 C3, S3, S6 using AccelStepper   
-v2.22.17  2025-01-02  Fix BuiltinLed syntax problem               
-                      
+v2.22.17  2025-01-02  Fix BuiltinLed syntax problem
+                      main() 1055 #if defined STEPPER if (adjustButtonActive)
 */                     

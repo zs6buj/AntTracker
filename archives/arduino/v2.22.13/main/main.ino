@@ -21,7 +21,7 @@
   By downloading this software you are agreeing to the terms specified in this page and the spirit of thereof.
 
    Boards supported:
-    Advanced features are only available on the ESP32 boards
+    Advanced features are only available on the ESP boards
       ESP8266
       ESP32 boards - number of variants
     Teensy 3.x and 4.x

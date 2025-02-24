@@ -8,16 +8,17 @@
 //#define DEBUG_ALL
 //#define DEBUG_PROTOCOL
 //#define DEBUG_BAUD
-#define DEBUG_AZEL
-#define DEBUG_MOTORS 
 //#define DEBUG_LEDS
 
-#define DEBUG_BOXCOMPASS   
+//#define DEBUG_BOXCOMPASS   
 
 //#define DEBUG_MAV_INPUT
 //#define DEBUG_MAV_BUFFER  
-//#define DEBUG_MAV_HEARTBEAT 
-//#define DEBUG_MAV_GPS   
+#define DEBUG_AZEL
+#define DEBUG_MOTORS 
+#define DEBUG_MAV_HEARTBEAT 
+#define DEBUG_MAV_GPS   
+#define DEBUG_HOME
 
 //#define DEBUG_LTM
 //#define DEBUG_MSP
@@ -25,7 +26,7 @@
 
 //#define DEBUG_EEPROM
 //#define DEBUG_TIME 
-//#define DEBUG_HOME
+
 
 //#define DEBUG_BT
 //#define DEBUG_BLE
@@ -35,13 +36,13 @@
 //#define DEBUG_FRSKY
 //#define DEBUG_FRSKY_MESSAGES
 //#define DEBUG_FRSKY_RSSI            // 0xF101
-#define DEBUG_FRSKY_GPS_STATUS      // 0x410 and 0x5002
-#define DEBUG_FRSKY_GPS             // 0x800
-#define DEBUG_FRSKY_ALT             // 0x820
+//#define DEBUG_FRSKY_GPS_STATUS      // 0x410 and 0x5002
+//#define DEBUG_FRSKY_GPS             // 0x800
+//#define DEBUG_FRSKY_ALT             // 0x820
 //#define DEBUG_FRSKY_SPEED           // 0x830
-#define DEBUG_FRSKY_HDG             // 0x840
+//#define DEBUG_FRSKY_HDG             // 0x840
 //#define DEBUG_FRSKY_BATTERY         // 0x5003
-#define DEBUG_FRSKY_HOME            // 0x5004
+//#define DEBUG_FRSKY_HOME            // 0x5004
 //#define DEBUG_FRSKY_MESSAGES_UDP
 //define DEBUG_FRSKY_MESSAGES_BT
 //#define DEBUG_FRSKY_MESSAGES_BLE

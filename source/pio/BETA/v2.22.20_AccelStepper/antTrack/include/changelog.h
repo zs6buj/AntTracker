@@ -8,7 +8,7 @@
 Change log:
                                     
 Legacy
-v0.37 2019-02-12 Reintroduce PacketGood() location reasonability test to mitigate telemetry errors.
+v0.37 2019-02-12 Reintroduce packetGood() location reasonability test to mitigate telemetry errors.
 v0.38 OLED support added
 
 v2.00 2019-03-03 Unified version auto detect telemetry speed and protocol. Mavlink 1 & 2, FrSky (D, S.Port and Passthru), LTM
@@ -23,7 +23,7 @@ v2.10 2019/08/23 Improve response in baud detect when no telemetry present.
 v2.11 2019/09/06 Mavlink WiFi and Bluetooth input added.  BT not tested.
 v2.12 2019/09/18 Store most recent mavlink GPS millis.  
 v2.13 2019-11-18 Update WiFi, BT (master/slave), board variants setup, autobaud, OledPrint to Mav2Pt v2.46  
-v2.14 2019-12-11 When Heading _Source == 3 (compass on tracker), don't need to check ap_hdg in PacketGood()
+v2.14 2019-12-11 When Heading _Source == 3 (compass on tracker), don't need to check ap_hdg in packetGood()
       2020-01-02 Sloppy exits removed. :)          
 v2.15 2020-10-12 Proper TCP client added for outgoing (to telemetry source) connect   
                  Display scrolling added
@@ -163,5 +163,6 @@ v2.22.17  2025-01-02  Fix BuiltinLed syntax problem
                       main() 1055 #if defined STEPPER if (adjustButtonActive)
 v2.22.18  2025-01-30  Add support into terseCRSF lib for BLE4.2 + CRSF combination
                       Never got around to this :(     
-v2.22.19  2025-02-23  Support esp8266 under the correct conditions                                      
+v2.22.19  2025-02-23  Support esp8266 under the correct conditions     
+v2.22.20  2025-02-25  Add debug for headingsource logic, minDist                            
 */                     

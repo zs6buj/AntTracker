@@ -5,7 +5,7 @@
 
 #define MAJOR_VERSION       2
 #define MINOR_VERSION      22
-#define PATCH_LEVEL        19
+#define PATCH_LEVEL        20
 
 //=============================================================================================
 //================== Please select your options below before compiling ========================
@@ -74,7 +74,7 @@
 //================================  T E L E M E T R Y   P R O T O C O L  ======================
 //=============================================================================================
 // Select only one telemetry PROTOCOL here
-//#define PROTOCOL 0     // AUTO detect protocol
+//#define PROTOCOL 0     // AUTO detect protocol   at present UART, BT Classic or BLE only
 //#define PROTOCOL 1     // Mavlink 1
 #define PROTOCOL 2     // Mavlink 2
 //#define PROTOCOL 3     // FrSky S.Port
@@ -90,8 +90,8 @@
 //=============================================================================================
 // Select one heading source. We need this to relate the external world of co-ordinates to the internal tracker co_ordinates.
 //#define HEADINGSOURCE  1     // 1=Flight Computer GPS
-//#define HEADINGSOURCE  2     // 2=Flight Computer Compass
-#define HEADINGSOURCE  3     // 3=Trackerbox_Compass 
+#define HEADINGSOURCE  2     // 2=Flight Computer Compass
+//#define HEADINGSOURCE  3     // 3=Trackerbox_Compass 
 //#define HEADINGSOURCE  4     // 4=Trackerbox_GPS_And_Compass
 // Select GPS module serial link speed. Many GPS modules are capable of using multiple serial speed out from the box.
 // This information should be provided by the manufacturer.
@@ -235,8 +235,8 @@
 #define HostName    "crsfUDP"  
 #define APssid      "crsfUDP"
 #define APpw        "password"         // Change me! Must be >= 8 chars  
-#define STAssid     "crsfUDP"
-#define STApw       "password"         // Change me! Must be >= 8 chars 
+#define STAssid     "AstonWLAN"
+#define STApw       "88bcc81881"         // Change me! Must be >= 8 chars 
 #define APchannel            9                  // The wifi channel to use for our AP
  
 // Choose one default mode for ESP only - AP means advertise as an access point (hotspot). STA means connect to a known host
@@ -898,6 +898,12 @@ uint16_t  udp_send_port = 0;
 
   #if ( (defined SSD1306_DISPLAY) || (defined SSD1331_DISPLAY) || (defined ST7789_DISPLAY) || (defined ILI9341_DISPLAY) )
     #define DISPLAY_PRESENT
+  #endif  
+
+  #if (PROTOCOL == 0)
+    #if (MEDIUM != 1) && (MEDIUM != 3) && (MEDIUM != 4)
+      #error AUTO detect protocol only avaiable for UART, BT Classic or BLE at present
+    #endif
   #endif  
   //=================================================================================================   
   //==================================   E E P R O M   S U P P O R T  =============================== 

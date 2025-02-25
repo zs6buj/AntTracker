@@ -375,8 +375,8 @@ void setup()
     #if (defined ESP32)
       if ( (Tup != -1) && (Tdn != -1) ) 
       {   // enable touch gpio-pair
-        touchAttachInterrupt(digitalPinToInterrupt(Tup), gotButtonUp, threshold);
-        touchAttachInterrupt(digitalPinToInterrupt(Tdn), gotButtonDn, threshold);   
+        touchAttachInterrupt(Tup, gotButtonUp, threshold);
+        touchAttachInterrupt(Tdn, gotButtonDn, threshold);   
       } 
     #endif  
 
@@ -1071,7 +1071,7 @@ void loop()
   #if defined STEPPERS
     azStepper.run();
     elStepper.run();
-#endif
+  #endif
 
 
   #if defined DISPLAY_PRESENT
@@ -1105,7 +1105,7 @@ void loop()
   {
     testedMotors = true;
 
-#if defined TEST_MOTORS   
+    #if defined TEST_MOTORS   
       log.println("Testing Servos/Steppers");
       logScreenPrintln("Testing Motors");     
       testMotors();  // Fine tune MaxPWM and MinPWM in config.h to achieve expected movement limits, like 0 and 180
@@ -1114,7 +1114,7 @@ void loop()
   }
   checkStatusAndTimeouts();          // and service status LED
 
-  #if (MEDiUM_IN == 2)              // WiFi
+  #if (MEDiUM_IN == 2)               // WiFi
     serviceWiFiRoutines(); 
   #endif
 
@@ -1262,15 +1262,15 @@ void loop()
           RequestDataStreams();   // must have Teensy Tx connected to Taranis/FC rx  (When SRx not enumerated)
         }
       }
-  #endif 
-#endif  
+    #endif 
+  #endif  
   //===============================  H A N D L E   H O M E   L O C A T I O N
 
   //       D Y N A M I C   H O M E   L O C A T I O N
   //log.printf("HEADINGSOURCE:%u  hbG:%u  gpsG:%u  boxgpsG:%u  PacketG:%u  new_GPS_data:%u  new_boxGPS_data:%u \n", 
-  //         HEADINGSOURCE, telemGood, gpsGood, boxgpsGood, PacketGood(), new_GPS_data, new_boxGPS_data);          
+  //         HEADINGSOURCE, telemGood, gpsGood, boxgpsGood, packetGood(), new_GPS_data, new_boxGPS_data);          
   #if (HEADINGSOURCE == 4)        // Trackerbox_GPS_And_Compass - possible moving home location
-      if (telemGood && gpsGood && boxgpsGood && PacketGood() && new_GPS_data && new_boxGPS_data) 
+      if (telemGood && gpsGood && boxgpsGood && packetGood() && new_GPS_data && new_boxGPS_data) 
       {  //  every time there is new GPS data 
         static bool first_dynamic_home = true;
         new_boxGPS_data = false; 
@@ -1324,17 +1324,21 @@ void loop()
           }      
         }  // end of check for button push  
 
-      } else  // end of heading source == FC GPS
+      } else  // end of heading source == 1 FC GPS
       {
         bool sh_armFlag = false;
         #if defined SET_HOME_AT_ARM_TIME  
           sh_armFlag = true;
         #endif
-        //log.printf("headingsource:%u  hdgGood:%u sh_armFlag:%u\n", headingsource, hdgGood, sh_armFlag);
+        #if defined DEBUG_HEADINGSOURCE
+          log.printf("headingsource:%u  hdgGood:%u sh_armFlag:%u\n", headingsource, hdgGood, sh_armFlag);
+        #endif
         if ( ((headingsource == 2) && (hdgGood)) || ( ((headingsource == 3) || (headingsource == 4)) && (boxhdgGood) ) ) 
         {  // if FC compass or Trackerbox compass 
-
-          //log.printf("sh_armFlag:%u  motArmed:%u  gpsfixGood:%u  ft:%u  hbp:%u\n", sh_armFlag, motArmed, gpsfixGood, ft, homeButtonPushed());              
+          static bool ft = true;   
+          #if defined DEBUG_HEADINGSOURCE
+            log.printf("sh_armFlag:%u  motArmed:%u  gpsfixGood:%u  ft:%u\n", sh_armFlag, motArmed, gpsfixGood, ft);   
+          #endif             
           if (sh_armFlag) // if set home at arm time
           {                    
             if ( motArmed && gpsfixGood ) 
@@ -1343,8 +1347,7 @@ void loop()
             } 
           } else                        // if not set home at arm time 
           if (gpsfixGood) 
-          {                                  
-            static bool ft = true;                         
+          {                                                        
             if (ft) 
             {
               ft=false;           
@@ -1367,18 +1370,29 @@ void loop()
     } // final home already stored
     #endif   // end of static home
   
+
     // Antenna pointing is done from code block below
+    //=======================>
+    //=======================>
     //=======================>
     if (finalHomeStored) 
     {
-      if (telemGood && gpsGood && PacketGood() && new_GPS_data) 
+      bool distTest = (hc_vector.dist >= minDist);
+      #if defined DEBUG_MIN_DIST
+        log.printf("telemGood:%u gpsGood:%u packetGood():%u new_GPS_data:%u dist:%u minDist distTest:%u\n", telemGood, gpsGood, packetGood(), new_GPS_data, hc_vector.dist, distTest);
+      #endif
+      if (telemGood && gpsGood && packetGood() && new_GPS_data) 
       {  //  every time there is new GPS data 
         getAzEl(hom, cur);
-        if (hc_vector.dist >= minDist)  
+        if (distTest)  
             pointMotors((uint16_t)hc_vector.az, (uint16_t)hc_vector.el, (uint16_t)hom.hdg);  // Motors pointed relative to "home midfront" heading >>>>>>
         new_GPS_data = false;
       }
     }
+    //=======================>
+    //=======================>
+    //=======================>
+
     if ((lostPowerCheckDone) && (timeGood) && (millis() - millisStore) > 60000) 
     {  // every 60 seconds
       storeEpochPeriodic();

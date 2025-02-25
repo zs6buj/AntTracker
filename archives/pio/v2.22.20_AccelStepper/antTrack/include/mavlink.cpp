@@ -357,7 +357,9 @@ void mavlinkReceive()
   #if (MEDIUM_IN == 3) // Bluetooth Serial
      bool msgReceived = readMavBT(&msg);
      if (msgReceived) {
-        gotRecord = true;     
+        gotRecord = true;   
+        telem_millis = millis();
+        telemGood = true;
         #ifdef  DEBUG_FC_Down   
           log.println("BT record read:");
           PrintMavBuffer(&msg);
@@ -369,6 +371,8 @@ void mavlinkReceive()
       bool msgReceived = Read_TCP(&msg);
       if (msgReceived) {
         gotRecord = true;  
+        telem_millis = millis();
+        telemGood = true;
         #if defined DEBUG_ALL || defined DEBUG_MAV_INPUT 
           log.print("Received WiFi TCP message. msgReceived=" ); log.println(msgReceived);
           PrintMavBuffer(&msg);
@@ -377,15 +381,19 @@ void mavlinkReceive()
     #endif
     #if (WIFI_PROTOCOL == 2) // UDP
       bool msgReceived = readParseMavUDP(&msg);
-      if (msgReceived) {     
+      if (msgReceived) 
+      {     
         gotRecord = true;   
+        telem_millis = millis();
+        telemGood = true;
         #if defined DEBUG_ALL || defined DEBUG_MAV_INPUT
           log.println(" UDP WiFi record read:");
           PrintMavBuffer(&msg);
         #endif      
       }     
     #endif    
- #endif 
+  #endif 
+  
     if (gotRecord) {
       switch(msg.msgid) {
         case MAVLINK_MSG_ID_HEARTBEAT:    // #0   http://mavlink.org/messages/common

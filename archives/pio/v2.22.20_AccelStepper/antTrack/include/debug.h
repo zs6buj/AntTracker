@@ -19,7 +19,8 @@
 #define DEBUG_MAV_HEARTBEAT 
 #define DEBUG_MAV_GPS   
 #define DEBUG_HOME
-
+#define DEBUG_HEADINGSOURCE
+#define DEBUG_MIN_DIST
 //#define DEBUG_LTM
 //#define DEBUG_MSP
 //#define DEBUG_inGPS               // a GPS on the 'plane
@@ -54,7 +55,7 @@
 //#define DEBUG_FRSKYD_Flight_Mode
 //#define DEBUG_ESPNOW
 //#define DEBUG_CRSF_BUF
-#define DEBUG_CRSF_GPS
+//#define DEBUG_CRSF_GPS
 //#define DEBUG_CRSF_BAT
 //#define DEBUG_CRSF_ATTI
 //#define DEBUG_CRSF_FLIGHT_MODE

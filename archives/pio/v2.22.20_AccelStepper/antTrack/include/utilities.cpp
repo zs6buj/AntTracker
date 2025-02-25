@@ -668,7 +668,7 @@ uint32_t epochHome()
     }
   #endif  
   //=======================================
-  bool PacketGood() 
+  bool packetGood() 
   {
     // Allow 1 degree of lat and lon away from home, i.e. 60 nautical miles radius at the equator
     // Allow 1km up and 300m down from home altitude

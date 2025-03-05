@@ -1,0 +1,14 @@
+{
+    "idf.portWin": "COM6",
+    "idf.pythonInstallPath": "C:\\Users\\erics\\.espressif\\tools\\idf-python\\3.11.2\\python.exe",
+    "idf.customExtraVars": {
+        "OPENOCD_SCRIPTS": "C:\\Users\\erics\\.espressif\\tools\\openocd-esp32\\v0.12.0-esp32-20230921/openocd-esp32/share/openocd/scripts",
+        "IDF_CCACHE_ENABLE": "1",
+        "ESP_ROM_ELF_DIR": "C:\\Users\\erics\\.espressif\\tools\\esp-rom-elfs\\20230320/",
+        "IDF_TARGET": "esp32"
+    },
+    "idf.openOcdConfigs": [
+        "interface/ftdi/esp32_devkitj_v1.cfg",
+        "target/esp32.cfg"
+    ]
+}

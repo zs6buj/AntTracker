@@ -36,21 +36,17 @@
   }
   //========================================================
 
-  uint32_t uint32Extract(uint8_t *buf, int posn){
-
+  uint32_t uint32Extract(uint8_t *buf, int posn)
+  {
     //  The number starts at byte "posn" of the received packet and is four bytes long.
     //  GPS payload fields are little-endian, i.e they need an end-to-end byte swap
-
     byte b1 = buf[posn+3];
     byte b2 = buf[posn+2];
     byte b3 = buf[posn+1];
     byte b4 = buf[posn]; 
-
     unsigned long highWord = b1 << 8 | b2;
     unsigned long lowWord  = b3 << 8 | b4;
-
       // Now combine the four bytes into an unsigned 32bit integer
-
     uint32_t myvar = highWord << 16 | lowWord;
     return myvar;
   }
@@ -258,7 +254,7 @@ void EEPROMwriteFloat(uint16_t idx, float value)
     return temp2;
  }
 
-//=================================================================================================  
+//======================================= 
 uint32_t epochHome() 
 {
   uint32_t epHome = 0;
@@ -270,7 +266,19 @@ uint32_t epochHome()
  #endif
  return epHome;    
 }
-
+//======================================= 
+void startProfileLoop()
+{
+  loop_start_millis = millis();
+}
+//======================================= 
+void profileLoop(uint8_t id)
+{ 
+  #if defined ACTIVATE_PROFILING
+    uint32_t _period = millis() - loop_start_millis;
+    log.printf("id:%u period:%u\n",id, _period);
+  #endif  
+}
 //======================================= 
   /*
        ========= Support for ESPNOW (ELRS_Backpack) =======
@@ -327,21 +335,290 @@ uint32_t epochHome()
       esp_wifi_set_mac(WIFI_IF_STA, soft_mac);
     }  // end ESP_NOW
   #endif
-  #if (MEDIUM_IN  == 2)      // WiFi UDP select
-  //========================================================
-  void printRemoteIP()
-  {
-    if (showRemoteIP)
+    //===================================================================  
+  #if defined DISPLAY_PRESENT       
+    void setScreenSizeOrient(uint8_t txtsz, uint8_t scr_orient) 
     {
-      showRemoteIP = false;
-      log.print("UDP client identified, remote IP: ");
-      log.print(UDP_remoteIP);
-      log.print(", remote port: ");
-      log.println(UDP_REMOTEPORT);
+    #if (defined SSD1306_DISPLAY) || (defined SSD1331_DISPLAY)   // rotation arguement depends on display type
+      if (scr_orient == 0) {          // portrait
+        display.setRotation(1);              
+        scr_h_px = SCR_H_PX;
+        scr_w_px = SCR_W_PX;
+      } else                       
+      if (scr_orient == 1) {          // landscape
+        display.setRotation(0);             
+        scr_h_px = SCR_W_PX;
+        scr_w_px = SCR_H_PX;
+      }
+    #else                             // ST7789 (T-Display) and ILI9341_DISPLAY
+      if (scr_orient == 0) {          // portrait
+        display.setRotation(0);       // or 4            
+        scr_h_px = SCR_H_PX;
+        scr_w_px = SCR_W_PX;
+      } else
+      if (scr_orient == 1) {          // landscape
+        display.setRotation(3);       // or 1         
+        scr_h_px = SCR_W_PX;
+        scr_w_px = SCR_H_PX;
+      }
+    #endif 
+    display.setTextSize(txtsz);   
+    
+    if (txtsz == 1) {
+      char_w_px = 6;    
+    } else 
+    if(txtsz == 2) {       
+      char_w_px = 12;   
+    } else       
+    if  (txtsz == 3) { 
+      char_w_px = 18;   
+    } else         
+    if  (txtsz == 4) {
+      char_w_px = 24;    
+    } else           
+    if  (txtsz == 5)  {
+      char_w_px = 30;    
+    }     
+    char_h_px = (uint8_t)(char_w_px * 1.4);   // vertical spacing
+    scr_w_ch = scr_w_px / char_w_px;
+    scr_h_ch = scr_h_px / char_h_px;       
+  }
+  #endif  
+  //===================================
+  #if defined DISPLAY_PRESENT    
+  void setupLogDisplayStyle() 
+  {
+    setScreenSizeOrient(TEXT_SIZE, SCR_ORIENT);
+      
+    #if (defined ST7789_DISPLAY)      // LILYGO® TTGO T-Display ESP32 1.14" ST7789 Colour LCD
+      #if (SCR_ORIENT == 0)           // portrait
+        display.setRotation(0);       // or 4 
+        display.setTextFont(0);       // Original Adafruit font 0, try 0 thru 6 
+      #elif (SCR_ORIENT == 1)         // landscape
+        display.setRotation(3);       // or 1 
+        display.setTextFont(1);        
+      #endif   
+        
+      display.fillScreen(SCR_BACKGROUND);
+      display.setTextColor(TFT_SKYBLUE);    
+          
+      //display.setTextColor(TFT_WHITE);
+      //display.setTextColor(TFT_BLUE);  
+      //display.setTextColor(TFT_GREEN, TFT_BLACK);
+  
+    #elif (defined SSD1306_DISPLAY)            // all  boards with SSD1306 OLED display
+      display.clearDisplay(); 
+      display.setTextColor(WHITE);     
+            
+    #elif (defined SSD1331_DISPLAY)            // T2 board with SSD1331 colour TFT display
+      //  software SPI pins defined in config.h 
+      display.fillScreen(SCR_BACKGROUND);
+      display.setCursor(0,0);
+      
+    #elif (defined ILI9341_DISPLAY)           // ILI9341 2.8" COLOUR TFT SPI 240x320 V1.2  
+      //  hardware SPI pins defined in config.h 
+      display.fillScreen(ILI9341_BLUE);    
+      display.setCursor(0,0);
+      //#if (SCR_ORIENT == 0)              // portrait
+      //   display.setRotation(2);          // portrait pins at the top rotation      
+      // #elif (SCR_ORIENT == 1)            // landscape
+      //   display.setRotation(3);          // landscape pins on the left    
+      //#endif 
+      #define SCR_BACKGROUND ILI9341_BLUE 
+    #endif
+  }
+  #endif  
+    #if defined DISPLAY_PRESENT
+    void paintLogScreen(uint8_t new_row, last_row_t last_row_action) 
+    { 
+      if (display_mode != logg) { 
+          setupLogDisplayStyle();
+          display_mode = logg; 
+      }  
+        #if (defined ST7789_DISPLAY) || (defined SSD1331_DISPLAY) ||  (defined ILI9341_DISPLAY)   
+        //  hardware SPI pins defined in config.h 
+          display.fillScreen(SCR_BACKGROUND);                 
+        #elif (defined SSD1306_DISPLAY) 
+          display.clearDisplay();
+        #endif  
+        display.setCursor(0,0);  
+        int8_t first_row;
+        int8_t last_row;
+        if (row < scr_h_ch) {
+          first_row = (last_row_action==omit_last_row) ? 1 : 0; 
+          last_row = (last_row_action==omit_last_row) ? new_row : new_row ;           
+        } else {
+          first_row = (last_row_action==omit_last_row) ? (new_row - scr_h_ch +1) : (new_row - scr_h_ch); 
+          last_row = (last_row_action==omit_last_row) ? new_row : (new_row );            
+        }     
+        for (int i = first_row ; i < last_row; i++) { // drop first line, display rest of old lines & leave space for new line          
+          display.println(ScreenRow[i].x);
+        }
+   
+        #if (defined SSD1306_DISPLAY)
+          display.display();
+        #endif 
+    }
+  #endif    
+  //===================================
+  void logScreenPrintln(String S) 
+  {
+    #if defined DISPLAY_PRESENT   
+      if (display_mode != logg) {
+          setupLogDisplayStyle();
+          display_mode = logg; 
+          paintLogScreen(row, omit_last_row);
+      } else {   
+        if (row >= scr_h_ch) {                      // if the new line exceeds the page lth, re-display existing lines
+          paintLogScreen(row, omit_last_row);
+        }
+      }
+      uint16_t lth = strlen(S.c_str());           // store the new line a char at a time
+      if (lth > scr_w_ch) {    
+        log.printf("Display width of %d exceeded for |%s|\n", scr_w_ch, S.c_str());  // scr_w_ch = max_col-1
+        lth = scr_w_ch-1;  // prevent array overflow
+      }
+      for (int i=0 ; i < lth ; i++ ) {
+        ScreenRow[row].x[col] = S[i];
+        col++;
+      } 
+
+      for (col=col ; col  < scr_w_ch; col++) {    //  padd out the new line to eol
+        ScreenRow[row].x[col] = '\0';
+      } 
+      display.println(ScreenRow[row].x);        // display the new line, which is always the last line
+      #if (defined SSD1306_DISPLAY)
+        display.display();
+      #endif  
+      col = 0;
+      row++;
+      if (row > max_row-1) {
+        log.println("Display rows exceeded!");
+        row = max_row-1;  // prevent array overflow
+      }
+      last_log_millis = millis();             // and enable toggle button again
+      show_log = true;  
+          
+    #endif       
+    } // ready for next line
+    //===================================
+    void logScreenPrint(String S) 
+    {
+    #if defined DISPLAY_PRESENT   
+      if (display_mode != logg) {
+          setupLogDisplayStyle();
+          display_mode = logg; 
+          paintLogScreen(row, omit_last_row);
+      } else {   
+        if (row >= scr_h_ch) {                      // if the new line exceeds the page lth, re-display existing lines
+          paintLogScreen(row, omit_last_row);
+        }
+      }
+      display.print(S);                         // the new line
+      #if (defined SSD1306_DISPLAY)
+        display.display();
+      #endif    
+      uint8_t lth = strlen(S.c_str());          // store the line a char at a time
+      if (lth > scr_w_ch) {
+        log.printf("Display width of %d exceeded for |%s|\n", scr_w_ch, S.c_str());  // scr_w_ch = max_col-1
+        lth = scr_w_ch-1;  // prevent array overflow
+      }  
+      for (int i=0 ; i < lth ; i++ ) {
+        ScreenRow[row].x[col] = S[i];
+        col++;
+      } 
+      for (col=col ; col < scr_w_ch; col++) {  //  padd out to eol
+        ScreenRow[row].x[col] = '\0';
+      }
+      if (col > scr_w_ch-1) {   // only if columns exceeded, increment row
+        col = 0;
+        row++;
+      }
+      last_log_millis = millis();             // and enable toggle button again
+      show_log = true;
+    #endif    
+    } // ready for next line
+//===================================
+void logScreenPrintChar(char ch) 
+{
+#if defined DISPLAY_PRESENT   
+  if (display_mode != logg) {
+      setupLogDisplayStyle();
+      display_mode = logg; 
+      paintLogScreen(row, omit_last_row);
+  } else {   
+    if (row >= scr_h_ch) {                      // if the new line exceeds the page lth, re-display existing lines
+      paintLogScreen(row, omit_last_row);
     }
   }
+  // display.setCursor( ((col+1) * char_w_px), ((row+1) * char_h_px) );
+  display.print(ch);                         // the new char
+  #if (defined SSD1306_DISPLAY)
+    display.display();
+  #endif 
+  ScreenRow[row].x[col] = ch;
+  col++;     
+  if (col > scr_w_ch-1) {   // if columns exceeded, increment row
+    col = 0;
+    row++;
+  }
+  last_log_millis = millis();             // and enable toggle button again
+  show_log = true;
+#endif    
+} // ready for next char   
+
+#if (MEDIUM_IN  == 2)      // WiFi UDP select
   //========================================================
-    uint16_t readUDP()
+  bool sendUDP()
+  {
+  if (!wifiSuGood)
+    return 0;
+  if (!(wifiStaConnected))
+    return 0;
+  if (!(wifiApConnected))
+    return 0;  
+    
+    //Send a packet
+    uint16_t len = 20;  // nominal
+    uint8_t  sendbuf[len];
+  
+    udp_object.beginPacket(UDP_remoteIP, udp_send_port);
+    //udp_object.printf("Seconds since boot: %lu", millis() / 1000);  // purely to trigger targeted IP from sending host
+    sprintf((char*)sendbuf, "Seconds since boot: %lu", millis() / 1000);
+    size_t sent = udp_object.write(sendbuf, len);
+    udp_object.endPacket();
+    #if defined DEBUG_SENDUDP
+      log.printf("UDP packet sent, len:%u\n", sent);
+    #endif
+    if (len == sent) 
+    {
+      return true;
+    } else
+    {
+      return false;
+    }
+  }    
+  //====================================================
+  #if (MEDIUM_IN == 2) &&  (WIFI_PROTOCOL == 2) //  WiFi && UDP - Print the remote UDP IP the first time we get it  
+  void printRemoteIP() 
+  {
+    if (showRemoteIP)  
+    {
+      showRemoteIP = false;
+      log.print("Client connected: Remote UDP IP: "); log.print(UDP_remoteIP);
+      log.print("  Remote  UDP port: "); log.println(UDP_REMOTEPORT);
+      logScreenPrintln("Client connected");
+      logScreenPrintln("Remote UDP IP =");
+      logScreenPrintln(UDP_remoteIP.toString());
+      logScreenPrintln("Remote UDP port =");
+      logScreenPrintln(String(UDP_REMOTEPORT));
+      // send a notional UDP packet to the sending host to help it target our IP (not broadcast)
+      sendUDP();
+    }
+  }
+  #endif
+  //========================================================
+  uint16_t readUDP()
   {
     if (!wifiSuGood)
       return 0;
@@ -349,15 +626,10 @@ uint32_t epochHome()
       return 0;
     if (!(wifiApConnected))
       return 0;    
-    #if (WIFI_MODE == 2)  // STA
-      udp_read_port = UDP_REMOTEPORT; // used by printRemoteIP() only. read port set by ->begin(udp_read_port)).
-      udp_send_port = UDP_LOCALPORT;
-      //log.printf("readUDP() read port:%u    send port:%u\n", udp_read_port, udp_send_port);
-    #endif
-    #if (WIFI_MODE == 1)  // AP
-        udp_read_port = UDP_LOCALPORT;
-        udp_send_port = UDP_REMOTEPORT;
-    #endif
+
+    udp_read_port = UDP_LOCALPORT;
+    udp_send_port = UDP_REMOTEPORT;
+
     int16_t packetSize = udp_object.parsePacket();
     // esp sometimes reboots here: WiFiUDP.cpp line 213 char * buf = new char[1460];
     //log.printf("Read UDP port:%d  packetSize:%d\n", udp_read_port, packetSize);
@@ -467,7 +739,7 @@ uint32_t epochHome()
     return S;
   }
   //=================================================================================================  
-  void PrintMavBuffer(const void *object) 
+  void printMavBuffer(const void *object) 
   {
     const unsigned char * const bytes = static_cast<const unsigned char *>(object);
 
@@ -668,7 +940,7 @@ uint32_t epochHome()
     }
   #endif  
   //=======================================
-  bool PacketGood() 
+  bool packetGood() 
   {
     // Allow 1 degree of lat and lon away from home, i.e. 60 nautical miles radius at the equator
     // Allow 1km up and 300m down from home altitude
@@ -729,246 +1001,6 @@ uint32_t epochHome()
     
   return true;
   }
-    //===================================================================  
-  #if defined DISPLAY_PRESENT       
-  void setScreenSizeOrient(uint8_t txtsz, uint8_t scr_orient) 
-  {
-
-    #if (defined SSD1306_DISPLAY) || (defined SSD1331_DISPLAY)   // rotation arguement depends on display type
-      if (scr_orient == 0) {          // portrait
-        display.setRotation(1);              
-        scr_h_px = SCR_H_PX;
-        scr_w_px = SCR_W_PX;
-      } else                       
-      if (scr_orient == 1) {          // landscape
-        display.setRotation(0);             
-        scr_h_px = SCR_W_PX;
-        scr_w_px = SCR_H_PX;
-      }
-    #else                             // ST7789 (T-Display) and ILI9341_DISPLAY
-      if (scr_orient == 0) {          // portrait
-        display.setRotation(0);       // or 4            
-        scr_h_px = SCR_H_PX;
-        scr_w_px = SCR_W_PX;
-      } else
-      if (scr_orient == 1) {          // landscape
-        display.setRotation(3);       // or 1         
-        scr_h_px = SCR_W_PX;
-        scr_w_px = SCR_H_PX;
-      }
-    #endif
-      
-    display.setTextSize(txtsz);   
-    
-    if (txtsz == 1) {
-      char_w_px = 6;    
-    } else 
-    if(txtsz == 2) {       
-      char_w_px = 12;   
-    } else       
-    if  (txtsz == 3) { 
-      char_w_px = 18;   
-    } else         
-    if  (txtsz == 4) {
-      char_w_px = 24;    
-    } else           
-    if  (txtsz == 5)  {
-      char_w_px = 30;    
-    }     
-  
-    char_h_px = (uint8_t)(char_w_px * 1.4);   // vertical spacing
-
-    scr_w_ch = scr_w_px / char_w_px;
-    scr_h_ch = scr_h_px / char_h_px;       
-  }
-  #endif
- 
-  //===================================
-  #if defined DISPLAY_PRESENT    
-  void setupLogDisplayStyle() 
-  {
-    setScreenSizeOrient(TEXT_SIZE, SCR_ORIENT);
-      
-    #if (defined ST7789_DISPLAY)      // LILYGO® TTGO T-Display ESP32 1.14" ST7789 Colour LCD
-      #if (SCR_ORIENT == 0)           // portrait
-        display.setRotation(0);       // or 4 
-        display.setTextFont(0);       // Original Adafruit font 0, try 0 thru 6 
-      #elif (SCR_ORIENT == 1)         // landscape
-        display.setRotation(3);       // or 1 
-        display.setTextFont(1);        
-      #endif   
-        
-      display.fillScreen(SCR_BACKGROUND);
-      display.setTextColor(TFT_SKYBLUE);    
-          
-      //display.setTextColor(TFT_WHITE);
-      //display.setTextColor(TFT_BLUE);  
-      //display.setTextColor(TFT_GREEN, TFT_BLACK);
-  
-    #elif (defined SSD1306_DISPLAY)            // all  boards with SSD1306 OLED display
-      display.clearDisplay(); 
-      display.setTextColor(WHITE);     
-            
-    #elif (defined SSD1331_DISPLAY)            // T2 board with SSD1331 colour TFT display
-      //  software SPI pins defined in config.h 
-      display.fillScreen(SCR_BACKGROUND);
-      display.setCursor(0,0);
-      
-    #elif (defined ILI9341_DISPLAY)           // ILI9341 2.8" COLOUR TFT SPI 240x320 V1.2  
-      //  hardware SPI pins defined in config.h 
-      display.fillScreen(ILI9341_BLUE);    
-      display.setCursor(0,0);
-      //#if (SCR_ORIENT == 0)              // portrait
-      //   display.setRotation(2);          // portrait pins at the top rotation      
-      // #elif (SCR_ORIENT == 1)            // landscape
-      //   display.setRotation(3);          // landscape pins on the left    
-      //#endif 
-      #define SCR_BACKGROUND ILI9341_BLUE 
-    #endif
-  }
-  #endif  
-    #if defined DISPLAY_PRESENT
-    void paintLogScreen(uint8_t new_row, last_row_t last_row_action) 
-    { 
-      if (display_mode != logg) { 
-          setupLogDisplayStyle();
-          display_mode = logg; 
-      }  
-        #if (defined ST7789_DISPLAY) || (defined SSD1331_DISPLAY) ||  (defined ILI9341_DISPLAY)   
-        //  hardware SPI pins defined in config.h 
-          display.fillScreen(SCR_BACKGROUND);                 
-        #elif (defined SSD1306_DISPLAY) 
-          display.clearDisplay();
-        #endif  
-        display.setCursor(0,0);  
-        int8_t first_row;
-        int8_t last_row;
-        if (row < scr_h_ch) {
-          first_row = (last_row_action==omit_last_row) ? 1 : 0; 
-          last_row = (last_row_action==omit_last_row) ? new_row : new_row ;           
-        } else {
-          first_row = (last_row_action==omit_last_row) ? (new_row - scr_h_ch +1) : (new_row - scr_h_ch); 
-          last_row = (last_row_action==omit_last_row) ? new_row : (new_row );            
-        }     
-        for (int i = first_row ; i < last_row; i++) { // drop first line, display rest of old lines & leave space for new line          
-          display.println(ScreenRow[i].x);
-        }
-   
-        #if (defined SSD1306_DISPLAY)
-          display.display();
-        #endif 
-    }
-  #endif  
-//===================================
-void logScreenPrintln(String S) 
-{
-#if defined DISPLAY_PRESENT   
-  if (display_mode != logg) 
-  {
-      setupLogDisplayStyle();
-      display_mode = logg; 
-      paintLogScreen(row, omit_last_row);
-  } else 
-  {   
-    if (row >= scr_h_ch)
-    {                      // if the new line exceeds the page lth, re-display existing lines
-      paintLogScreen(row, omit_last_row);
-    }
-  }
-  uint16_t lth = strlen(S.c_str());           // store the new line a char at a time
-  if (lth > scr_w_ch) {    
-    log.printf("Display width of %d exceeded for |%s|\n", scr_w_ch, S.c_str()); // scr_w_ch = max_col-1            
-    lth = scr_w_ch-1;  // prevent array overflow
-  }
-  for (int i=0 ; i < lth ; i++ ) {
-    ScreenRow[row].x[col] = S[i];
-    col++;
-  } 
-  for (col=col ; col  < scr_w_ch; col++) {    //  padd out the new line to eol
-    ScreenRow[row].x[col] = '\0';
-  } 
-  display.println(ScreenRow[row].x);        // display the new line, which is always the last line
-  #if (defined SSD1306_DISPLAY)
-    display.display();
-  #endif  
-  col = 0;
-  row++;
-  if (row > max_row-1) {
-    log.println("Display rows exceeded!");
-    row = max_row-1;  // prevent array overflow
-  }
-  last_log_millis = millis();             // and enable toggle button again
-  show_log = true;       
-#endif       
-} // ready for next line
-//===================================
-void logScreenPrint(String S)
-{
-#if defined DISPLAY_PRESENT   
-
-  if (display_mode != logg) {
-      setupLogDisplayStyle();
-      display_mode = logg; 
-      paintLogScreen(row, omit_last_row);
-  } else {   
-    if (row >= scr_h_ch) {                      // if the new line exceeds the page lth, re-display existing lines
-      paintLogScreen(row, omit_last_row);
-    }
-  }
-  display.print(S);                         // the new line
-  #if (defined SSD1306_DISPLAY)
-    display.display();
-  #endif  
-  uint8_t lth = strlen(S.c_str());          // store the line a char at a time
-  if (lth > scr_w_ch) {
-    log.printf("Display width of %d exceeded for |%s|\n", scr_w_ch, S.c_str()); // scr_w_ch = max_col-1             
-    lth = scr_w_ch-1;  // prevent array overflow
-  }  
-  for (int i=0 ; i < lth ; i++ ) {
-    ScreenRow[row].x[col] = S[i];
-    col++;
-  } 
-  for (col=col ; col < scr_w_ch; col++) {  //  padd out to eol
-    ScreenRow[row].x[col] = '\0';
-  }
-  if (col > scr_w_ch-1) {   // only if columns exceeded, increment row
-    col = 0;
-    row++;
-  }
-  last_log_millis = millis();             // and enable toggle button again
-  show_log = true;
-#endif    
-} // ready for next line
-
-//===================================
-void logScreenPrintChar(char ch) 
-{
-#if defined DISPLAY_PRESENT   
-
-  if (display_mode != logg) {
-      setupLogDisplayStyle();
-      display_mode = logg; 
-      paintLogScreen(row, omit_last_row);
-  } else {   
-    if (row >= scr_h_ch) {                      // if the new line exceeds the page lth, re-display existing lines
-      paintLogScreen(row, omit_last_row);
-    }
-  }
-  // display.setCursor( ((col+1) * char_w_px), ((row+1) * char_h_px) );
-  display.print(ch);                         // the new char
-  #if (defined SSD1306_DISPLAY)
-    display.display();
-  #endif 
-  ScreenRow[row].x[col] = ch;
-  col++;     
-  if (col > scr_w_ch-1) {   // if columns exceeded, increment row
-    col = 0;
-    row++;
-  }
-  last_log_millis = millis();             // and enable toggle button again
-  show_log = true;
-#endif    
-} // ready for next char 
 //===========================================================================================
 void driveLED(uint8_t gpio, uint8_t state)
 {
@@ -1303,122 +1335,157 @@ void storeEpochPeriodic()
       log.println("A STA disconnected from our AP"); // back in listening mode
     }
   }
+  //=============================================
+  bool startStation()
+  {
+    uint8_t retry = 0;
+    WiFi.disconnect(true); // To circumvent "wifi: Set status to INIT" error bug
+    delay(500);
+    if (WiFi.mode(WIFI_STA))
+    {
+      log.println("WiFi mode set to STA sucessfully");
+    } else
+    {
+      log.println("WiFi mode set to STA failed!");
+    }
+    log.print("Trying to connect to ");
+    log.print(STAssid);
+    delay(500);
+    WiFi.begin(STAssid, STApw);
+    while (WiFi.status() != WL_CONNECTED)
+    {
+      retry++;
+      static uint32_t max_retry = 40;
+      if (retry >= max_retry)
+      {
+        log.println();
+        log.println("Failed to connect in STA mode");
+        return false;
+      }
+      delay(1000);
+      log.print(".");
+    }   
+    if (WiFi.status() == WL_CONNECTED) 
+    {
+      wifiStaConnected = true;
+      localIP = WiFi.localIP();
+      log.println();
+      log.println("WiFi connected!");
+      log.print("Local IP address: ");
+      log.print(localIP);
+
+      #if (MEDIUM_IN == 2) && (WIFI_PROTOCOL == 1)   // Mav TCP
+          log.print("  TCP port: ");
+          log.println(TCP_LOCALPORT);    //  UDP port is printed lower down
+      #else 
+          log.println();
+      #endif 
+      wifi_rssi = WiFi.RSSI();
+      log.print("WiFi RSSI:");
+      log.print(wifi_rssi);
+      log.println(" dBm");
+      logScreenPrintln("Connected! My IP =");
+      logScreenPrintln(localIP.toString());
+      #if (WIFI_PROTOCOL == 1)          // TCP                                                
+        // We are a client and need to connect to a server
+        outbound_clientGood = NewOutboundTCPClient();
+      #endif
+      #if (WIFI_PROTOCOL == 2)          // UDP 
+        udp_read_port = UDP_LOCALPORT;
+        udp_send_port = UDP_REMOTEPORT; 
+        log.printf("Begin UDP using read port:%d  send port:%d\n", udp_read_port, udp_send_port);
+        udp_object.begin(udp_read_port); 
+        log.printf("UDP instance started, listening on local port %d\n", udp_read_port);                 
+        logScreenPrint("UDP port = ");  logScreenPrintln(String(udp_read_port));
+      #endif
+      wifiSuGood = true;
+      wifiSuDone = true;
+    }  
+    return true;
+  }
+  //=============================================
+  bool startAccessPoint()
+  {
+    if (!(WiFi.mode(WIFI_AP)))
+    {
+      log.println("Set mode WIFI_AP FAILED!");
+      return false;
+    } 
+    log.println("WiFi mode successfully set to WIFI_AP");  
+    // WiFi.softAP(const char* ssid, const char* password, int channel, int ssid_hidden, int max_connection)
+    WiFi.softAP(APssid, APpw);
+    delay(100);
+    localIP = WiFi.softAPIP();
+    log.print("AP IP address: ");
+    log.print(localIP);
+    log.printf(" SSID:%s\n", APssid);
+    logScreenPrintln("WiFi AP SSID =");
+    logScreenPrintln(String(APssid));
+    #if (MEDIUM_IN == 2)                  // WiFi
+      #if (WIFI_PROTOCOL == 2)            // UDP 
+        // regular AP
+        udp_read_port = UDP_LOCALPORT;
+        udp_send_port = UDP_REMOTEPORT;
+        //WiFiUDP UDP_Object;
+        //udp_object = new WiFiUDP(UDP_Object);
+        log.printf("Begin UDP using AP UDP object  read port:%d  send port:%d\n", udp_read_port, udp_send_port);
+        udp_object.begin(udp_read_port);
+        log.printf("UDP instance started, listening on local port %d\n", udp_read_port);              
+        logScreenPrint("UDP port = ");  logScreenPrintln(String(udp_read_port));
+      #endif
+    #endif
+    wifiSuGood = true;
+    return true;
+  }  
+  //====================================================================
+  
   void setupWiFi() 
   { 
+    delay(5000);
     bool apMode = false;  // used when STA fails to connect
-     //===============================  S T A T I O N   =============================
+    //===============================  S T A T I O N   =============================
      
-    #if (WIFI_MODE == 2) || (WIFI_MODE == 3)  // STA or SPA>AP
-      uint8_t retry = 0;
-      log.printf("Trying to connect to \"%s\" ", STAssid);  
-     // log.print(STAssid); 
-      logScreenPrintln("WiFi trying ..");
-
-      WiFi.disconnect(true);   // To circumvent "wifi: Set status to INIT" error bug
-      delay(500);
-      WiFi.mode(WIFI_STA);
-      delay(500);
-      
-      WiFi.begin(STAssid, STApw);
-      while (WiFi.status() != WL_CONNECTED){
-        retry++;
-        if (retry > 20) {
-          log.println();
-          log.println("Failed to connect in STA mode");
-          logScreenPrintln("Failed in STA Mode");
-          wifiSuDone = true;
-          
-          #if (WIFI_MODE ==  3)       
-            apMode = true;            // Rather go establish an AP instead
-            log.println("Starting AP instead.");
-            logScreenPrintln("Starting AP instead");  
+    #if (WIFI_MODE == 2) || (WIFI_MODE == 3)  // STA or STA>AP
+      if (!(startStation()))
+      {
+        wifiSuDone = true;
+        #if (WIFI_MODE ==  3)       // STA>AP
+          apMode = true;            // Rather go establish an AP instead
+          log.println("Starting AP instead.");
+          logScreenPrintln("Starting AP instead");  
+          #if defined ESP32
             //new from Target0815:
             log.println("WiFi-Reset ...");
             WiFi.mode(WIFI_MODE_NULL);    
-            delay(500);             
-          #endif  
-          
-          break;
-        }
-        delay(500);
-        log.print(".");
+            delay(500); 
+          #endif      
+          #if defined ESP8266
+            log.println("WiFi-Reset ...");
+            WiFi.mode(WIFI_OFF); 
+            delay(500); 
+          #endif                       
+        #endif  
       }
-      
-      if (WiFi.status() == WL_CONNECTED) {
-        wifiStaConnected = true;
-        localIP = WiFi.localIP();
-        log.println();
-        log.println("WiFi connected!");
-        log.print("Local IP address: ");
-        log.print(localIP);
-
-        #if (MEDIUM_IN == 2) && (WIFI_PROTOCOL == 1)   // Mav TCP
-            log.print("  TCP port: ");
-            log.println(TCP_LOCALPORT);    //  UDP port is printed lower down
-        #else 
-            log.println();
-        #endif 
-         
-        wifi_rssi = WiFi.RSSI();
-        log.print("WiFi RSSI:");
-        log.print(wifi_rssi);
-        log.println(" dBm");
-
-        logScreenPrintln("Connected! My IP =");
-        logScreenPrintln(localIP.toString());
-
-        #if (WIFI_PROTOCOL == 1)          // TCP                                                
-          // We are a client and need to connect to a server
-          outbound_clientGood = NewOutboundTCPClient();
-        #endif
-        #if (WIFI_PROTOCOL == 2)          // UDP 
-          udp_read_port = UDP_REMOTEPORT;
-          udp_send_port = UDP_LOCALPORT; // so we swap read and send ports, local (read) becomes 14550
-          //WiFiUDP UDP_STA_Object;
-          //udp_object = new WiFiUDP(UDP_STA_Object);
-          log.printf("Begin UDP using STA UDP object  read port:%d  send port:%d\n", udp_read_port, udp_send_port);
-          udp_object.begin(udp_read_port); 
-          log.printf("UDP instance started, listening on IP %s, UDP local port %d\n", localIP.toString().c_str(), udp_read_port);                 
-          logScreenPrint("UDP port = ");  logScreenPrintln(String(udp_read_port));
-        #endif
-        wifiSuGood = true;
-        wifiSuDone = true;
-      } 
-    #endif
-     //===============================  Access Point   =============================  
-
+    #endif  // end of STA or STA>AP
+    // drop through
+    //===============================  Access Point   =============================  
     #if (WIFI_MODE == 1)  // AP
       apMode = true;
     #endif
-
     if (apMode)   
     {
-      WiFi.mode(WIFI_AP);
-      WiFi.softAP(APssid, APpw, APchannel);
-      localIP = WiFi.softAPIP();
-      log.print("AP IP address: ");
-      log.print (localIP); 
-      log.printf("  SSID: \"%s\"\n", String(APssid));
-      logScreenPrintln("WiFi AP SSID =");
-      logScreenPrintln(String(APssid));
-
-      #if (MEDIUM_IN == 2)                  // WiFi
-        #if (WIFI_PROTOCOL == 2)            // UDP 
-          // regular AP
-          udp_read_port = UDP_LOCALPORT;
-          udp_send_port = UDP_REMOTEPORT;
-          //WiFiUDP UDP_Object;
-          //udp_object = new WiFiUDP(UDP_Object);
-          log.printf("Begin UDP using AP UDP object  read port:%d  send port:%d\n", udp_read_port, udp_send_port);
-          udp_object.begin(udp_read_port);
-          log.printf("UDP instance started, listening on IP %s, UDP port %d\n", localIP.toString().c_str(), udp_read_port);              
-          logScreenPrint("UDP port = ");  logScreenPrintln(String(udp_read_port));
-        #endif
-      #endif
-      wifiSuGood = true;
+      if (startAccessPoint())
+      {
+        wifiSuDone = true;   
+  
+      } else
+      {
+        log.println("WiFi setup FAILED!");
+        while (1) delay (500);
+      }
     }           
-    wifiSuDone = true;
- }   
+ }   // end of setupWiFi()  
+
   //=================================================================================================  
   #if (WIFI_PROTOCOL == 1)    //  WiFi TCP      
     bool NewOutboundTCPClient() 
@@ -1446,26 +1513,8 @@ void storeEpochPeriodic()
       return true;
     }
     #endif
-    //=================================================================================================  
-    #if (MEDIUM_IN == 2) &&  (WIFI_PROTOCOL == 2) //  WiFi && UDP - Print the remote UDP IP the first time we get it  
-    void PrintRemoteIP() {
-      if (FtRemIP)  {
-        FtRemIP = false;
-        log.print("Client connected: Remote UDP IP: "); log.print(UDP_remoteIP);
-        log.print("  Remote  UDP port: "); log.println(UDP_REMOTEPORT);
-        logScreenPrintln("Client connected");
-        logScreenPrintln("Remote UDP IP =");
-        logScreenPrintln(UDP_remoteIP.toString());
-        logScreenPrintln("Remote UDP port =");
-        logScreenPrintln(String(UDP_REMOTEPORT));
-      }
-    }
-    #endif
-  
  #endif  
-
   //=================================================================================================  
-
   uint32_t Get_Volt_Average1(uint16_t mV)  {
     if (bat1.avg_mV < 1) bat1.avg_mV = mV;  // Initialise first time
     bat1.avg_mV = (bat1.avg_mV * 0.6666) + (mV * 0.3333);  // moving average
@@ -1947,34 +1996,42 @@ void WiFiEventHandler(WiFiEvent_t event)  {
         show_log = false;
       }
         
-      if (show_log) {
-        if (infoNewPress) {     
+      if (show_log) 
+      {
+        if (infoNewPress) 
+        {     
           paintLogScreen(row, show_last_row);  // one time     
           infoNewPress = false; 
           last_log_millis = millis();
         }
-      } else {            // else show flight info
+      } else 
+      {            // else show flight info
         displayFlightInfo();             
       }
       
       //log.printf("busy=%d  new=%d log=%d  bounce=%d  info=%d\n", infoPressBusy, infoNewPress, show_log, info_debounce_millis, info_millis); 
       
      #if ((defined ESP32) || (defined ESP8266))   // Teensy does not have touch pins          
-      if ( (Tup != -1) && (Tdn != -1) ) {         // if ESP touch pin-pair enumerated
-        if (up_button) {
+      if ( (Tup != -1) && (Tdn != -1) ) 
+      {         // if ESP touch pin-pair enumerated
+        if (up_button) 
+        {
           scrollDisplay(up);
         }
-        if (scroll_display) {     
+        if (scroll_display) 
+        {     
           scrollDisplay(down);
         }     
       } else
       #endif
       
       #if ( (Pup != -1) && (Pdn != -1) )    // if digital pin-pair enumerated
-        if (up_button) {                 
+        if (up_button) 
+        {                 
           scrollDisplay(up);
         }
-        if (scroll_display) {
+        if (scroll_display) 
+        {
           scrollDisplay(down);
         }        
       #endif       
@@ -2156,44 +2213,11 @@ void WiFiEventHandler(WiFiEvent_t event)  {
     }
     return  res;
   }
- //===============  Bluetooth Low Energy Support Routines  ===============
-#if (MEDIUM_IN == 4)
-  static void recordNotifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, 
-                                          uint8_t* pData, size_t length, bool isNotify) 
-  {
-    ppData = pData;  // store the Data pointer
-    newMsg = true;
-    newLen = length;
-  }
-  //======================================== 
-  bool connectToServer(BLEAddress pAddress) 
-  {
-    BLEClient* pClient = BLEDevice::createClient();
-    pClient->connect(pAddress);
-    log.println("connected to remote BLE server");
-    BLERemoteService* pRemoteService = pClient->getService(bmeServiceUUID);
-    if (pRemoteService == nullptr) 
-    {
-      log.print("Failed to find our service UUID: ");
-      log.println(bmeServiceUUID.toString().c_str());
-      return (false);
-    }
-    log.println("our service found");
-    msgCharacteristic = pRemoteService->getCharacteristic(msgCharacteristicUUID);
-    if (msgCharacteristic == nullptr)  
-    {
-      log.print("failed to find our characteristic UUID");
-      return false;
-    }
-    log.println("our characteristics found");
-    msgCharacteristic->registerForNotify(recordNotifyCallback);
-    return true;
-  }
-#endif  // end of BLE4.2
+
 //===========================================================================================
 void displayHeadingSource(uint8_t hs) 
 {
-#if defined DEBUG_MINIMUM || defined DEBUG_ALL || defined DEBUG_BOXCOMPASS  
+//#if defined DEBUG_MINIMUM || defined DEBUG_ALL || defined DEBUG_BOXCOMPASS  
    
   if (hs == 1)  {
       log.printf("headingsource:%u FC GPS\n", hs); 
@@ -2202,7 +2226,7 @@ void displayHeadingSource(uint8_t hs)
   else if  (hs == 2) 
   { 
       log.printf("headingsource:%u FC Compass\n", hs);    
-      logScreenPrintln("Headg srce=FC Mag");
+      logScreenPrintln("HdgSrce=FC Mag");
   }
   else if (hs == 3)   
   {
@@ -2214,7 +2238,7 @@ void displayHeadingSource(uint8_t hs)
       log.printf("Dynamic heading source:%u Tracker Box Compass and GPS\n", headingsource); 
       logScreenPrintln("Dynamic Headg+GPS");
   }  
-#endif  
+//#endif  
 }
 #if ((PROTOCOL == 8) || (PROTOCOL == 0)) || (HEADINGSOURCE == 4) // NMEA GPS or TrackerBox GPS
   //====================================================

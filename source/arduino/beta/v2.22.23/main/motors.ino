@@ -54,11 +54,15 @@ void moveMotors(uint16_t az, uint16_t el)
     azServo.write(az);       // async non-blocking for ESP
     elServo.write(el);  
   #endif
-  #if defined STEPPERS
-    az_step = az * steps_per_degree;
-    el_step = el * steps_per_degree;
-    azStepper.moveTo(az_step);  // async non-blocking
-    elStepper.moveTo(el_step);  // async non-blocking
+  #if defined _MOBASTEP 
+    azStepper.write(az, 1);  // async non-blocking
+    elStepper.write(el, 1);  // async non-blocking
+  #endif
+  #if defined _ACCELSTEP 
+    acst_az_step = az * acst_steps_per_deg;
+    acst_el_step = el * acst_steps_per_deg;
+    azStepper.moveTo(acst_az_step);  // async non-blocking
+    elStepper.moveTo(acst_el_step);  // async non-blocking
   #endif
 }
 //=======================================================
@@ -95,14 +99,12 @@ void pointMotors(int16_t worldAz, int16_t ourEl, int16_t boxHdg)
 //=====================================================
 void waitForComplete()
 {   
-  #if (defined ESP32) || (defined ESP8266)
-    #if defined SERVOS
-      // servo is not asynch ??  while ((azStepper.distanceToGo() != 0) || (elStepper.distanceToGo() != 0)) {delay(100);};
-    #endif
-    #if defined STEPPERS
-      while ((azStepper.distanceToGo() != 0) || (elStepper.distanceToGo() != 0)) {delay(100);};
-    #endif
+  #if (defined _MOBASTEP)
+      while ((azStepper.distanceToGo() != 0) || (elStepper.distanceToGo() != 0)) {delay(100);}; 
   #endif  
+  #if (defined _MOBASERVO)
+      while ((azServo.moving()) || (elServo.moving())) {delay(100);}; 
+  #endif    
 }
 //=====================================================
 void testMotors() {

@@ -166,31 +166,64 @@
   #endif    
   void checkStatusAndTimeouts();
 #endif  
-  //================================================================
-  #if (MEDIUM_IN == 4)  // BLE 4.2
-    class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks 
+
+//================================================================
+#if (MEDIUM_IN == 4)  // BLE 4.2
+  class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks 
+  {
+    void onDisconnect(BLEClient* pclient) 
     {
-      void onDisconnect(BLEClient* pclient) 
-      {
-        BLEconnected = false;
-        log.println("Device disconnected\nScanning to reconnect");
-        BLEScan* pBLEScan = BLEDevice::getScan();
-        pBLEScan->start(0);
+      BLEconnected = false;
+      log.println("Device disconnected\nScanning to reconnect");
+      BLEScan* pBLEScan = BLEDevice::getScan();
+      pBLEScan->start(0);
+    }
+    void onResult(BLEAdvertisedDevice advertisedDevice) 
+    {
+      //log.printf("Device:%s\n", advertisedDevice.toString().c_str());
+      if (advertisedDevice.getName() == bleServerName)
+      {                                                                 // Check if the name of the advertised device matches
+        log.printf("Device:%s found\n", advertisedDevice.toString().c_str());
+        advertisedDevice.getScan()->stop();                             // Stop scanning, we found our device
+        pServerAddress = new BLEAddress(advertisedDevice.getAddress()); // Address of advertiser
+        doConnect = true;                                               // Set flag indicating we are ready to connect
+        log.printf("our device found, connecting to %S...\n", bleServerName);
       }
-      void onResult(BLEAdvertisedDevice advertisedDevice) 
-      {
-        //log.printf("Device:%s\n", advertisedDevice.toString().c_str());
-        if (advertisedDevice.getName() == bleServerName)
-        {                                                                 // Check if the name of the advertised device matches
-          log.printf("Device:%s found\n", advertisedDevice.toString().c_str());
-          advertisedDevice.getScan()->stop();                             // Stop scanning, we found our device
-          pServerAddress = new BLEAddress(advertisedDevice.getAddress()); // Address of advertiser
-          doConnect = true;                                               // Set flag indicating we are ready to connect
-          log.printf("our device found, connecting to %S...\n", bleServerName);
-        }
-      }
-    };
-  #endif
+    }
+  };
+  //===============================================================
+  static void recordNotifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, 
+                                          uint8_t* pData, size_t length, bool isNotify) 
+  {
+    ppData = pData;  // store the Data pointer
+    ble_received = true;
+    ble_len = length;
+  }    
+  //============================================================
+  bool connectToServer(BLEAddress pAddress) 
+  {
+    BLEClient* pClient = BLEDevice::createClient();
+    pClient->connect(pAddress);
+    log.println("connected to remote BLE server");
+    BLERemoteService* pRemoteService = pClient->getService(bmeServiceUUID);
+    if (pRemoteService == nullptr) 
+    {
+      log.print("Failed to find our service UUID: ");
+      log.println(bmeServiceUUID.toString().c_str());
+      return (false);
+    }
+    log.println("our service found");
+    msgCharacteristic = pRemoteService->getCharacteristic(msgCharacteristicUUID);
+    if (msgCharacteristic == nullptr)  
+    {
+      log.print("failed to find our characteristic UUID");
+      return false;
+    }
+    log.println("our characteristics found");
+    msgCharacteristic->registerForNotify(recordNotifyCallback);
+    return true;
+  }
+  #endif // end of BLE4.2 support
   //================================================================
   #if (MEDIUM_IN == 5)  // ESPNOW
     // callback function that will be executed when data is received
@@ -226,19 +259,30 @@
       {
         if (adjustButton.isPressed()) 
         {
-          azStepper.setSpeedSteps(1e4);
-          azStepper.rotate(st_direction);
-          s_dir = (st_direction == 1) ? "CW" : "CCW";
-          std::cout << "dir:" << s_dir << std::endl;
+          #if defined _MOBASTEP 
+            azStepper.setSpeedSteps(1e4);
+            azStepper.rotate(st_direction);         
+          #endif    
+          #if defined _ACCELSTEP      
+            acst_adjustButtonActive = true;
+            acst_button_millis = millis();
+          #endif  
+          s_dir = (st_direction == CW) ? "CW" : "CCW";
+          std::cout << "dir:" << s_dir << std::endl;              
         }
         if (adjustButton.isReleased())
         {
-          azStepper.stop();
-          delay(10);                              // wait for async .stop to finish
-          st_direction = (st_direction == 1) ? -1 : 1;  // ternary toggle direction
-          s_dir = (st_direction == 1) ? "CW" : "CCW";
-          std::cout << "dir:" << s_dir << std::endl;           
-          azStepper.setSpeedSteps((st_speed * 1e4),  (uint32_t)(aStepRev * st_ramp_ratio));
+          #if defined _MOBASTEP 
+            azStepper.stop();
+            delay(10);                   // wait for async .stop() to finish   
+            azStepper.setSpeedSteps((mbst_speed * 1e4),  (uint32_t)(mbstStepRev * mbst_ramp));              
+          #endif  
+          #if defined _ACCELSTEP            
+            acst_adjustButtonActive = false;               // wait for async moveTo() to finish
+          #endif  
+          st_direction = (st_direction == CW) ? CCW: CW;  // ternary toggle direction
+          s_dir = (st_direction == CW) ? "CW" : "CCW";
+          std::cout << "dir:" << s_dir << std::endl;      
         }  
       }
     #endif  
@@ -247,11 +291,18 @@
       {
         if (phase == set_midfront)
         {
-          azStepper.setZero();                    // present position is set as 0 angle (zeropoint)
+          #if defined _MOBASTEP 
+            azStepper.setZero(-azMidFront);  // present position is set as 0 midFront, zero is CCW from here
+          #endif    
+          #if defined _ACCELSTEP
+            acst_deg = azMidFront; 
+          #endif     
+
           log.print("MidFront is "); log.print(azMidFront); log.println(" deg");
-          log.println("Starting set_home phase");
+          log.println(Fsetuping set_home phase");
           logScreenPrintln("Set_home phase");
           phase = set_home;  
+          delay(50);
         } 
       } 
     #endif  
@@ -261,6 +312,10 @@
 //===========================================================
 void setup() 
 { 
+
+  //pinMode(15, OUTPUT);  // T-Display_S3 to boot with battery...
+  //digitalWrite(15, 1);  // and/or power from 5v rail instead of USB
+
   log.begin(115200);
   delay(2000);
   #if defined ESP32
@@ -314,7 +369,7 @@ void setup()
       dnButton.setDebounceTime(200); 
     #endif   
   #endif  
-  ezButton setButton(set_Pin);
+  ezButton setButton(setPin);
   setButton.setDebounceTime(200); // mS
   #if defined STEPPERS
     ezButton adjustButton(adjustPin);
@@ -338,12 +393,13 @@ void setup()
   //=================================================================================================   
   //                                   S E T U P   D I S P L A Y
   //=================================================================================================
+  
   #if (defined DISPLAY_PRESENT) 
     #if (defined ESP32)
       if ( (Tup != -1) && (Tdn != -1) ) 
       {   // enable touch gpio-pair
-        touchAttachInterrupt(digitalPinToInterrupt(Tup), gotButtonUp, threshold);
-        touchAttachInterrupt(digitalPinToInterrupt(Tdn), gotButtonDn, threshold);   
+        touchAttachInterrupt(Tup, gotButtonUp, threshold);
+        touchAttachInterrupt(Tdn, gotButtonDn, threshold);   
       } 
     #endif  
 
@@ -397,14 +453,34 @@ void setup()
   //=================================================================================================   
     
   logScreenPrintln("AntTracker by zs6buj");
-  log.printf("Target Board = %u\n", TARGET_BOARD);   
+
+  #if CONFIG_IDF_TARGET_ESP32
+    Serial.println("ESP32 detected"); 
+  #elif CONFIG_IDF_TARGET_ESP32C2
+    Serial.println("ESP32C2 detected"); 
+    #define ESP32CX 2
+  #elif CONFIG_IDF_TARGET_ESP32C3
+    Serial.println("ESP32C3 detected");
+  #elif CONFIG_IDF_TARGET_ESP32C6
+    Serial.println("ESP32C6 detected");  
+  #elif CONFIG_IDF_TARGET_ESP32S2
+    Serial.println("ESP32S2 detected");    
+  #elif CONFIG_IDF_TARGET_ESP32S3
+    Serial.println("ESP32S3 detected");  
+  #elif CONFIG_IDF_TARGET_ESP32S6
+    Serial.println("ESP32S6 detected");       
+  #elif CONFIG_IDF_TARGET_ESP32H2
+      Serial.println("ESP32H2 detected");  
+  #endif
+
+  log.printf("Target MCU Family:%u\n", TARGET_FAMILY);   
   #if (defined TEENSY3X) // Teensy3x
     log.println("Teensy 3.x");
     logScreenPrintln("Teensy 3.x");
   #elif (defined TEENSY4X)
     log.println("Teensy 4.x");  
   #elif (defined STM32F1xx)
-    log.println("STM32F1xx");  
+    log.println("STM32F1xx");       
   #elif (defined ESP32) //  ESP32 Board
   delay(10);
     log.print("ESP32/Variant is ");
@@ -428,7 +504,19 @@ void setup()
     #if (ESP32_VARIANT == 7)
       log.println("Dev Module with ILI9341 2.8in COLOUR TFT SPI");
       logScreenPrintln("Dev module + TFT");
+    #endif    
+    #if (ESP32_VARIANT == 8)
+      log.println("LilyGo T-Display-S3");
+      logScreenPrintln("LilyGo T-Display-S3");
     #endif      
+    #if (ESP32_VARIANT == 9)
+      log.println("ESP32-S3-DEVKIT-1 no display");
+      logScreenPrintln("ESP32-S3-DEVKIT-1");
+    #endif 
+    #if (ESP32_VARIANT == 10)
+      log.println("ESP32-C3 Supermini");
+      logScreenPrintln("ESP32-C3 Supermini");
+    #endif   
   #elif (defined ESP8266) 
     log.print("ESP8266 / Variant is ");
     logScreenPrintln("ESP8266 / Variant is");  
@@ -442,22 +530,18 @@ void setup()
     log.println("Expecting UART Telemetry In");
     logScreenPrintln("UART Telem In");
   #endif  
-
   #if (MEDIUM_IN  == 2)  // UDP - ESP only
     log.println("Expecting UDP In");
     logScreenPrintln("UDP In");
   #endif  
-
   #if (MEDIUM_IN == 3)  // Bluetooth Serial - ESP32 only
     log.println("Expecting Bluetooth In");
     logScreenPrintln("Expect BT In");
   #endif  
-  
-  #if (MEDIUM_IN == 4)  // GBLE4 - ESP32 only
+  #if (MEDIUM_IN == 4)  // BLE4 - ESP32 only
     log.println("Expecting BLE In");
     logScreenPrintln("Expect BLE In");
   #endif 
-
   #if (MEDIUM_IN == 5)  // ESPNOW - ESP  only
     log.println("Expecting ESPNOW In");
     logScreenPrintln("Expect ESPNOW In");
@@ -492,15 +576,16 @@ void setup()
   #if defined STEPPERS
     log.println("Expecting STEPPERS motors");
   #endif
-
   millisStartup = millis();
   pinMode(StatusLed, OUTPUT ); 
-  if (BuiltinLed != -1) {
+  if (BuiltinLed != -1) 
+  {
     pinMode(BuiltinLed, OUTPUT);     // Board LED mimics status led
     digitalWrite(BuiltinLed, LOW);   // Logic is NOT reversed! Initialse off    
   }
   displayHeadingSource(headingsource);
-  #ifdef QLRS
+
+#ifdef QLRS
     log.println("QLRS variant of Mavlink expected"); 
     logScreenPrintln("QLRS Mavlink expected");
   #endif  
@@ -524,38 +609,34 @@ void setup()
 
   // ====================== SETUP SERVOS or STEPPERS  ===========================
   log.printf("midFront is assumed to be %u deg\n", azMidFront); 
-  #if defined SERVOS
+#if defined SERVOS
     azServo.attach(azPWM_Pin); 
     elServo.attach(elPWM_Pin); 
-    #if (defined ESP32) || (defined ESP8266)
-      azServo.setSpeed(SERVO_SPEED);   
-      elServo.setSpeed(SERVO_SPEED); 
-    #endif  
-  
-    phase = set_home;
-    log.println("Starting set_home phase");
     delay(100);
+    phase = set_home;
+
+    log.println("Starting set_home phase");
+
     logScreenPrintln("Set_home phase");
-    #if (defined ESP32) || (defined ESP8266)
-      if (SERVO_SPEED > 0) 
-      {
-        log.printf("Servo speed is %u\n", SERVO_SPEED);       
-      } else
-      {
-        log.println("Servo speed is default");
-      }
-    #endif  
   #endif
-  #if (defined STEPPERS) && ((defined ESP32) || (defined ESP8266))
-    azStepper.attach(azStepPin, azDirPin);
-    azStepper.setSpeedSteps((st_speed * 1e4),  (uint32_t)(aStepRev * st_ramp_ratio)); // speed10== steps in 10s, ramp
-    //azStepper.attachEnable(azEnaPin, 200, LOW ); // (pinEna, delay ms before start, active hi or low);
-    elStepper.attach(elStepPin, elDirPin);
-    elStepper.setSpeedSteps((st_speed * 1e4),  (uint32_t)(aStepRev * st_ramp_ratio)); 
-    //elStepper.attachEnable(elEnaPin, 200, LOW );   // save a scarce  
-    phase = set_midfront;
-    log.printf("Servo speed:%u  ramp_ratio:%1.1f  gear_ratio:1/%u\n", st_speed, st_ramp_ratio, st_gear_ratio);
+  #if defined_MOBASTEP
+    azStepper.attach(azPulsePin, azDirPin);
+    azStepper.setSpeedSteps((mbst_speed * 1e4),  (uint32_t)(mbstStepRev * mbst_ramp)); // speed10== steps in 10s, ramp
+    // alternative --  myStepper.setRampLen( uint32_t rampLen ); 
+    elStepper.attach(elPulsePin, elDirPin);
+    elStepper.setSpeedSteps((mbst_speed * 1e4),  (uint32_t)(mbstStepRev * mbst_ramp)); 
+    log.printf("Servo speed:%u  ramp_ratio:%1.1f  gear_ratio:1/%u\n", mbst_speed, mbst_ramp, st_gear_ratio);   
   #endif
+  #if defined _ACCELSTEP 
+  /* We choose not to use the SPI attach methods, but rather pulse pin and direction pin */
+    azStepper.setMaxSpeed(acst_max_speed);  // steps/s BEWARE too high value will stall the stepper and blow the TB6600 
+    azStepper.setAcceleration(acst_accel); // acceleration rate in steps/s/s
+    elStepper.setMaxSpeed(acst_max_speed);        // steps/s - 3200 == 60RPM, 1rp/s
+    elStepper.setAcceleration(acst_accel); // acceleration rate in steps/s/s
+    log.printf("Stepper max speed:%u  acst_accel:%1.1f  gear_ratio:1/%u\n", acst_max_speed, acst_accel, st_gear_ratio);    
+  #endif  
+
+  phase = set_midfront;
 
   // ======================== Setup Bluetooth Serial ==========================    
   #if defined ESP32
@@ -592,15 +673,16 @@ void setup()
         #endif
       }
     #endif // end BT
-    #endif // end of ESP32    
-    // ======================== Setup Bluetooth Low Energy 4.2 ==========================    
+  #endif // end of ESP32  
+
+  // ======================== Setup Bluetooth Low Energy 4.2 ==========================    
   #if defined ESP32
     #if (MEDIUM_IN == 4)  // BLE 4.2
       //Init BLE device
       BLEDevice::init("");
       // Retrieve a Scanner and set the callback we want to use to be informed when we
       // have detected a new device.  Specify that we want active scanning and start the
-      // scan to run asynchronously always
+      // scan to run asynchronously allways
       log.println("Starting BLE Client");
       log.printf("Scanning for device \"%s\" forever\n", bleServerName);
       logScreenPrintln("BLE scanning..");
@@ -611,7 +693,8 @@ void setup()
       
     #endif // end BLE 4.2       
   #endif // ESP32
-      // ===================   Setup ESPNOW (ELRS Backpack)  ======================   
+
+  // ===================   Setup ESPNOW (ELRS Backpack)  ======================   
   #if defined ESP32
     #if (MEDIUM_IN == 5)  // ESPNOW
       if ((myUID[0] == 0) && (myUID[1] == 0) && (myUID[2] == 0) && 
@@ -647,6 +730,7 @@ void setup()
       
     #endif // end ESPNOW     
   #endif // ESP32
+
   // ======================== S e t u p   T r a c k e r b o x   G P S  =================
   #if (HEADINGSOURCE == 4)  // Tracker box GPS 
     #if ( (defined ESP8266) || (defined ESP32) )
@@ -856,20 +940,22 @@ void setup()
       log.println("CRSF initialised");
     #endif   
   #endif  
+
   // ================================  Setup WiFi  ====================================
   #if (defined ESP32)  || (defined ESP8266)
     #if (MEDIUM_IN == 2)  //  WiFi
-      setupWiFi();    
+      setupWiFi();
     #endif  
   #endif   
  //===========================================================================================
-  #if defined STEPPERS
-    log.println("Please use adjust button then set midFront position");
-    logScreenPrintln("Adjust midfront pos");
+ #if defined STEPPERS
+    #if defined _ACCELSTEP
+      log.printf("Steps/degree: %3.5f\n", acst_steps_per_deg);
+    #endif
+      log.println("Please use adjust button then set midFront position");
+      logScreenPrintln("Adjust midfront pos");
   #endif
-
-  log.println("Waiting for input telemetry");
-  logScreenPrintln("Waiting for telem"); 
+  log.println("end of setup()");
 } // end of setup()
 
 //===========================================================================================
@@ -1026,6 +1112,12 @@ void finalStoreHome()
 void loop() 
 {     
   //log.print(".");
+  #if defined _ACCELSTEP
+    azStepper.run();
+    elStepper.run();
+  #endif
+
+
   #if defined DISPLAY_PRESENT
     upButton.loop();
     dnButton.loop();
@@ -1036,10 +1128,27 @@ void loop()
   #endif  
   buttonEvents();
 
+  #if defined _ACCELSTEP
+  if (acst_adjustButtonActive)
+    {
+      if ((millis() - acst_button_millis) > 50)
+      {
+        acst_button_millis = millis();
+        acst_deg += st_direction;
+        acst_deg = acst_deg > 360 ? 1 : acst_deg;
+        acst_deg = acst_deg < 1 ? 360 : acst_deg;
+        acst_az_step = acst_deg * acst_steps_per_deg;
+        azStepper.moveTo(acst_az_step);
+        log.printf("acst_deg:%d  my_step:%d\n", acst_deg, acst_az_step);
+      }
+    }
+  #endif
+  
   static bool testedMotors = false;
   if ((phase == set_home) && (!testedMotors))
   {
     testedMotors = true;
+
     #if defined TEST_MOTORS   
       log.println("Testing Servos/Steppers");
       logScreenPrintln("Testing Motors");     
@@ -1047,9 +1156,10 @@ void loop()
     #endif 
     moveMotors(azMidFront, elStart);   // Move Motors to "midfront/start position
   }
+
   checkStatusAndTimeouts();          // and service status LED
 
-  #if (MEDiUM_IN == 2)              // WiFi
+  #if (MEDiUM_IN == 2)               // WiFi
     serviceWiFiRoutines(); 
   #endif
 
@@ -1097,12 +1207,12 @@ void loop()
       #endif
         switch(protocol) { 
         case 1:    // Mavlink 1
-          #if (PROTOCOL == 1) || (PROTOCOL == 2)  || (PROTOCOL == 0)  
+          #if (PROTOCOL == 1) || (PROTOCOL == 0)  
             mavlinkReceive();    
           #endif  
           break;
         case 2:    // Mavlink 2
-          #if (PROTOCOL == 1) || (PROTOCOL == 2)  || (PROTOCOL == 0)  
+          #if (PROTOCOL == 2)  || (PROTOCOL == 0)  
             mavlinkReceive();    
           #endif    
           break;
@@ -1153,33 +1263,6 @@ void loop()
       #endif  
     }
   #endif
-  //===============================       C h e c k   F o r   N e w   A P   C o n n e c t s
-  /*
-  #if (MEDIUM_IN == 2)    // WiFi
-    static uint8_t   AP_prev_sta_count = 0;
-    uint8_t AP_sta_count = WiFi.softAPgetStationNum();
-    log.printf(" \n", );
-    if (AP_sta_count > AP_prev_sta_count) 
-    {  // a STA device has connected to the AP
-      AP_prev_sta_count = AP_sta_count;
-      log.printf("Remote STA %d connected to our AP\n", AP_sta_count);  
-      snprintf(snprintf_buf, snp_max, "New STA, total=%d", AP_sta_count);        
-      logScreenPrintln(snprintf_buf); 
-      #if (WIFI_PROTOCOL == 1)  // TCP
-        if (!outbound_clientGood) 
-        {// if we don't have an active tcp session, start one
-          outbound_clientGood = NewOutboundTCPClient();
-        } 
-      #endif               
-    } else 
-    if (AP_sta_count < AP_prev_sta_count) 
-    {  // a STA device has disconnected from the AP
-      AP_prev_sta_count = AP_sta_count;
-      log.println("A STA disconnected from our AP");     // back in listening mode
-      logScreenPrintln("A STA disconnected"); 
-    }
-  #endif
-  */
   //====================  Check For Display Button Touch / Press
   #if defined DISPLAY_PRESENT
     handleDisplayButtons();
@@ -1197,15 +1280,15 @@ void loop()
           RequestDataStreams();   // must have Teensy Tx connected to Taranis/FC rx  (When SRx not enumerated)
         }
       }
-  #endif 
-#endif  
+    #endif 
+  #endif  
   //===============================  H A N D L E   H O M E   L O C A T I O N
 
   //       D Y N A M I C   H O M E   L O C A T I O N
   //log.printf("HEADINGSOURCE:%u  hbG:%u  gpsG:%u  boxgpsG:%u  PacketG:%u  new_GPS_data:%u  new_boxGPS_data:%u \n", 
-  //         HEADINGSOURCE, telemGood, gpsGood, boxgpsGood, PacketGood(), new_GPS_data, new_boxGPS_data);          
+  //         HEADINGSOURCE, telemGood, gpsGood, boxgpsGood, packetGood(), new_GPS_data, new_boxGPS_data);          
   #if (HEADINGSOURCE == 4)        // Trackerbox_GPS_And_Compass - possible moving home location
-      if (telemGood && gpsGood && boxgpsGood && PacketGood() && new_GPS_data && new_boxGPS_data) 
+      if (telemGood && gpsGood && boxgpsGood && packetGood() && new_GPS_data && new_boxGPS_data) 
       {  //  every time there is new GPS data 
         static bool first_dynamic_home = true;
         new_boxGPS_data = false; 
@@ -1259,17 +1342,21 @@ void loop()
           }      
         }  // end of check for button push  
 
-      } else  // end of heading source == FC GPS
+      } else  // end of heading source == 1 FC GPS
       {
         bool sh_armFlag = false;
         #if defined SET_HOME_AT_ARM_TIME  
           sh_armFlag = true;
         #endif
-        //log.printf("headingsource:%u  hdgGood:%u sh_armFlag:%u\n", headingsource, hdgGood, sh_armFlag);
+        #if defined DEBUG_HEADINGSOURCE
+          log.printf("headingsource:%u  hdgGood:%u sh_armFlag:%u\n", headingsource, hdgGood, sh_armFlag);
+        #endif
         if ( ((headingsource == 2) && (hdgGood)) || ( ((headingsource == 3) || (headingsource == 4)) && (boxhdgGood) ) ) 
         {  // if FC compass or Trackerbox compass 
-
-          //log.printf("sh_armFlag:%u  motArmed:%u  gpsfixGood:%u  ft:%u  hbp:%u\n", sh_armFlag, motArmed, gpsfixGood, ft, homeButtonPushed());              
+          static bool ft = true;   
+          #if defined DEBUG_HEADINGSOURCE
+            log.printf("sh_armFlag:%u  motArmed:%u  gpsfixGood:%u  ft:%u\n", sh_armFlag, motArmed, gpsfixGood, ft);   
+          #endif             
           if (sh_armFlag) // if set home at arm time
           {                    
             if ( motArmed && gpsfixGood ) 
@@ -1278,12 +1365,11 @@ void loop()
             } 
           } else                        // if not set home at arm time 
           if (gpsfixGood) 
-          {                                  
-            static bool ft = true;                         
+          {                                                        
             if (ft) 
             {
               ft=false;           
-              log.printf("GPS lock good! Push set-home button (gpio:%d) anytime to start tracking *************\n", set_Pin);  
+              log.printf("GPS lock good! Push set-home button (gpio:%d) anytime to start tracking *************\n", setPin);  
               logScreenPrintln("GPS lock good! Push");
               logScreenPrintln("home button");        
             } else 
@@ -1302,18 +1388,29 @@ void loop()
     } // final home already stored
     #endif   // end of static home
   
+
     // Antenna pointing is done from code block below
+    //=======================>
+    //=======================>
     //=======================>
     if (finalHomeStored) 
     {
-      if (telemGood && gpsGood && PacketGood() && new_GPS_data) 
+      bool distTest = (hc_vector.dist >= minDist);
+      #if defined DEBUG_MIN_DIST
+        log.printf("telemGood:%u gpsGood:%u packetGood():%u new_GPS_data:%u dist:%u minDist distTest:%u\n", telemGood, gpsGood, packetGood(), new_GPS_data, hc_vector.dist, distTest);
+      #endif
+      if (telemGood && gpsGood && packetGood() && new_GPS_data) 
       {  //  every time there is new GPS data 
         getAzEl(hom, cur);
-        if (hc_vector.dist >= minDist) 
+        if (distTest)  
             pointMotors((uint16_t)hc_vector.az, (uint16_t)hc_vector.el, (uint16_t)hom.hdg);  // Motors pointed relative to "home midfront" heading >>>>>>
         new_GPS_data = false;
       }
     }
+    //=======================>
+    //=======================>
+    //=======================>
+
     if ((lostPowerCheckDone) && (timeGood) && (millis() - millisStore) > 60000) 
     {  // every 60 seconds
       storeEpochPeriodic();

@@ -1,11 +1,11 @@
-//================================================================================================= 
+ //================================================================================================= 
 //================================================================================================= 
 //
 //                                    C O N F I G U R A T I O N 
 
 #define MAJOR_VERSION       2
 #define MINOR_VERSION      22
-#define PATCH_LEVEL        13
+#define PATCH_LEVEL        23
 
 //=============================================================================================
 //================== Please select your options below before compiling ========================
@@ -15,11 +15,52 @@
 #define DEVICE_COMPID    MAV_COMP_ID_PERIPHERAL  // 158 Generic autopilot peripheral - APM FC is 1, MP is 190, QGC is  https://mavlink.io/en/messages/common.html
 
 //=============================================================================================
+//============================    D E T E C T   M C U   F A M I L Y   =========================
+//=============================================================================================
+//                Don't change anything here
+//
+#if defined (__MK20DX128__) || defined(__MK20DX256__)
+  #define TEENSY3X  
+  #define TARGET_FAMILY   1      // Teensy 3.1 and 3.2  
+  #define TEENSY_VARIANT 1    
+#endif  
+#if defined(__IMXRT1052__) || defined(__IMXRT1062__)
+  #define TEENSY4X  
+  #define TARGET_FAMILY   1      // Teensy 4.2  
+  #define TEENSY_VARIANT 2  
+#endif    
+// Using official stmicroelectronics lib: https://github.com/stm32duino/BoardManagerFiles/raw/main/package_stmicroelectronics_index.json 
+#if defined (STM32F1xx)   // in boards.txt / build.variant, like GenF1.menu.pnum.BLUEPILL_F103C8.build.variant=STM32F1xx/F103C8T_F103CB(T-U)
+  #define TARGET_FAMILY   2      // Blue Pill STM32F103C8 
+  #define STM32_VARIANT  1
+#endif    
+#if defined ESP32
+  #define TARGET_FAMILY   3      // Espressif ESP32 
+#endif    
+#if defined ESP8266
+  #define TARGET_FAMILY   4      // Espressif ESP8266
+#endif 
+#if defined(CONFIG_IDF_TARGET_ESP32C3)
+  #define ESP32CX 3
+#elif CONFIG_IDF_TARGET_ESP32C6 
+#define ESP32CX  6   
+#elif CONFIG_IDF_TARGET_ESP32S2
+#define ESP32Sx  2        
+#elif CONFIG_IDF_TARGET_ESP32S3
+#define ESP32Sx 3   
+#elif CONFIG_IDF_TARGET_ESP32S6
+#define ESP32Sx 6        
+#elif CONFIG_IDF_TARGET_ESP32H2
+  #define ESP32Hx 2   
+#endif
+
+//=============================================================================================
 //========================      S E L E C T   M O T O R   T Y P E      ========================
 //=============================================================================================
+ 
 // Select only one motor type
-//#define STEPPERS     
-#define SERVOS
+#define STEPPERS 
+//#define SERVOS
 
 //=================================================================================================                            
 //===========================     S E L E C T   B O A R D   V A R I A N T     =====================  
@@ -33,11 +74,13 @@
 //#define STM32_VARIANT     1      // STM32 Blue Pill F103C8 with 128k
 //#define ESP32_VARIANT     1    //  ESP32 Dev Module
 //#define ESP32_VARIANT     4    // Heltec Wifi Kit 32 V3 (S3) (thanks to Marc Dornan)
-#define ESP32_VARIANT     5    //  LILYGO® TTGO T-DISPLAY ESP32 1.14" ST7789 Colour LCD, IDE board = "ESP32 Dev Module"
+//#define ESP32_VARIANT     5    //  LILYGO® TTGO T-DISPLAY ESP32 1.14" ST7789 Colour LCD, IDE board = "ESP32 Dev Module"
 //#define ESP32_VARIANT     6    // LILYGO® TTGO T2 ESP32 OLED Arduino IDE board = "ESP32 Dev Module"
 //#define ESP32_VARIANT     7    // ESP32 Dev Module with ILI9341 2.8" colour TFT SPI 240x320 NOT TESTED _ DON'T USE YET
 //#define ESP32_VARIANT     8    // Lilygo T-Display-S3 ESP32-S3 1.9 in ST7789V LCD no touch screen 
-//#define ESP8266_VARIANT   1    // Lolin NodeMCU 12E/F board - Select NodeMCU 12E in IDE 
+//#define ESP32_VARIANT     9    // ESP32-S3-DEVKIT-1 no display
+//#define ESP32_VARIANT    10    // ESP32-C3 Supermini
+#define ESP8266_VARIANT   1    // Lolin NodeMCU 12E/F board - Select NodeMCU 12E in IDE 
 
 /*
                 PLATFORMIO BOARD VARIANT SELECTION OVERRIDE
@@ -65,31 +108,31 @@
 //=============================================================================================
 // Choose only one input medium 
 //#define MEDIUM_IN  1    // UART (Serial)   Teensy, STM32F103, ESP8266 and ESP32   
-//#define MEDIUM_IN  2    // WiFi UDP - ESP only
+#define MEDIUM_IN  2    // WiFi UDP - ESP only
 //#define MEDIUM_IN  3    // Bluetooth Classic - ESP32 only
 //#define MEDIUM_IN  4    // Bluetooth Low Energy (BLE4.2)- ESP32 only
-#define MEDIUM_IN  5    // ESPNOW - ESP32 and CRSF protocol only
+//#define MEDIUM_IN  5    // ESPNOW - ESP32 and CRSF protocol only
 
 //=============================================================================================
 //================================  T E L E M E T R Y   P R O T O C O L  ======================
 //=============================================================================================
 // Select only one telemetry PROTOCOL here
-//#define PROTOCOL 0     // AUTO detect protocol
+//#define PROTOCOL 0     // AUTO detect protocol   at present UART, BT Classic or BLE only
 //#define PROTOCOL 1     // Mavlink 1
-//#define PROTOCOL 2     // Mavlink 2
+#define PROTOCOL 2     // Mavlink 2
 //#define PROTOCOL 3     // FrSky S.Port
 //#define PROTOCOL 4     // FrSky F.Port 1
 //#define PROTOCOL 5     // FrSky F.Port 2
 //#define PROTOCOL 6     // LTM
 //#define PROTOCOL 7     // MSP - Not supported - Possible future support
 //#define PROTOCOL 8     // GPS NMEA
-#define PROTOCOL 9     // CRFS
+//#define PROTOCOL 9     // CRFS
 
 //=============================================================================================
 //==================================  H E A D I N G   S O U R C E  ============================
 //=============================================================================================
 // Select one heading source. We need this to relate the external world of co-ordinates to the internal tracker co_ordinates.
-//#define HEADINGSOURCE  1     // 1=Flight Computer GPS, 
+//#define HEADINGSOURCE  1     // 1=Flight Computer GPS
 #define HEADINGSOURCE  2     // 2=Flight Computer Compass
 //#define HEADINGSOURCE  3     // 3=Trackerbox_Compass 
 //#define HEADINGSOURCE  4     // 4=Trackerbox_GPS_And_Compass
@@ -148,24 +191,92 @@
 
 #define DATA_STREAMS_ENABLED   // Mavlink only - Requests data streams from FC. Requires both rx and tx lines to FC. Rather set SRn in Mission Planner
 
-
+//=================================================================================================   
+//================================   M O T O R   L I B R A R I E S   ============================== 
+//=================================================================================================  
+#if defined TEENSY3X         
+  #include <PWMServo.h>  
+  #define _PWMSERVO   
+#elif defined STM32F1xx
+  #include <MobaTools.h>
+  #define _MOBASERVO     
+#elif defined ESP32 
+  // if ESP32Cx or Sx MCU, then Mobatools does not support! Use other libraries
+  #if (defined ESP32CX) || (defined ESP32SX)
+    #if defined STEPPERS
+      #include <AccelStepper.h> 
+      #define _ACCELSTEP    
+    #elif defined SERVOS
+      #include <ESP32Servo.h> 
+      #define _ESPSERVO   
+    #endif  
+  #else                    // regular ESP32, not Cx or Sx
+    #include <MobaTools.h>  
+    #if defined STEPPERS
+      #define _MOBASTEP  
+    #elif defined SERVOS
+      #define _MOBASERVO   
+    #endif  
+  #endif  
+#elif (defined ESP8266)  
+  #include <MobaTools.h>    
+  #if defined STEPPERS
+    #define _MOBASTEP 
+  #else
+    #define _MOBASERVO
+   // #include <Servo.h> // investgate ESP8266_ISR_Servo library
+   // #define _8266SERVO  // Arduino/Espressif lib   
+  #endif          
+#endif
 //=============================================================================================
 //===================================  M O T O R   S E T T I N G S  ===========================
 //=============================================================================================
 
-  #define TEST_MOTORS    // Move servos/steppers through their limits, then try box_hdg every 45 degrees of circle
+  //#define TEST_MOTORS    // Move servos/steppers through their limits, then try box_hdg every 45 degrees of circle
 
   //#define AZ_SERVO_360   // Means the azimuth servo can point in a 360 deg circle, elevation servo 90 deg
                            // Default (comment out #define above) is 180 deg azimuth and flip over 180 deg elevation 
-  #if (defined STEPPERS)
-    #define azMidFront  0   // 270 deg = left, 0 deg = straight ahead, 90 deg = right, 180 deg = behind
-  #endif 
-  #if (defined SERVOS)                   
-    #define azMidFront  90  // 0 deg = left, 90 deg = straight ahead, 180 deg = right, 270 deg = behind
-  #endif
+
+  #define azMidFront  90   // 0 deg = left, 90 deg = straight ahead, 180 deg = right, 270 deg = behind
   #define elStart   0       // 0 = horizontal, 90 = vertical
 
-  /*    See SERVO_SPEED below     */
+  #if defined STEPPERS
+    typedef enum direction_set {none= 0, CW = 1, CCW = -1 } direction_t;
+      direction_t st_direction = CW;
+
+    const uint16_t st_gear_ratio = 10;  // Inverse. So 10 means 1/10. Gear ratio of motor gearbox. 1 if no gearing      
+    std::string s_dir;   
+  #endif
+  #if defined SERVOS
+    #define SERVO_SPEED     100  // Default = 0 - Try 5, 20, 50, 100, 300
+  #endif
+
+  #if defined _MOBASTEP        
+    //st_direction = CW;                           
+    const uint8_t mbst_speed = 10;                  // relative speed recommended range 1 - 30
+    const float mbst_ramp = 0.2;                    // portion of angular range for speed ramp_up and ramp down
+    const int mbstStepRev = 1600 * st_gear_ratio; // 1600 steps per revolution
+  #endif
+  #if defined _ACCELSTEP
+    uint32_t acst_button_millis = 0;
+    int16_t acst_deg = 0;
+    int16_t acst_az_step = 0;
+    int16_t acst_el_step = 0;
+    const int16_t max_steps = 3200;       // steps per 360deg, set TB6600 same (200 base steps x 16 or 32)
+    const float acst_steps_per_deg = (float)max_steps / (float)360;
+    bool  acst_adjustButtonActive = false;
+    const uint16_t acst_max_speed = 1000;      // steps/s - 6400 == 60RPM, 1rp/s
+    const uint16_t acst_accel = 2000;          // steps/s/s
+   
+  #endif
+  #if defined _MOBASERVO
+    /* adjust your servo movement limits here
+       Find these settings in MobaTools.h and change them, or comment them out
+       and insert below
+      #define MINPULSEWIDTH   613   
+      #define MAXPULSEWIDTH   2215
+    */  
+  #endif
 
   // Set the degree range of the motors here. Do not adjust servo mechanical limits here. See MIN/MAXPULSEWIDTH below.                        
   #if defined AZ_SERVO_360   // 1 x 360, 1 x 90 (or 180) motors  
@@ -180,62 +291,35 @@
     int16_t maxEl = 180;        // El upper limit in degrees, horizontal and rearward
   #endif 
 
-  // Sometimes the mechanical movement of a servo is reversed due to the orientation of its mounting
+  // Sometimes the mechanical movement of a motor is reversed due to the orientation of its mounting
   // Its movement may be reversed here to compensate
   #define REVERSEAZIMUTH          // my azimuth servo has a reversed action
   //#define REVERSEELEVATION
-
 
   // Default values for SG90 servos; 500 and 2400
   // My 180 deg servos have a PWM range of 700 through 2300 microseconds. Your's may differ. 
   // ADJUST THE MECHANICAL LIMITS OF MOVEMENT OF YOUR SERVOS/STEPPERS HERE BELOW
 
-  #if defined STM32F1xx      // my STM32 based tracker has different servos
-    const uint16_t minAzPWM = 600;   // right (because mine is reversed)
-    const uint16_t maxAzPWM = 2300;  // left   
-    const uint16_t minElPWM = 700;   // front 
-    const uint16_t maxElPWM = 2300;  // back
-  #else
-    const uint16_t minAzPWM = 625;   // right (because mine is reversed)
-    const uint16_t maxAzPWM = 2235;  // left 
-    const uint16_t minElPWM = 600;   // front
-    const uint16_t maxElPWM = 2257;  // back  
-  #endif
-
-  #if defined SERVOS
-    /* adjust your servo movement limits here
-       Find these settings in MobaTools.h and change them, or comment them out
-       and insert below
-      #define MINPULSEWIDTH   613   
-      #define MAXPULSEWIDTH   2215
-    */  
-    #define SERVO_SPEED     100  // Default = 0 - Try 5, 20, 50, 100, 300
-  #endif
-  #if defined STEPPERS
-    int8_t st_direction = 1;                      // CW or -1 CCW
-    const uint8_t st_speed = 10;                  // relative speed recommended range 1 - 30
-    const float st_ramp_ratio = 0.2;              // portion of angular range for speed ramp_up and ramp down
-    const uint16_t st_gear_ratio = 10;            // Inverse. So 10 means 1/10. Gear ratio of motor gearbox. 1 if no gearing
-    const int aStepRev = 1600 * st_gear_ratio;    // 1600 steps per revolution
-    std::string s_dir; 
-  #endif
+  const uint16_t minAzPWM = 625;   // right (because mine is reversed)
+  const uint16_t maxAzPWM = 2235;  // left 
+  const uint16_t minElPWM = 600;   // front
+  const uint16_t maxElPWM = 2257;  // back  
 
 //=============================================================================================
 //================================   W I F I   S E T T I N G S  ===============================  
 //=============================================================================================
 
-#define HostName    "crsfUDP"  
-#define APssid      "crsfUDP"
+#define HostName    "Tracker"  
+#define APssid      "Tracker"
 #define APpw        "password"         // Change me! Must be >= 8 chars  
-#define STAssid     "crsfUDP"
+#define STAssid     "MavToUDP"
 #define STApw       "password"         // Change me! Must be >= 8 chars 
 #define APchannel            9                  // The wifi channel to use for our AP
  
 // Choose one default mode for ESP only - AP means advertise as an access point (hotspot). STA means connect to a known host
-//#define WIFI_MODE   1  //AP            
+//#define WIFI_MODE  1  //AP            
 //#define WIFI_MODE   2  // STA
 #define WIFI_MODE   3  // (STA>AP) STA failover to AP 
-
 // Choose one default protocol - for ESP only
 //#define WIFI_PROTOCOL 1    // TCP/IP not used here
 #define WIFI_PROTOCOL 2    // UDP 
@@ -250,33 +334,12 @@ uint16_t  TCP_REMOTEPORT = 5760;    // Send port. You send to this port.
 uint16_t  UDP_LOCALPORT = 14555;    // readPort,  (default 14555) remote host (like MP and QGC) expects to send to this port - Frsky +1
 uint16_t  UDP_REMOTEPORT = 14550;   // sendPort,  (default 14550) remote host reads from this port - FrSky +1
 uint16_t  udp_read_port = 0;
-uint16_t  udp_send_port = 0;
+uint16_t  udp_send_port = 0; 
 
 //=============================================================================================
-//============================= Auto Determine Target Platform ================================
+//========================   Determine Board Group Capability  ================================
 //=============================================================================================
-//
-//                Don't change anything here
-//
-#if defined (__MK20DX128__) || defined(__MK20DX256__)
-  #define TEENSY3X    
-  #define TARGET_BOARD   1      // Teensy 3.1 and 3.2  
-  #define TEENSY_VARIANT 1
-#elif defined(__IMXRT1052__) || defined(__IMXRT1062__)
-  #define TEENSY4X  
-  #define TARGET_BOARD   1      // Teensy 4.2  
-  #define TEENSY_VARIANT 2 
-// Using official stmicroelectronics lib: https://github.com/stm32duino/BoardManagerFiles/raw/main/package_stmicroelectronics_index.json 
-#elif defined (STM32F1xx)   // in boards.txt / build.variant, like GenF1.menu.pnum.BLUEPILL_F103C8.build.variant=STM32F1xx/F103C8T_F103CB(T-U)
-  #define TARGET_BOARD   2      // Blue Pill STM32F103C8 
-  #define STM32_VARIANT  1
-#elif defined ESP32
-  #define TARGET_BOARD   3      // Espressif ESP32 Dev Module
-#elif defined ESP8266
-  #define TARGET_BOARD   4      // Espressif ESP8266
-#else
-  #error "No board type defined!"
-#endif
+
 #if (defined ESP32 || defined ESP8266) && (MEDIUM_IN == 2) 
   #define wifiBuiltin   //  for this feature we need wifi support compiled in
 #endif    
@@ -296,7 +359,7 @@ uint16_t  udp_send_port = 0;
 //======================= P L A T F O R M   D E P E N D E N T   S E T U P S ===================
 //=============================================================================================
 
-#if (TARGET_BOARD == 1)           //   (TEENSY) 
+#if (TARGET_FAMILY == 1)           //   (TEENSY) 
   #if (TEENSY_VARIANT == 1)          // TEENSY 3.1/3.2
     #define in_rxPin        0       // rx1 tx1 - Serial1
     #define in_txPin        1
@@ -306,8 +369,9 @@ uint16_t  udp_send_port = 0;
     #endif  
     bool in_invert = false;          // ONLY FOR FrSky S.Port, NOT F.Port, NOT MAVLINK     
     #define frOneWire     true      // ONLY FOR FrSky S.Port
-    #define set_Pin        11
+    #define setPin         11
     #define StatusLed      14
+    #define BuiltinLed     -1     // none, but must be defined!
     #define azPWM_Pin       5
     #define elPWM_Pin       6
     #define BuiltinLed     13
@@ -328,8 +392,9 @@ uint16_t  udp_send_port = 0;
     #endif  
     bool in_invert = true;          // ONLY FOR FrSky S.Port, NOT F.Port, NOT MAVLINK     
     #define frOneWire     true      // ONLY FOR FrSky S.Port
-    #define set_Pin        11
+    #define setPin         11
     #define StatusLed      14
+    #define BuiltinLed     -1     // none, but must be defined!
     #define azPWM_Pin       5
     #define elPWM_Pin       6
     #define BuiltinLed     13
@@ -342,7 +407,7 @@ uint16_t  udp_send_port = 0;
   #endif  
 //=========================================================================   
 
-#elif (TARGET_BOARD == 2)         // STM32F1xx Blue Pill
+#elif (TARGET_FAMILY == 2)         // STM32F1xx Blue Pill
   #if (STM32_VARIANT == 1)
     // There are three USART peripherals on the STM32F103, rx1/tx1 (flash, monitor), rx2/tx2, rx3/tx3
                           // PA10   // rx1 Serial(0) flash and monitor    
@@ -354,8 +419,9 @@ uint16_t  udp_send_port = 0;
       #define boxgps_txPin      -1     // not needed tx3 Serial2
     #endif  
     bool in_invert = false;          // ONLY FOR FrSky S.Port, NOT F.Port, NOT MAVLINK    
-    #define set_Pin           PA5    //PA0    
+    #define setPin           PA5    //PA0    
     #define StatusLed         PA6    // Off=No good GPS yet, flashing=good GPS but home not set yet, solid = ready to track
+    #define BuiltinLed        -1     // none, but must be defined!
     #define azPWM_Pin         PA7    // azimuth servo 
     #define elPWM_Pin         PA8    // elevation servo
     #define BuiltinLed        PC13  
@@ -368,15 +434,16 @@ uint16_t  udp_send_port = 0;
   #endif  
   //=========================================================================  
    
-#elif (TARGET_BOARD == 3)         // ESP32 Platform
+#elif (TARGET_FAMILY == 3)         // ESP32 Platform
 
   // For info: Avoid SPI pins - generally   CS=5    MOSI=23   MISO=19   SCK=18  
+  /*
   #if defined LED_BUILTIN
     #define BuiltinLed LED_BUILTIN
   #else
     #define BuiltinLed        -1
   #endif
-
+  */
   #if (ESP32_VARIANT == 1)          // ESP32 Dev Module
     int8_t in_rxPin =         27;  // uart1
     #define in_txPin          17 
@@ -385,17 +452,18 @@ uint16_t  udp_send_port = 0;
       #define boxgps_txPin       4  
     #endif  
     bool in_invert = false;         // ONLY FOR FrSky S.Port, NOT F.Port, NOT MAVLINK
-    #define set_Pin           12   // LOW == pushed    
+    #define setPin           12   // LOW == pushed    
     #define StatusLed         25   // Off=No good GPS yet, flashing=good GPS but home not set yet, solid = ready to track
+    #define BuiltinLed        -1     // none, but must be defined!
     #if defined SERVOS
       #define azPWM_Pin       32  // azimuth servo (can't be 34,35,36,39 because input only !!)
       #define elPWM_Pin       33  // elevation servo(can't be 34,35,36,39 because input only !!)  
     #endif
     #if defined STEPPERS
       #define adjustPin       26  // white    
-      #define azStepPin       32  // orange
+      #define azPulsePin       32  // orange
       #define azDirPin        33  // grey
-      #define elStepPin        2  // brown
+      #define elPulsePin        2  // brown
       #define elDirPin        15  // purple
     #endif
 
@@ -429,17 +497,18 @@ uint16_t  udp_send_port = 0;
       #define boxgps_txPin       4 
     #endif   
     bool in_invert = false;         // ONLY FOR FrSky S.Port, NOT F.Port, NOT MAVLINK
-    #define set_Pin           12   // LOW == pushed    
+    #define setPin           12   // LOW == pushed    
     #define StatusLed         25   // Off=No good GPS yet, flashing=good GPS but home not set yet, solid = ready to track
+    #define BuiltinLed        -1     // none, but must be defined!
     #if defined SERVOS
       #define azPWM_Pin       32  // azimuth servo (can't be 34,35,36,39 because input only !!)
       #define elPWM_Pin       33  // elevation servo(can't be 34,35,36,39 because input only !!)  
     #endif
     #if defined STEPPERS
       #define adjustPin       26  // white    
-      #define azStepPin       32  // orange
+      #define azPulsePin       32  // orange
       #define azDirPin        33  // grey
-      #define elStepPin        2  // brown
+      #define elPulsePin        2  // brown
       #define elDirPin        15  // purple
     #endif
 
@@ -467,16 +536,17 @@ uint16_t  udp_send_port = 0;
       #define boxgps_txPin    -1    // not used
     #endif
     #define StatusLed         25  // Add your own LED with around 1K series resistor
-    #define set_Pin           12  // black
+    #define BuiltinLed        -1     // none, but must be defined!
+    #define setPin            12  // black
     #if defined SERVOS
       #define azPWM_Pin       32  // azimuth servo (can't be 34,35,36,39 because input only !!)
       #define elPWM_Pin       33  // elevation servo(can't be 34,35,36,39 because input only !!)  
     #endif
     #if defined STEPPERS
       #define adjustPin       26  // white    
-      #define azStepPin       32  // orange
+      #define azPulsePin      32  // orange
       #define azDirPin        33  // grey
-      #define elStepPin        2  // brown
+      #define elPulsePin       2  // brown
       #define elDirPin        15  // purple
     #endif
     
@@ -506,16 +576,16 @@ uint16_t  udp_send_port = 0;
       uint8_t boxgps_rxPin =    19;       // uart2 for tracker box GPS
       #define boxgps_txPin      21  
     #endif  
-    bool in_invert = true;               // ONLY FOR FrSky S.Port, NOT F.Port, NOT MAVLINK
-    #define set_Pin           15
-    #define StatusLed         25        // Add your own LED with around 1K series resistor
+    bool in_invert = true;           // ONLY FOR FrSky S.Port, NOT F.Port, NOT MAVLINK
+    #define setPin            15
+    #define StatusLed         25  // Add your own LED with around 1K series resistor
+    #define BuiltinLed        -1  // none, but must be defined!
     #define azPWM_Pin         14  // azimuth servo (can't be 34,35,36,39 because input only !!)
     #define elPWM_Pin         16  // elevation servo(can't be 34,35,36,39 because input only !!)    
 
     #if !defined SSD1306_DISPLAY    
       #define SSD1306_DISPLAY         // OLED display type
     #endif 
-    #undef ST7789_DISPLAY 
     /* Below please choose either Touch pin-pair or Digital pin-pair for display scrolling
     *  Pin == -1 means the pin-pair is not used
     */        
@@ -537,8 +607,9 @@ uint16_t  udp_send_port = 0;
       #define boxgps_txPin       4
     #endif  
     bool in_invert = false;              // ONLY FOR FrSky S.Port, NOT F.Port, NOT MAVLINK
-    #define set_Pin            5
+    #define setPin             5
     #define StatusLed          2        // Add your own LED with around 1K series resistor  
+    #define BuiltinLed        -1    // none, but must be defined!
     #define azPWM_Pin         32    // azimuth servo (can't be 34,35,36,39 because input only !!)
     #define elPWM_Pin         33    // elevation servo(can't be 34,35,36,39 because input only !!)    
     #define ILI9341_DISPLAY         // ILI9341 2.8" COLOUR TFT SPI 240x320 V1.2  
@@ -560,55 +631,205 @@ uint16_t  udp_send_port = 0;
     #define SDA           21        // I2C for tracker box compass
     #define SCL           22        // I2C 
   #endif    
-    //=========================================================================   
+  //=========================================================================   
 
-  #if (ESP32_Variant == 8)  // Lilygo T-Display-S3 ESP32-S3 1.9 in ST7789V LCD no touch screen    
-  // NOT TESTED YET
+  #if (ESP32_VARIANT == 8)  // Lilygo T-Display-S3 ESP32-S3 1.9 in ST7789V LCD no touch screen 
+  /*   
+  see C:\Users\<user>\AppData\Local\Arduino15\packages\esp32\hardware\esp32\2.0.10\variants\lilygo_t_display_s3\pins_arduino.h                                
+  uart0(flash & monitor), uart1 and uart2(map pins)   
 
-    int8_t in_rxPin =         27;  // uart1
-    #define in_txPin          17 
+  static const uint8_t TX = 43;      // u0txd default
+  static const uint8_t RX = 44;      // u0rxd
+  */
+    int8_t in_rxPin =         10;    // uart1 
+    #define in_txPin          11     // for talking to FC when needed
     #if (HEADINGSOURCE == 4)  // Tracker box GPS     
       int8_t boxgps_rxPin =     13;  // uart2 for tracker box GPS if applicable
-      #define boxgps_txPin       4  
+      #define boxgps_txPin      -1   // not needed
     #endif  
-    bool in_invert = false;         // ONLY FOR FrSky S.Port, NOT F.Port, NOT MAVLINK
-    #define set_Pin           12   // LOW == pushed    
-    #define StatusLed         25   // Off=No good GPS yet, flashing=good GPS but home not set yet, solid = ready to track
+    bool in_invert = false;          // ONLY FOR FrSky S.Port, NOT F.Port, NOT MAVLINK
+    #define setPin             1     // yellow LOW == pushed  
+    #define StatusLed          2     // purple  Off=No good GPS yet, flashing=good GPS but home not set yet, solid = ready to track
+    #define BuiltinLed        -1     // none, but must be defined!
+    /*
+    The ESP32-S3 board has 8 PWM channels (all GPIO pins except the input-only pins 34-39) 
+    */
     #if defined SERVOS
-      #define azPWM_Pin       32  // azimuth servo (can't be 34,35,36,39 because input only !!)
-      #define elPWM_Pin       33  // elevation servo(can't be 34,35,36,39 because input only !!)  
+      #define azPWM_Pin       12     // azimuth servo (can't be 34,35,36,39 because input only !!)
+      #define elPWM_Pin       11     // elevation servo(can't be 34,35,36,39 because input only !!)  
     #endif
     #if defined STEPPERS
-      #define adjustPin       26  // white    
-      #define azStepPin       32  // orange
-      #define azDirPin        33  // grey
-      #define elStepPin        2  // brown
-      #define elDirPin        15  // purple
+      #define adjustPin       12     // white    
+      #define azPulsePin      11     // orange
+      #define azDirPin        10     // light blue
+      #define elPulsePin      18     // green
+      #define elDirPin        21     // blue
     #endif
 
-    #define SSD1306_DISPLAY         // OLED display type    
-    /* Below please choose either Touch pin-pair or Digital pin-pair for display scrolling
-      *  Pin == -1 means the pin-pair is not used
-      */ 
-    #define Pup            0        // 34 Board Button 1 to scroll the display up
-    #define Pdn           35        // Board Button 2 to scroll the display down   
-    #define Tup           -1        // Touch pin to scroll the display up
-    #define Tdn           -1        // Touch pin to scroll the display down   
-        
-    #define SDA           21        // I2C OLED board and/or Compass
-    #define SCL           22        // I2C OLED board and/or Compass
-  #endif  
+    #define ST7789_DISPLAY            // 170 x 320 dot 262K Color TFT LCD
+    #define SCR_ORIENT     1          // 1 Landscape or 0 Portrait 
+    
+    #define Pup            0           // Hardwired board Button 1 to scroll the display up
+    #define Pdn           14           // Hardwired board Button 2 to scroll the display down   
+    #define Tup           -1           // Touch pin to scroll the display up
+    #define Tdn           -1           // Touch pin to scroll the display down   
+    
+    /* 
+    Available Pins on Lilygo T-Display_S3
+    1, 2, 3   10, 11, 12, 13   16, 17, 18    21    43, 44
+    
+    Button 1 and 2    0, 14
+    From variants\ lilygo_t_display_s3_pins_arduino.h 
+    static const uint8_t SDA = 18;
+    static const uint8_t SCL = 17; 
 
-#elif (TARGET_BOARD == 4)         // ESP8266 Platform            
+    MOBATOOLS SPI (BUT WE DON'T NEED THIS, And hope Moba does not meddle with these pins)
+    #define SPI_USED    HSPI
+    #define MOSI        13
+    #define SCK         14 (Used by Button2)
+    #define SS          15
+
+      SPI FLASH
+      Do not use these pins in your projects.
+        GPIO 26
+        GPIO 27
+        GPIO 28
+        GPIO 29
+        GPIO 30
+        GPIO 31
+        GPIO 32
+     ST7789V Display reserved pins
+      LCD_Power_on      15
+      LCD_BL            38 Backlight
+      LCD_D0            39
+      LCD_D1            40 
+      LCD_D2            41
+      LCD_D3            42
+      LCD_D4            45 
+      LCD_D5            46
+      LCD_D6            47
+      LCD_D7            48
+      LCD_WR            08
+      LCD_RD            09
+      LCD_DC            07
+      LCD_CS            06
+      LCD_RES           05                 
+    */
+  #endif  
+  //=========================================================================   
+
+  #if (ESP32_VARIANT == 9)  // ESP32-S3-DEVKIT-1 no display (at this time) 
+  /*   
+  see C:\Users\<user>\AppData\Local\Arduino15\packages\esp32\hardware\esp32\2.0.10\variants\lilygo_t_display_s3\pins_arduino.h                                
+  uart0(flash & monitor), uart1 and uart2(map pins)   
+
+  static const uint8_t TX = 43;      // u0txd default
+  static const uint8_t RX = 44;      // u0rxd
+  */
+    int8_t in_rxPin =         10;    // uart1 
+    #define in_txPin          11     // for talking to FC when needed
+    #if (HEADINGSOURCE == 4)  // Tracker box GPS     
+      int8_t boxgps_rxPin =     13;  // uart2 for tracker box GPS if applicable
+      #define boxgps_txPin      -1   // not needed
+    #endif  
+    bool in_invert = false;          // ONLY FOR FrSky S.Port, NOT F.Port, NOT MAVLINK
+    #define setPin             1     // yellow LOW == pushed  
+    #define StatusLed          2     // purple  Off=No good GPS yet, flashing=good GPS but home not set yet, solid = ready to track
+    #define BuiltinLed        -1     // none, but must be defined!
+    /*
+    The ESP32-S3 board has 8 PWM channels (all GPIO pins except the input-only pins 34-39) 
+    */
+    #if defined SERVOS
+      #define azPWM_Pin       12     // azimuth servo (can't be 34,35,36,39 because input only !!)
+      #define elPWM_Pin       11     // elevation servo(can't be 34,35,36,39 because input only !!)  
+    #endif
+    #if defined STEPPERS
+      #define adjustPin       12     // white    
+      #define azPulsePin      11     // orange
+      #define azDirPin        10     // light blue
+      #define elPulsePin      18     // green
+      #define elDirPin        21     // blue
+    #endif
+
+    /*#define ST7789_DISPLAY            // 170 x 320 dot 262K Color TFT LCD
+    #define SCR_ORIENT     1          // 1 Landscape or 0 Portrait 
+    
+    #define Pup            0           // Hardwired board Button 1 to scroll the display up
+    #define Pdn           14           // Hardwired board Button 2 to scroll the display down   
+    #define Tup           -1           // Touch pin to scroll the display up
+    #define Tdn           -1           // Touch pin to scroll the display down   
+    */
+    /* 
+    Available Pins on Lilygo T-Display_S3
+    1, 2, 3   10, 11, 12, 13   16, 17, 18    21    43, 44
+    
+    static const uint8_t SDA = 18;
+    static const uint8_t SCL = 17; 
+
+    MOBATOOLS SPI (BUT WE DON'T NEED THIS, And hope Moba does not meddle with these pins)
+    #define SPI_USED    HSPI
+    #define MOSI        13
+    #define SCK         14 (Used by Button2)
+    #define SS          15
+
+      SPI FLASH
+      Do not use these pins in your projects.
+        GPIO 26
+        GPIO 27
+        GPIO 28
+        GPIO 29
+        GPIO 30
+        GPIO 31
+        GPIO 32
+       
+    */
+  #endif  
+  #if (ESP32_VARIANT == 10)  // ESP32-C3-Supermini no display (at this time) 
+  /*   
+    PWM pins GPIO0 thru GPIO21
+    UART0:
+        TX: GPIO21
+        RX: GPIO20
+    UART1:
+        TX: GPIO19
+        RX: GPIO18   
+    NO UART2 - use SoftareSerial   
+    Colour PWM LED GPIO8 
+    SDA_PIN 8
+    SCL_PIN 9
+  */
+    int8_t in_rxPin =         18;    // uart1 
+    #define in_txPin          19     // for talking to FC when needed
+    #if (HEADINGSOURCE == 4)  // Tracker box GPS   
+    // Must use softwareSerial  
+      int8_t boxgps_rxPin =     13;  // uart2 for tracker box GPS if applicable
+      #define boxgps_txPin      -1   // not needed
+    #endif  
+    bool in_invert = false;          // ONLY FOR FrSky S.Port, NOT F.Port, NOT MAVLINK
+    #define setPin             1     // yellow LOW == pushed  
+    #define StatusLed          8     // purple  Off=No good GPS yet, flashing=good GPS but home not set yet, solid = ready to track
+    #define BuiltinLed        -1     // none, but must be defined!
+    // pwm pins on C3 are GPIO0 thru GPIO21
+    #if defined SERVOS
+      #define azPWM_Pin        2     // D0 azimuth servo 
+      #define elPWM_Pin        3     // D1 elevation servo  
+    #endif
+    #if defined STEPPERS
+      #define adjustPin        2     // white    
+      #define azPulsePin       3     // orange
+      #define azDirPin         6     // light blue
+      #define elPulsePin       7     // green
+      #define elDirPin        10     // blue
+    #endif
+
+  #endif    
+
+#elif (TARGET_FAMILY == 4)         // ESP8266 Platform            
 
   /*The ESP8266 has two hardware UARTS (Serial ports): UART0 on pins 1 and 3 (TX0 and RX0 resp.), 
     and UART1 on pins 2 and 8 (TX1 and RX1 resp.), however, GPIO8 is used to connect the flash chip
   */  
-  #if defined LED_BUILTIN
-    #define BuiltinLed LED_BUILTIN
-  #else
-    #define BuiltinLed        -1
-  #endif
+
   //========================================================================= 
   #if (ESP8266_VARIANT == 1)        // Lolin NodeMCU 12E/F board - Select NodeMCU 12E in IDE 
     /*                        D0  flash
@@ -624,8 +845,9 @@ uint16_t  udp_send_port = 0;
       #define boxgps_txPin      D6   // alt D9
     #endif
     bool in_invert = false;         // ONLY FOR FrSky S.Port, NOT F.Port, NOT MAVLINK
-    #define set_Pin           D7   // LOW == pushed    
+    #define setPin            D7   // LOW == pushed    
     #define StatusLed         D4   // Off=No good GPS yet, flashing=good GPS but home not set yet, solid = ready to track
+    #define BuiltinLed        -1   // none, but must be defined!
                                    // Also TXD1 - Serial-1 debug log out SHARED WITH BOARD LED  
     #define INVERT_LED             // NodeMCU LED action is inverse                  
     #if defined SERVOS
@@ -634,9 +856,9 @@ uint16_t  udp_send_port = 0;
     #endif
     #if defined STEPPERS
       #define adjustPin       D10  // white    
-      #define azStepPin       D5  // orange
+      #define azPulsePin      D5  // orange
       #define azDirPin        D6  // grey
-      #define elStepPin       D8  // brown
+      #define elPulsePin      D8  // brown
       #define elDirPin        D9  // purple
     #endif
 
@@ -667,11 +889,11 @@ uint16_t  udp_send_port = 0;
     #endif
   #endif
 
-  #ifndef set_Pin
-      #error Please define a set_Pin for your board
+  #ifndef setPin
+      #error Please define a setPin for your board
   #endif
-  #if (set_Pin == -1)
-      #error Please define a valid set_Pin. set_Pin is mandatory.
+  #if (setPin == -1)
+      #error Please define a valid setPin. setPin is mandatory.
   #endif
 
   #if (defined STEPPERS) && (defined SERVOS)    
@@ -682,15 +904,15 @@ uint16_t  udp_send_port = 0;
       #error Please choose a motor_type
   #endif
 
-  #ifndef TARGET_BOARD
+  #ifndef TARGET_FAMILY
     #error Please choose at least one target board
   #endif
 
-  #if (TARGET_BOARD == 1) 
+  #if (TARGET_FAMILY == 1) 
     //#error Teensy 3.x/4.x 
   #endif  
 
-  #if (TARGET_BOARD == 2) // STM32F1xx
+  #if (TARGET_FAMILY == 2) // STM32F1xx
   //   #error STM32F1xx  
   #endif  
 
@@ -714,11 +936,17 @@ uint16_t  udp_send_port = 0;
   #ifndef MEDIUM_IN  
     #error Please choose at least one input medium, Serial, Bluetooth, BLE or WiFi 
   #endif
-  #if not defined ESP32 
-     #if (MEDIUM_IN  == 2) || (MEDIUM_IN  == 3) || (MEDIUM_IN == 4) 
-       #error WiFi or Bluetooth works only on an ESP32 board, rather select serial in
+  #if (not defined ESP32) && (not defined ESP8266) 
+     #if (MEDIUM_IN  == 2) 
+       #error WiFi only works on an ESP32 or ES8266 board
      #endif  
   #endif
+  #if (not defined ESP32) 
+     #if (MEDIUM_IN  == 3) || (MEDIUM_IN == 4) 
+       #error Bluetooth works only on an ESP32 board
+     #endif  
+  #endif
+
   
   #if (defined ESP32)
     #ifndef WIFI_MODE 
@@ -766,6 +994,12 @@ uint16_t  udp_send_port = 0;
   #if ( (defined SSD1306_DISPLAY) || (defined SSD1331_DISPLAY) || (defined ST7789_DISPLAY) || (defined ILI9341_DISPLAY) )
     #define DISPLAY_PRESENT
   #endif  
+
+  #if (PROTOCOL == 0)
+    #if (MEDIUM != 1) && (MEDIUM != 3) && (MEDIUM != 4)
+      #error AUTO detect protocol only avaiable for UART, BT Classic or BLE at present
+    #endif
+  #endif  
   //=================================================================================================   
   //==================================   E E P R O M   S U P P O R T  =============================== 
   //================================================================================================= 
@@ -783,20 +1017,11 @@ uint16_t  udp_send_port = 0;
       ezButton dnButton(Pdn);
     #endif 
   #endif    
-  ezButton setButton(set_Pin);
+  ezButton setButton(setPin);
   #if defined STEPPERS
     ezButton adjustButton(adjustPin);       // instantiate ezButton objects
   #endif  
-  //=================================================================================================   
-  //==================================   M O T O R   S U P P O R T    ===============================  
-  //=================================================================================================  
-    #if defined TEENSY3X            // Teensy 3.2
-      #include <PWMServo.h>     
-    #elif defined STM32F1xx
-      #include <Servo.h>           
-    #elif (defined ESP32) || (defined ESP8266)   
-      #include <MobaTools.h>      
-    #endif
+
   //=================================================================================================   
   //==================================  C O M P A S S    S U P P O R T ==============================  
   //=================================================================================================  
@@ -809,11 +1034,6 @@ uint16_t  udp_send_port = 0;
   //=================================================================================================  
 
   #if defined DISPLAY_PRESENT
-   // #include <SPI.h>                // for Display
-    #if not defined WIRE_LOADED
-  //    #include <Wire.h>
-  //    #define WIRE_LOADED
-    #endif  
     
      #if (ESP32_VARIANT == 6)
       // Generic colour definitions
@@ -832,8 +1052,15 @@ uint16_t  udp_send_port = 0;
     #if (defined ST7789_DISPLAY)      // TTGO T_DISPLAY 1.14 TFT display 135 x 240 SPI
       #include <TFT_eSPI.h>           // Remember to select the T_DISPLAY board in   in TFT_eSPI library (135 x 240) 
       TFT_eSPI display = TFT_eSPI();
-      #define SCR_W_PX      135       // OLED display width, in pixels - always define in portrait
-      #define SCR_H_PX      240       // OLED display height, in pixels
+      #if (ESP32_VARIANT == 8)
+      // TTGO T_DISPLAY_S3 1.90 170 x 320 Touch Color TFT LCD SPI
+        #define SCR_W_PX      170       // Display width, in pixels - always define in portrait
+        #define SCR_H_PX      320       // Display height, in pixels
+      #else  
+        // TTGO T_DISPLAY 1.14 TFT display 135 x 240 SPI
+        #define SCR_W_PX      135       // Display width, in pixels - always define in portrait
+        #define SCR_H_PX      240       // Display height, in pixels
+      #endif  
       //#define SCR_ORIENT  1
       
       #if (SCR_ORIENT == 0)           // portrait
@@ -842,7 +1069,7 @@ uint16_t  udp_send_port = 0;
         #define TEXT_SIZE     2                       
       #endif 
       #define SCR_BACKGROUND        TFT_BLACK  
-      //#define display_i2c_addr      0x3C       // I2C OLED board
+
     //==========================================================
     
     #elif (defined SSD1306_DISPLAY)    // SSD1306 OLED display     (128 x 64) 
@@ -1022,8 +1249,8 @@ uint16_t  udp_send_port = 0;
   const uint8_t notificationOff[] = {0x0, 0x0};
   const uint8_t maxbuf = 64;
   uint8_t msgBuf[maxbuf];
-  boolean newMsg = false;
-  uint8_t newLen = 0;
+  boolean ble_received = false;
+  uint8_t ble_len = 0;
   uint8_t *ppData = 0;
 
 #endif // end of BLE4
@@ -1034,10 +1261,7 @@ uint16_t  udp_send_port = 0;
 
     int16_t   wifi_rssi;
     
-#if (defined ESP32) && (MEDIUM_IN == 2)  // ESP32 and WiFi 
-  
-    bool      FtRemIP = true;
-    bool showRemoteIP = true;
+#if ((defined ESP32) ||(defined ESP8266)) && (MEDIUM_IN == 2)  // ESP and WiFi 
 
     #if (not defined BT_Setup) && (not defined BLE_Setup)
       // Define link variables
@@ -1055,9 +1279,14 @@ uint16_t  udp_send_port = 0;
        linkStatus    link_status;
     #endif
     
-    #include <WiFi.h>  
+    #if defined ESP32
+        #include <WiFi.h> 
+        #include <WiFiAP.h>  // SoftAP        
+    #endif   
+    #if defined ESP8266
+        #include <ESP8266WiFi.h> 
+    #endif    
     #include <WiFiClient.h>
-    #include <WiFiAP.h>  // SoftAP
   
     #if (WIFI_PROTOCOL == 2)    //  UDP libs
       #include <WiFiUdp.h>      // ESP32 and ESP8266
@@ -1125,7 +1354,7 @@ uint16_t  udp_send_port = 0;
 #endif
 #endif
 
-#define log Serial // USB / Serial
+#define log Serial          // USB / Serial
 
 #if defined ESP32           // U0UXD, U1UXD and U2UXD  UART0, UART1, and UART2
 #if (MEDIUM_IN == 1)        // UART Serial
@@ -1136,13 +1365,13 @@ uint16_t  udp_send_port = 0;
 #endif
 
 #if (defined ESP8266) // Always SoftwareSerial
-#if (MEDIUM_IN == 1)  // UART Serial
-#include <SoftwareSerial.h>
-#define SWSERIAL_INCLUDED
-       SoftwareSerial inSerial(in_rxPin, in_txPin, in_invert);
-#elif (MEDIUM_IN == 3) // BLUETOOTH Serial
-      BluetoothSerial inSerial;
-#endif
+  #if (MEDIUM_IN == 1)  // UART Serial
+  #include <SoftwareSerial.h>
+  #define SWSERIAL_INCLUDED
+        SoftwareSerial inSerial(in_rxPin, in_txPin, in_invert);
+  #elif (MEDIUM_IN == 3) // BLUETOOTH Serial
+        BluetoothSerial inSerial;
+  #endif
 #endif
 #if ((PROTOCOL == 8) || (PROTOCOL == 0)) || (HEADINGSOURCE == 4) // NMEA GPS or Box GPS
   #include <TinyGPS++.h>
@@ -1162,6 +1391,6 @@ struct compdate dt = {0,0,0,0,0,0};
         SoftwareSerial boxgpsSerial(boxgps_rxPin, boxgps_txPin);
   #endif
   #else
-  #define boxgpsSerial Serial2 // Tracker box GPS
+    #define boxgpsSerial Serial2 // Tracker box GPS
   #endif
 #endif

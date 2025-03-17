@@ -1,9 +1,6 @@
 #include <Arduino.h>
 
 #if (PROTOCOL == 1) || (PROTOCOL == 2)  || (PROTOCOL == 0)
-// Forward declarations
-void printByte(byte b);
-
 
 // ******************************************
 // Mavlink Message Types
@@ -11,7 +8,7 @@ void printByte(byte b);
   mavlink_message_t msg, sendmsg;
   uint8_t             readbuf[300];  
   uint8_t             sendbuf[128];
-  
+  uint8_t             udpBuf[128];
 // Mavlink Header
 uint8_t    system_id;
 uint8_t    component_id;
@@ -128,7 +125,6 @@ uint16_t len;
 
 //=====================Forward declarations =================
 
- void PrintRemoteIP();
  void checkLinkErrors(mavlink_message_t* msgptr);
  
 //================================================================================================= 
@@ -181,7 +177,7 @@ void Send_To_FC(uint32_t msg_id)
     #if defined  DEBUG_FC_Write
       if (msg_id) {    //  dont print heartbeat - too much info
         log.printf("Write to FC Serial: len=%d\n", len);             
-        PrintMavBuffer(&sendmsg);
+        printMavBuffer(&sendmsg);
       }  
     #endif    
   #endif
@@ -189,7 +185,7 @@ void Send_To_FC(uint32_t msg_id)
         bool msgSent = sendMavBT(&sendmsg);      
         #ifdef  DEBUG_FC_Write
           log.print("Write to FC Bluetooth: msgSent="); log.println(msgSent);
-          if (msgSent) PrintMavBuffer(&sendmsg);
+          if (msgSent) printMavBuffer(&sendmsg);
         #endif     
   #endif
   #if (MEDIUM_IN == 2)              // WiFi to FC  
@@ -199,7 +195,7 @@ void Send_To_FC(uint32_t msg_id)
            bool msgSent = Send_TCP(&sendmsg);  // to FC   
            #ifdef  DEBUG_FC_Write
              log.print("Write to FC WiFi TCP: msgSent="); log.println(msgSent);
-             PrintMavBuffer(&sendmsg);
+             printMavBuffer(&sendmsg);
            #endif    
          #endif   
          #if (WIFI_PROTOCOL == 2)       // UDP 
@@ -207,7 +203,7 @@ void Send_To_FC(uint32_t msg_id)
            bool msgSent = sendMavUDP(&sendmsg);     // to FC    
            #ifdef  DEBUG_FC_Write
              log.print("Write to FC WiFi UDP: msgSent="); log.println(msgSent);
-             if (msgSent) PrintMavBuffer(&sendmsg);
+             if (msgSent) printMavBuffer(&sendmsg);
            #endif           
          #endif                                                             
       }
@@ -244,39 +240,57 @@ void Send_FC_Heartbeat() {
 #if ((MEDIUM_IN == 2) && (WIFI_PROTOCOL == 2))     //  WiFi UDP
 bool readParseMavUDP(mavlink_message_t* msgptr)  
 {
-    if (!wifiSuGood) return false;  
-    bool msgRcvd = false;
-    mavlink_status_t _status;
-    len = udp_object.parsePacket();
-    int UDP_count = len;
-    if(UDP_count > 0) {
-        while(UDP_count--)  {
-            int result = udp_object.read();
-            if (result >= 0)  {
-                msgRcvd = mavlink_parse_char(MAVLINK_COMM_2, result, msgptr, &_status);
-                if(msgRcvd) {   
-                    UDP_remoteIP = udp_object.remoteIP();  // remember which remote client sent this packet so we can target it
-                    PrintRemoteIP();
-                    if(!hb_heard_from) {
-                        if(msgptr->msgid == MAVLINK_MSG_ID_HEARTBEAT) {
-                            hb_heard_from      = true;
-                            hb_system_id       = msgptr->sysid;
-                            hb_comp_id         = msgptr->compid;
-                            hb_seq_expected   = msgptr->seq + 1;
-                            hb_last_heartbeat = millis();
-                        }
-                    } else {
-                        if(msgptr->msgid == MAVLINK_MSG_ID_HEARTBEAT)
-                          hb_last_heartbeat = millis();
-                          checkLinkErrors(msgptr);
-                    } 
-                    break;
-                }
+  if (!(wifiSuGood)) return false; 
+  if ( (!(wifiStaConnected)) && (!(wifiApConnected)) ) return false; 
+
+  bool msgRcvd = false;
+  mavlink_status_t _status;
+
+  if (udp_object.parsePacket())
+  {
+    len = udp_object.read(udpBuf, sizeof(udpBuf));
+    if (len)
+    {
+      #if defined DEBUG_MAV_INPUT
+        log.printf("UDP Mav message #%2u read, len:%u\n", msg.msgid, len);
+        profileLoop(99);
+        startProfileLoop();
+        #if defined DEBUG_MAV_BUFFER
+          printMavBuffer(&msg);
+        #endif  
+      #endif   
+      UDP_remoteIP = udp_object.remoteIP();  // remember which remote client sent this packet so we can target it
+      printRemoteIP();
+   
+      for (int i = 0; i < len; i++)
+      {
+        msgRcvd = mavlink_parse_char(MAVLINK_COMM_2, udpBuf[i], msgptr, &_status);
+        if(msgRcvd) 
+        {   
+          if(!hb_heard_from) 
+          {
+            if(msgptr->msgid == MAVLINK_MSG_ID_HEARTBEAT) 
+            {
+              hb_heard_from      = true;
+              hb_system_id       = msgptr->sysid;
+              hb_comp_id         = msgptr->compid;
+              hb_seq_expected   = msgptr->seq + 1;
+              hb_last_heartbeat = millis();
             }
+          } else 
+          {
+            if(msgptr->msgid == MAVLINK_MSG_ID_HEARTBEAT) hb_last_heartbeat = millis();
+            checkLinkErrors(msgptr);
+          } 
+            
+          return true;
         }
+      }
+ 
+
     }
-    
-    return msgRcvd;
+  }
+  return false;
 }
 #endif
 //======================================================================
@@ -328,9 +342,10 @@ void mavlinkReceive()
 { 
 #if (PROTOCOL == 1) || (PROTOCOL == 2) || (PROTOCOL == 0)     
   //==================== Periodically Send Our Own Heartbeat to FC to trigger tardy telemetry
-  if(millis()- millisFcHheartbeat > 2000) {  // MavToPass heartbeat to FC every 2 seconds
-  millisFcHheartbeat=millis();       
-  Send_FC_Heartbeat();                     // for serial must have tx pin connected to dedicated telem radio rx pin  
+  if((millis()- millisFcHheartbeat) > 2000) 
+  {  // MavToPass heartbeat to FC every 2 seconds
+    millisFcHheartbeat=millis();       
+    Send_FC_Heartbeat();                     // for serial must have tx pin connected to dedicated telem radio rx pin  
   }
   mavlink_status_t status;
   gotRecord = false;
@@ -338,18 +353,16 @@ void mavlinkReceive()
     while(inSerial.available()) {
       uint8_t c = inSerial.read();
       //Printbyte(c, false, ' ');
-      #ifdef DEBUG_MAV_BUFFER
-        log.println("Mavlink buffer : ");
-      PrintMavBuffer(&msg);
-      #endif
       if(mavlink_parse_char(MAVLINK_COMM_0, c, &msg, &status)) 
       {
         telem_millis = millis();
         telemGood = true;
-        #if defined DEBUG_ALL || defined DEBUG_MAV_INPUT
-          log.println("Serial record read:");
-          PrintMavBuffer(&msg);  
-        #endif
+        #if defined DEBUG_MAV_INPUT
+          log.printf("UART message #%2u read\n", msg.msgid);
+          #if defined DEBUG_MAV_BUFFER
+            printMavBuffer(&msg);
+          #endif  
+        #endif    
         gotRecord = true;
       }
    } 
@@ -357,37 +370,57 @@ void mavlinkReceive()
   #if (MEDIUM_IN == 3) // Bluetooth Serial
      bool msgReceived = readMavBT(&msg);
      if (msgReceived) {
-        gotRecord = true;     
-        #ifdef  DEBUG_FC_Down   
-          log.println("BT record read:");
-          PrintMavBuffer(&msg);
-        #endif      
+        gotRecord = true;   
+        telem_millis = millis();
+        telemGood = true;
+        #if defined DEBUG_MAV_INPUT
+          log.printf("BT message #%2u read\n", msg.msgid);
+          #if defined DEBUG_MAV_BUFFER
+            printMavBuffer(&msg);
+          #endif  
+        #endif       
       }
   #endif   
   #if (MEDIUM_IN == 2)  //  WiFi
     #if (WIFI_PROTOCOL == 1) // TCP 
       bool msgReceived = Read_TCP(&msg);
-      if (msgReceived) {
+      if (msgReceived) 
+      {
         gotRecord = true;  
-        #if defined DEBUG_ALL || defined DEBUG_MAV_INPUT 
-          log.print("Received WiFi TCP message. msgReceived=" ); log.println(msgReceived);
-          PrintMavBuffer(&msg);
-        #endif      
+        telem_millis = millis();
+        telemGood = true;
+        #if defined DEBUG_MAV_INPUT
+          log.printf("TCP WiFi message #%2u read\n", msg.msgid);
+          #if defined DEBUG_MAV_BUFFER
+            printMavBuffer(&msg);
+          #endif  
+        #endif       
       } // else no message received, drop thru - no block
     #endif
     #if (WIFI_PROTOCOL == 2) // UDP
+   
       bool msgReceived = readParseMavUDP(&msg);
-      if (msgReceived) {     
+      if (msgReceived) 
+      {     
         gotRecord = true;   
-        #if defined DEBUG_ALL || defined DEBUG_MAV_INPUT
-          log.println(" UDP WiFi record read:");
-          PrintMavBuffer(&msg);
+        telem_millis = millis();
+        telemGood = true;
+        #if defined DEBUG_MAV_INPUT
+          log.printf("UDP Mav message #%2u parsed\n", msg.msgid);
+       //   profileLoop(99);
+       //   startProfileLoop();
+          #if defined DEBUG_MAV_BUFFER
+            printMavBuffer(&msg);
+          #endif  
         #endif      
       }     
     #endif    
- #endif 
-    if (gotRecord) {
-      switch(msg.msgid) {
+  #endif 
+  
+    if (gotRecord) 
+    { 
+      switch(msg.msgid) 
+      {
         case MAVLINK_MSG_ID_HEARTBEAT:    // #0   http://mavlink.org/messages/common
           ap_type = mavlink_msg_heartbeat_get_type(&msg);
           ap_autopilot = mavlink_msg_heartbeat_get_autopilot(&msg);
@@ -410,9 +443,7 @@ void mavlinkReceive()
             ap24_fixtype = 0;  
             hb_count++; 
             #ifdef DEBUG_STATUS
-            log.print(" hb_count=");
-            log.print(hb_count);
-            log.println("");
+              log.printf(" hb_count:%u\n", hb_count);
             #endif
             if((hb_count >= 3) || (finalHomeStored)) {  // If 3 heartbeats or 1 hb && previously connected, we are connected
               hbGood=true; 
@@ -655,7 +686,6 @@ void mavlinkReceive()
           if (ap_battery_id == 1) {  // Battery 2
             hud_bat2_mAh = ap_current_consumed;                              
           } 
-          
           #if defined Mav_DEBUG_ALL || defined DEBUG_Batteries
             log.print("Mavlink from FC #147 Battery Status: ");
             log.print(" bat id= "); log.print(ap_battery_id); 
@@ -669,15 +699,14 @@ void mavlinkReceive()
               log.print(" my di/dt mAh= ");  
               log.println(Total_mAh2(), 0);   
             }    
-        //  log.print(" bat % remaining= ");  log.println(ap_time_remaining);       
+            //  log.print(" bat % remaining= ");  log.println(ap_time_remaining);       
           #endif                        
-          
-          break;          
+          break;            
       }
-      
-  }
+  }  // end of gotRecord
+
 #endif  
-} 
+}  // end of mavlinkReceive
   
  //********************************************************************************
 #if ((MEDIUM_IN == 2) && (WIFI_PROTOCOL == 1))     //  WiFi TCP

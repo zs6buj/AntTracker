@@ -873,8 +873,8 @@ uint16_t  udp_send_port = 0;
     #define SSD1306_DISPLAY         // OLED display type    
     #if (defined SSD1306_DISPLAY)
       /*    digital pin-pair for display scrolling    */ 
-      #define Pup           D8       // GPIO9 Board Button 1 to scroll the display up
-      #define Pdn           D9       // GPIO10Board Button 2 to scroll the display down     
+      #define Pup           -1       // GPIO9 Board Button 1 to scroll the display up
+      #define Pdn           -1       // GPIO10Board Button 2 to scroll the display down     
       #define SDA           D5       // I2C OLED board and/or Compass
       #define SCL           D6       // I2C OLED board and/or Compass
     #endif  

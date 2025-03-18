@@ -312,7 +312,6 @@
 //===========================================================
 void setup() 
 { 
-
   //pinMode(15, OUTPUT);  // T-Display_S3 to boot with battery...
   //digitalWrite(15, 1);  // and/or power from 5v rail instead of USB
 
@@ -1119,8 +1118,10 @@ void loop()
 
 
   #if defined DISPLAY_PRESENT
-    upButton.loop();
-    dnButton.loop();
+    #if ( (Pup != -1) && (Pdn != -1) ) 
+      upButton.loop();
+      dnButton.loop();
+    #endif
   #endif
   setButton.loop();
   #if defined STEPPERS

@@ -8,7 +8,7 @@
   typedef enum frport_type_set { f_none = 0, f_port1 = 1, f_port2 = 2, s_port = 3, f_auto = 4} frport_t;  
   typedef enum polarity_set { idle_low = 0, idle_high = 1, no_traffic = 2 } pol_t;
   typedef enum phase_set {set_midfront = 0, set_home = 1, set_done = 3} phase_t;
-  phase_t phase;
+  phase_t phase = set_home;
 
   enum BOX_COMPASS_ALIGN 
   {

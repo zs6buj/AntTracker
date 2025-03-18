@@ -172,5 +172,5 @@ v2.22.22  2025-03-06/08  Build in motor library selection by esp type
 v2.22.23  2025-03-17 Missing TARGET_FAMILY 4 esp8266
           2025-03-18 esp8266 does not have touch pins
 v2.22.24  2025-03-18 For MobaTools servos, add setSpeed() function (meaning acceleration apparently)
-                                   
+                      initialise phase_t phase = set_home               
 */                     

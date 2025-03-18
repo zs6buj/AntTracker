@@ -837,6 +837,9 @@ uint16_t  udp_send_port = 0;
                               D2  tx1 
                               D3  rx0
                               D8  rx1 and memory
+                I2C default   D1 SCL                                 
+                              D2 SDA 
+           
     */
     int8_t in_rxPin =         D2;  // SoftwareSerial 1
     #define in_txPin          D3   // for mavlink
@@ -862,16 +865,13 @@ uint16_t  udp_send_port = 0;
       #define elDirPin        D9  // purple
     #endif
 
-    //#define SSD1306_DISPLAY         // OLED display type    
+    #define SSD1306_DISPLAY         // OLED display type    
     #if (defined SSD1306_DISPLAY)
-      /* Below please choose either Touch pin-pair or Digital pin-pair for display scrolling
-        *  Pin == -1 means the pin-pair is not used
-        */ 
-      #define Pup           -1        // Board Button 1 to scroll the display up
-      #define Pdn           -1        // Board Button 2 to scroll the display down     
-          
-      #define SDA           -1        // I2C OLED board and/or Compass
-      #define SCL           -1        // I2C OLED board and/or Compass
+      /*    digital pin-pair for display scrolling    */ 
+      #define Pup           D8       // GPIO9 Board Button 1 to scroll the display up
+      #define Pdn           D9       // GPIO10Board Button 2 to scroll the display down     
+      #define SDA           D5       // I2C OLED board and/or Compass
+      #define SCL           D6       // I2C OLED board and/or Compass
     #endif  
   #endif
 #endif

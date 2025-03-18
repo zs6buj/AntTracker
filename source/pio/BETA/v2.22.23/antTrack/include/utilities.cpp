@@ -2011,7 +2011,7 @@ void WiFiEventHandler(WiFiEvent_t event)  {
       
       //log.printf("busy=%d  new=%d log=%d  bounce=%d  info=%d\n", infoPressBusy, infoNewPress, show_log, info_debounce_millis, info_millis); 
       
-     #if ((defined ESP32) || (defined ESP8266))   // Teensy does not have touch pins          
+     #if (defined ESP32)   // Teensy does not have touch pins          
       if ( (Tup != -1) && (Tdn != -1) ) 
       {         // if ESP touch pin-pair enumerated
         if (up_button) 

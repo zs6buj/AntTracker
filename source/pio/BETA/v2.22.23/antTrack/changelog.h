@@ -169,6 +169,7 @@ v2.22.21  2025-02-27  Add support for ESP32-C3 Supermini
           2025-03-02  Tidy up printRemoteIP() and logScreenPrint() redundancy 
           2025-03-05  Separate UDP Read loop and parse loop. Add profiling.   
 v2.22.22  2025-03-06/08  Build in motor library selection by esp type  
-v2.22.23  2025-03-17  Missing TARGET_FAMILY 4 esp8266 
+v2.22.23  2025-03-17 Missing TARGET_FAMILY 4 esp8266
+          2025-03-18 esp8266 does not have touch pins 
                                    
 */                     

@@ -326,13 +326,13 @@ void setup()
     pgm_name = __FILE__;  // ESP8266 __FILE__ macro returns pgm_name and no path
   #endif
   log.print("\nStarting ");  
-    #if (defined ESP32) || (defined ESP8266)
+  #if (defined ESP32) || (defined ESP8266)
     log.println(pgm_name);
   #elif defined STM32F1xx
      log.println("antTrack");  
   #endif  
   log.printf("Version:%d.%02d.%02d\n", MAJOR_VERSION,  MINOR_VERSION, PATCH_LEVEL);
-
+ 
   #if (defined ESP32) && (MEDIUM_IN == 2) && (defined DEBUG_WIFI)
     WiFi.onEvent(WiFiEventHandler);   
   #endif  

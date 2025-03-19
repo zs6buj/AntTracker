@@ -1,0 +1,156 @@
+#######################################
+# Syntax Coloring Map MoBaTools
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+MobaTools	KEYWORD1
+
+MoToButtons	KEYWORD1
+MoToServo	KEYWORD1
+MoToTimer	KEYWORD1    
+MoToTimebase	KEYWORD1    
+MoToSoftLed	KEYWORD1   
+MoToStepper	KEYWORD1
+MoToSyncStepper	KEYWORD1
+MoToPwm	KEYWORD1
+ 
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+#Methods for Class MoToServo
+attach	KEYWORD2
+detach	KEYWORD2
+write	KEYWORD2
+read	KEYWORD2
+readMicroseconds	KEYWORD2
+read	KEYWORD2
+setSpeed	KEYWORD2
+setSpeedTime	KEYWORD2
+moving	KEYWORD2
+stepsToDo	KEYWORD2
+setMinimumPulse	KEYWORD2
+setMaximumPulse	KEYWORD2
+
+#Methods for Class MoToTimer
+setTime	KEYWORD2
+getTime	KEYWORD2
+getRuntime	KEYWORD2
+getElapsed	KEYWORD2
+getRemain	KEYWORD2
+restart	KEYWORD2
+getElapsed	KEYWORD2
+expired	KEYWORD2
+running	KEYWORD2
+stop	KEYWORD2
+
+#Methods for Class MoToTimebase
+setBasetime	KEYWORD2
+tick	KEYWORD2
+stop	KEYWORD2
+start	KEYWORD2
+running	KEYWORD2
+inactive	KEYWORD2
+
+#Methods for Class MoToSoftLed 
+attach	KEYWORD2
+riseTime	KEYWORD2
+on	KEYWORD2
+off	KEYWORD2
+toggle	KEYWORD2
+write	KEYWORD2
+
+#Methods for Class MoToPwm 
+attach	KEYWORD2
+detach	KEYWORD2
+analogWrite	KEYWORD2
+setFreq	KEYWORD2
+tone	KEYWORD2
+setPwm	KEYWORD2
+stop	KEYWORD2
+
+#Methods for Class MoToStepper
+attach	KEYWORD2
+attachEnable	KEYWORD2
+detach	KEYWORD2
+autoEnable	KEYWORD2
+write	KEYWORD2
+writeSteps	KEYWORD2
+setZero	KEYWORD2
+setSpeed	KEYWORD2
+setSpeedSteps	KEYWORD2
+setRampLen	KEYWORD2
+doSteps	KEYWORD2
+rotate	KEYWORD2
+stop	KEYWORD2
+moving	KEYWORD2
+read	KEYWORD2
+readSteps	KEYWORD2
+getSpeedSteps	KEYWORD2
+attached	KEYWORD2
+# AccelStepper compatible
+moveTo	KEYWORD2
+move	KEYWORD2
+setMaxSpeed	KEYWORD2
+distanceToGo	KEYWORD2
+currentPosition	KEYWORD2
+
+#Methods for Class MoToSyncStepper
+addStepper	KEYWORD2
+setMaxSpeedSteps	KEYWORD2
+moveTo	KEYWORD2
+setTargets	KEYWORD2
+startSyncMove	KEYWORD2
+moving	KEYWORD2
+
+#Methods for Class MoToButtons
+processButtons	KEYWORD2
+state	KEYWORD2
+allStates	KEYWORD2
+changed	KEYWORD2
+forceChanged	KEYWORD2
+resetChanged	KEYWORD2
+
+shortPress	KEYWORD2
+longPress	KEYWORD2
+pressed	KEYWORD2
+released	KEYWORD2
+clicked	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+MAX_STEPPER	LITERAL1
+SPI_1	LITERAL1
+SPI_2	LITERAL1
+SPI_3	LITERAL1
+SPI_4	LITERAL1
+HALFSTEP	LITERAL1
+FULLSTEP	LITERAL1
+A4988	LITERAL1
+STEPDIR	LITERAL1
+MAX_SERVOS	LITERAL1
+AUTOOFF	LITERAL1
+MINPULSEWIDTH	LITERAL1
+MAXPULSEWIDTH	LITERAL1
+HIGHRES	LITERAL1
+SPEEDV08	LITERAL1
+MAX_LEDS	LITERAL1
+LINEAR	LITERAL1
+BULB	LITERAL1
+ON	LITERAL1
+OFF	LITERAL1
+
+button_t	LITERAL1
+MAX8BUTTONS	LITERAL1
+MAX16BUTTONS	LITERAL1
+MAX32BUTTONS	LITERAL1
+CLICK_NO_SHORT	LITERAL1
+NOCLICK	LITERAL1
+SINGLECLICK	LITERAL1
+DOUBLECLICK	LITERAL1
+
+
+

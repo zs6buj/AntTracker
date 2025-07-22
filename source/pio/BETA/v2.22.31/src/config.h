@@ -305,10 +305,10 @@
   // My 180 deg servos have a PWM range of 700 through 2300 microseconds. Your's may differ. 
   // ADJUST THE MECHANICAL LIMITS OF MOVEMENT OF YOUR SERVOS HERE BELOW
 
-  uint16_t minAzPWM = 625;   // right (because mine is reversed)
-  uint16_t maxAzPWM = 2235;  // left 
-  uint16_t minElPWM = 600;   // front
-  uint16_t maxElPWM = 2257;  // back  
+  const uint16_t minAzPWM = 625;   // right (because mine is reversed)
+  const uint16_t maxAzPWM = 2235;  // left 
+  const uint16_t minElPWM = 600;   // front
+  const uint16_t maxElPWM = 2257;  // back  
 
 //=============================================================================================
 //================================   W I F I   S E T T I N G S  ===============================  

@@ -1,5 +1,5 @@
 {
-    "idf.portWin": "COM14",
+    "idf.portWin": "COM18",
     "idf.pythonInstallPath": "C:\\Users\\erics\\.espressif\\tools\\idf-python\\3.11.2\\python.exe",
     "idf.customExtraVars": {
         "OPENOCD_SCRIPTS": "C:\\Users\\erics\\.espressif\\tools\\openocd-esp32\\v0.12.0-esp32-20230921/openocd-esp32/share/openocd/scripts",

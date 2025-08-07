@@ -318,7 +318,7 @@
 #define APssid      "Tracker"
 #define APpw        "password"         // Change me! Must be >= 8 chars  
 #define STAssid     "AmpliFiMesh"
-#define STApw       "changeme"       // Change me! Must be >= 8 chars 
+#define STApw       "88bcc81881"       // Change me! Must be >= 8 chars 
 #define APchannel            9         // The wifi channel to use for our AP
  
 // Choose one default mode for ESP only - AP means advertise as an access point (hotspot). STA means connect to a known host
@@ -453,7 +453,7 @@ uint16_t  udp_send_port = 0;
     #endif  
     bool in_invert = false;         // ONLY FOR FrSky S.Port, NOT F.Port, NOT MAVLINK
     #define set_Pin           12   // LOW == pushed    
-    #define StatusLed         2    // Off=No good GPS yet, flashing=good GPS but home not set yet, solid = ready to track
+    #define StatusLed          2   // Off=No good GPS yet, flashing=good GPS but home not set yet, solid = ready to track
     #define BuiltinLed        -1     // none, but must be defined!
     #if defined SERVOS
       #define azPWM_Pin       32  // azimuth servo (can't be 34,35,36,39 because input only !!)
@@ -498,7 +498,7 @@ uint16_t  udp_send_port = 0;
       int8_t boxgps_rxPin =     13;  // uart2 for tracker box GPS if applicable
       #define boxgps_txPin       4 
     #endif   
-    bool in_invert = false;         // ONLY FOR FrSky S.Port, NOT F.Port, NOT MAVLINK
+    bool in_invert = false;        // ONLY FOR FrSky S.Port, NOT F.Port, NOT MAVLINK
     #define set_Pin           12   // LOW == pushed    
     #define StatusLed         25   // Off=No good GPS yet, flashing=good GPS but home not set yet, solid = ready to track
     #define BuiltinLed        -1     // none, but must be defined!

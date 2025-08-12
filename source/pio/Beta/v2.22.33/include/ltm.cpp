@@ -81,7 +81,7 @@ boolean unpackGPS(int lth) {
   cur.lon = Lon / 1E7;
   cur.alt = Alt / 1E2;
 
-  if ((finalHomeStored) || (headingsource == 4))  
+  if ((finalHomeStored) || (headingSource == 4))  
   {
     cur.alt_ag = cur.alt - hom.alt;
   } else 

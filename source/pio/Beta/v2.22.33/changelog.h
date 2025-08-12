@@ -144,11 +144,11 @@ v2.22.05  2024-09-09 Fix eeprom write offset typo
 v2.22.06  2024-09-12 STM32F103 supported, including display   
 v2.22.07  2024-09-16 Ongoing development. Add full support for ESP8266  
 v2.22.08  2024-09-17 Fix esp8266 LED blink. 
-v2.22.10  2024-10-23 For headingsource==1, store home properly
+v2.22.10  2024-10-23 For headingSource==1, store home properly
                      For Frsky 0x820, cur.alt_ag=cur.alt when (finalHomeStored)     
 v2.22.11  2024-09-28  Fix name error WiFiUdp.h. Replace TFT_eSPI library.   
                       Remove spurious "initialiseCompass" text 
-v2.22.12  2024-09-30  if ((finalHomeStored) || (headingsource == 4))  cur.alt_ag = cur.alt - hom.alt;  
+v2.22.12  2024-09-30  if ((finalHomeStored) || (headingSource == 4))  cur.alt_ag = cur.alt - hom.alt;  
                       Test syntax of all media, all protocols.
 v2.22.13  2024-10-11  Set minAltAg = 0       
 v2.22.14  2024-10-24  Remove minAltAg completely as it hampers testing. 
@@ -164,7 +164,7 @@ v2.22.17  2025-01-02  Fix BuiltinLed syntax problem
 v2.22.18  2025-01-30  Add support into terseCRSF lib for BLE4.2 + CRSF combination
                       Never got around to this :(     
 v2.22.19  2025-02-23  Support esp8266 under the correct conditions   :ValkyrieDomi   
-v2.22.20  2025-02-25  Add debug for headingsource logic, minDist     
+v2.22.20  2025-02-25  Add debug for headingSource logic, minDist     
 v2.22.21  2025-02-27  Add support for ESP32-C3 Supermini 
           2025-03-02  Tidy up printRemoteIP() and logScreenPrint() redundancy 
           2025-03-05  Separate UDP Read loop and parse loop. Add profiling 
@@ -176,7 +176,7 @@ v2.22.24  2025-03-18  For MobaTools servos, add setSpeed() function (meaning acc
                       Ignore display scroll buttons when their value -1 
 v2.22.25  2025-03-19  Constrain servo angles to those in config.h  :ValkyrieDomi 
 v2.22.26  2025-03-20  Rename setPin to set_Pin because of setPin() macro in Bluetooth.h(esp32) :HuangYing137
-v2.22.27  2025-03-27  In finalStoreHome() && headingsource == GPS after calc hom.hdg, don't hom.hdg = cur.hdg;  (from FC)    
+v2.22.27  2025-03-27  In finalStoreHome() && headingSource == GPS after calc hom.hdg, don't hom.hdg = cur.hdg;  (from FC)    
 v2.22.28  2025-03-31  Include Adafruit_HMC5883_Unified lib
           2025-04-01  lilygo-t-display.json added in ../build/
 v2.22.29  2025-05-16  Fix stepper mobatools driver initialise 
@@ -184,8 +184,8 @@ v2.22.29  2025-05-16  Fix stepper mobatools driver initialise
 v2.22.30  2025-07-20  Insert 50mS delay after setSoftMACAddress() to allow to complete
                       Revise firstLoop handling
 v2.22.31  2025-07-22  Bring back Servo.attach(azPWM_Pin, minAzPWM, maxAzPWM) overload 
-v2.22.32  2025-08-05  Testbed for testing headingsource 1 using UDP input
+v2.22.32  2025-08-05  Testbed for testing headingSource 1 using UDP input
                       Simplify Mavlink heartbeat handling  
-V2.22.33  2025-08-11  Missing break in UART read loop
+V2.22.33  2025-08-11  Insert break in UART read loop
 
 */                     

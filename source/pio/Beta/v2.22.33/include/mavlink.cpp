@@ -583,7 +583,7 @@ void mavlinkReceive()
           cur.lat =  (float)ap33_lat / 1E7;
           cur.lon = (float)ap33_lon / 1E7;
           cur.alt = ap33_alt_ag / 1E3;            
-          if ((finalHomeStored) || (headingsource == 4))  
+          if ((finalHomeStored) || (headingSource == 4))  
           {
             cur.alt_ag = cur.alt - hom.alt;
           } else 

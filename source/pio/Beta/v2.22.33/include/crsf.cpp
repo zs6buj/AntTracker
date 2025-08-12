@@ -44,7 +44,7 @@
 
         new_GPS_data = hdgGood = altGood = lonGood = latGood = gpsfixGood;
 
-        if ((finalHomeStored) || (headingsource == 4))  
+        if ((finalHomeStored) || (headingSource == 4))  
         {
           cur.alt_ag = cur.alt - hom.alt;
         } else 

@@ -132,13 +132,13 @@
   };
 
   struct Location hom     = {
-    0,0,0,0};   // home location
+    0.0,0.0,0.0,0.0,0.0};       // home location
 
   struct Location cur      = {
-    0,0,0,0};   // current location
+    0.0,0.0,0.0,0.0,0.0};       // current location
 
   struct Location boxGPS      = {             // tracker box
-    0,0,0,0};   // current location
+    0.0,0.0,0.0,0.0,0.0};       // box location
 
   struct Vector {
     float    az;                     

@@ -582,7 +582,7 @@ void setup()
     pinMode(BuiltinLed, OUTPUT);     // Board LED mimics status led
     digitalWrite(BuiltinLed, LOW);   // Logic is NOT reversed! Initialse off    
   }
-  displayHeadingSource(headingsource);
+  displayHeadingSource(headingSource);
 
 #ifdef QLRS
     log.println("QLRS variant of Mavlink expected"); 
@@ -1018,7 +1018,7 @@ void displayFinalHome()
   #endif
 }   
 //===========================================================================================
-void firstStoreHome() // when headingsource == 1 - FC GPS
+void firstStoreHome() // when headingSource == 1 - FC GPS
 {
   hom.lat = cur.lat;
   hom.lon = cur.lon;
@@ -1038,7 +1038,7 @@ void firstStoreHome() // when headingsource == 1 - FC GPS
 //===========================================================================================
 void finalStoreHome() 
 {
-  if (headingsource == 1) // GPS
+  if (headingSource == 1) // GPS
   {  
       if (firstHomeStored) 
       { // Use home established when 3D+ lock established, firstHomeStored = 1 
@@ -1069,7 +1069,7 @@ void finalStoreHome()
       }  
   } else
   {                
-    if (headingsource == 2) // Flight computer compass 
+    if (headingSource == 2) // Flight computer compass 
     { 
           hom.lat = cur.lat;
           hom.lon = cur.lon;
@@ -1079,19 +1079,19 @@ void finalStoreHome()
           displayFinalHome();                  
     } else
     {
-      if (headingsource == 3)  // Trackerbox Compass  
+      if (headingSource == 3)  // Trackerbox Compass  
       {    
             hom.lat = cur.lat;
             hom.lon = cur.lon;
             hom.alt = cur.alt;
-            #if (headingsource  == 3) || (headingsource  == 4)
+            #if (headingSource  == 3) || (headingSource  == 4)
               hom.hdg = getTrackerboxHeading(); // From own compass 
             #endif          
             finalHomeStored = true;
             displayFinalHome();                  
       } else
       { 
-        if (headingsource == 4) // Trackerbox GPS/Compass 
+        if (headingSource == 4) // Trackerbox GPS/Compass 
         {    
               log.println("Trackerbox GPS/Compass. Should never get here because home is dynamic!");
               log.println("Aborting. Check logic");       
@@ -1099,8 +1099,8 @@ void finalStoreHome()
               while(1) delay(1000);  // wait here forever    
         } else 
         {      // Unknown protocol 
-              log.println("No headingsource!");
-              logScreenPrintln("No headingsource!");
+              log.println("No headingSource!");
+              logScreenPrintln("No headingSource!");
               logScreenPrintln("Aborting");
               while(1) delay(1000);  // wait here forever                     
         }
@@ -1329,14 +1329,33 @@ void loop()
   //      S T A T I C   H O M E   L O C A T I O N
   #else   // end of tracker box gps moving home location, start of static home location, HEADINGSOURCE 1, 2 and 3
     if (timeGood) lostPowerCheckAndRestore(epochNow());  // only if active time Enabled protocol
-      
-    //log.printf("finalHomeStored:%u  timeEnabled:%u  lostPowerCheckDone:%u  firstHomeStored:%u  homeButtonPushed:%u\n", 
-    //        finalHomeStored, timeEnabled, lostPowerCheckDone, firstHomeStored, homeButtonPushed());     
+
+    static bool prevHS = false;
+    static bool prevFinalHS = false;
+    static bool prevTE = false;
+    static bool prevLPCD = false;
+    static bool prevFirstHS = false;
+    static bool prevSBP = false;
+    static bool prevGPSG = false;
+    bool SBP = setButton.isPressed();
+    if ((headingSource != prevHS) || (finalHomeStored != prevFinalHS)  || (timeEnabled != prevTE) ||(lostPowerCheckDone != prevLPCD) || (firstHomeStored != prevFirstHS) || (SBP != prevSBP) )
+    {
+      log.printf("headingSource:%u  finalHomeStored:%u  timeEnabled:%u  lostPowerCheckDone:%u  firstHomeStored:%u  setButton.isPressed()%u  gpsGood:%u\n", 
+              headingSource, finalHomeStored, timeEnabled, lostPowerCheckDone, firstHomeStored, SBP, gpsGood);
+      prevHS = headingSource;
+      prevFinalHS = finalHomeStored;
+      prevTE = timeEnabled;
+      prevLPCD = lostPowerCheckDone;
+      prevFirstHS = firstHomeStored;
+      prevSBP = SBP;
+      prevGPSG = gpsGood;
+    }
+   
                     
     if ( (!finalHomeStored) && ( ((timeEnabled) && (lostPowerCheckDone)) || (!timeEnabled) ) ) 
     {  // final home not yet stored
 
-      if ((headingsource == 1) && (gpsGood) ) 
+      if ((headingSource == 1) && (gpsGood) ) 
       {                                                  // if FC GPS      
         if (!firstHomeStored) 
         {  
@@ -1356,7 +1375,7 @@ void loop()
           }      
         }  // end of check for button push  
 
-      } else  // end of (headingsource == 1) && (gpsGood)
+      } else  // end of (headingSource == 1) && (gpsGood)
 
       {
         bool sh_armFlag = false;
@@ -1364,9 +1383,9 @@ void loop()
           sh_armFlag = true;
         #endif
         #if defined DEBUG_HEADINGSOURCE
-          // very verbose log.printf("headingsource:%u  hdgGood:%u sh_armFlag:%u\n", headingsource, hdgGood, sh_armFlag);
+          // very verbose log.printf("headingSource:%u  hdgGood:%u sh_armFlag:%u\n", headingSource, hdgGood, sh_armFlag);
         #endif
-        if ( ((headingsource == 2) && (hdgGood)) || ( ((headingsource == 3) || (headingsource == 4)) && (boxhdgGood) ) ) 
+        if ( ((headingSource == 2) && (hdgGood)) || ( ((headingSource == 3) || (headingSource == 4)) && (boxhdgGood) ) ) 
         {  // if FC compass or Trackerbox compass 
           static bool ft = true;   
           #if defined DEBUG_HEADINGSOURCE

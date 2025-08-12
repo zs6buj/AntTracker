@@ -985,7 +985,7 @@ void logScreenPrintChar(char ch)
         log.println("  Packet ignored");    
       return false;  
       }
-    if (headingsource == 2) 
+    if (headingSource == 2) 
     { //  Heading source from flight controller
       if (cur.hdg<0 || cur.hdg>360) 
       {
@@ -1162,7 +1162,7 @@ void serviceTheStatusLed()
           logScreenPrintln("FC GPS timeout");         
          }
        }    
-       #if (headingsource == 4)
+       #if (headingSource == 4)
          if (boxgpsGood != boxgpsPrev) {  
            boxgpsPrev = boxgpsGood;
            if (boxgpsGood) {
@@ -1208,7 +1208,7 @@ void serviceTheStatusLed()
       gpsGood = false;        // If no meaGPS packet  
       new_GPS_data = true;   
     }   
-    #if (headingsource == 4)
+    #if (headingSource == 4)
       if ((millis() - boxgpsGood_millis) > (timeout_secs * 1000) ) {
         boxgpsGood = false;        // If no box GPS packet  
       }  
@@ -1217,65 +1217,6 @@ void serviceTheStatusLed()
     serviceTheStatusLed();  
   }   
 
-
-//=================================================================================================  
-void restoreHomeFromFlash() 
-{
-  uint8_t offset = home_eeprom_offset;  // 0
-    uint32_t epoch_now = EEPROMreadULong(offset);
-    offset += sizeof(unsigned long); //4
-    hom.lon = EEPROMreadFloat(offset); 
-    offset += sizeof(float); //4
-    hom.lat = EEPROMreadFloat(offset);
-    offset += sizeof(float); 
-    hom.alt = EEPROMreadFloat(offset);
-    offset += sizeof(float); 
-    hom.hdg = EEPROMreadFloat(offset);
-    offset += sizeof(float); 
-
-  #if defined DEBUG_ALL || defined DEBUG_EEPROM || defined DEBUG_TIME || defined DEBUG_HOME
-    log.print("  home.lon="); log.print(hom.lon, 6);
-    log.print("  home.lat="); log.print(hom.lat, 6);
-    log.print("  home.alt="); log.print(hom.alt, 0);
-    log.print("  home.hdg="); log.println(hom.hdg, 0);
-  #endif  
-}
-//=================================================================================================  
-void lostPowerCheckAndRestore(uint32_t epoch_now) 
-{ // only ever called if active time supporting protocol 
-  if ((!timeGood) || (epoch_now == 0)) return;
-  
-  if (lostPowerCheckDone) return;
-
-  #if defined DEBUG_ALL || defined DEBUG_TIME || defined DEBUG_HOME
-    log.print("Checking for restoreHomeFromFlash conditions:"); 
-    log.print("  epochHome="); log.print(TimeString(epochHome())); 
-    log.print("  epochNow="); log.println(TimeString(epochNow()));
-  #endif 
-
-  #if (HEADINGSOURCE != 4)  // If NOT (Tracker GPS + Compass). Home could move constantly.
-    uint16_t decay_secs = epoch_now -  epochHome();  
-    if (decay_secs <= HOME_DECAY_SECS) {  //  restore home if restart within decay seconds
-      restoreHomeFromFlash();     
-      log.printf("Home data restored from NVM, decay %d secs is within limit of %d secs\n", decay_secs, HOME_DECAY_SECS);     
-      //log.printf("Home data restored from NVM, decay %d secs is within limit of %d secs\n", decay_secs, HOME_DECAY_SECS);     
-      logScreenPrintln("Home data restored");
-      logScreenPrintln("from Flash. Go Fly!");  
-      finalHomeStored=1;           
-    }
-  #endif
-  
-  lostPowerCheckDone = true;
-}
-//================================================================================================= 
-void displayEEPROM() {
-  log.print("EEPROM:");
-  for (int i = 0; i < EEPROM_SIZE; i++) 
-  {
-    printByte(EEPROMreadByte(i)); 
-  }
-  log.println();
-}
 //=================================================================================================  
 void saveHomeToFlash() 
 {
@@ -1303,6 +1244,71 @@ void saveHomeToFlash()
   log.print("  home.hdg:"); log.println(hom.hdg, 1);
 #endif   
 }
+//=================================================================================================  
+bool restoreHomeFromFlash() 
+{
+  uint8_t offset = home_eeprom_offset;  // 0
+    uint32_t epoch_now = EEPROMreadULong(offset);
+    offset += sizeof(unsigned long); //4
+    hom.lon = EEPROMreadFloat(offset); 
+    offset += sizeof(float); //4
+    hom.lat = EEPROMreadFloat(offset);
+    offset += sizeof(float); 
+    hom.alt = EEPROMreadFloat(offset);
+    offset += sizeof(float); 
+    hom.hdg = EEPROMreadFloat(offset);
+    offset += sizeof(float); 
+    
+
+  #if defined DEBUG_ALL || defined DEBUG_EEPROM || defined DEBUG_TIME || defined DEBUG_HOME
+    log.print("  home.lon="); log.print(hom.lon, 6);
+    log.print("  home.lat="); log.print(hom.lat, 6);
+    log.print("  home.alt="); log.print(hom.alt, 0);
+    log.print("  home.hdg="); log.println(hom.hdg, 0);
+  #endif  
+  // reasonability test to avoid flash corruption
+  if ((hom.lat > 90.0) || (hom.lat < -90.0) ||  (hom.lon > 90.0) || (hom.lon < -90.0) || (hom.hdg > 360.0)) return false;
+  return true;
+}
+//=================================================================================================  
+void lostPowerCheckAndRestore(uint32_t epoch_now) 
+{ // only ever called if active time supporting protocol 
+  if ((!timeGood) || (epoch_now == 0)) return;
+  
+  if (lostPowerCheckDone) return;
+
+  #if defined DEBUG_ALL || defined DEBUG_TIME || defined DEBUG_HOME
+    log.print("Checking for restoreHomeFromFlash conditions:"); 
+    log.print("  epochHome="); log.print(TimeString(epochHome())); 
+    log.print("  epochNow="); log.println(TimeString(epochNow()));
+  #endif 
+
+  #if (HEADINGSOURCE != 4)  // If NOT (Tracker GPS + Compass). Home could move constantly.
+    uint16_t decay_secs = epoch_now -  epochHome();  
+    if (decay_secs <= HOME_DECAY_SECS) {  //  restore home if restart within decay seconds
+      if (restoreHomeFromFlash()) // if successfully restored
+      {
+        log.printf("Home data restored from NVM, decay %d secs is within limit of %d secs\n", decay_secs, HOME_DECAY_SECS);     
+        //log.printf("Home data restored from NVM, decay %d secs is within limit of %d secs\n", decay_secs, HOME_DECAY_SECS);     
+        logScreenPrintln("Home data restored");
+        logScreenPrintln("from Flash. Go Fly!");  
+        finalHomeStored=1;   
+      }      
+    }
+  #endif
+  
+  lostPowerCheckDone = true;
+}
+//================================================================================================= 
+void displayEEPROM() {
+  log.print("EEPROM:");
+  for (int i = 0; i < EEPROM_SIZE; i++) 
+  {
+    printByte(EEPROMreadByte(i)); 
+  }
+  log.println();
+}
+
 //=================================================================================================  
 void storeEpochPeriodic() 
 {
@@ -2238,22 +2244,22 @@ void displayHeadingSource(uint8_t hs)
 //#if defined DEBUG_MINIMUM || defined DEBUG_ALL || defined DEBUG_BOXCOMPASS  
    
   if (hs == 1)  {
-      log.printf("headingsource:%u FC GPS\n", hs); 
+      log.printf("headingSource:%u FC GPS\n", hs); 
       logScreenPrintln("HdgSrce=FC GPS");
   }
   else if  (hs == 2) 
   { 
-      log.printf("headingsource:%u FC Compass\n", hs);    
+      log.printf("headingSource:%u FC Compass\n", hs);    
       logScreenPrintln("HdgSrce=FC Mag");
   }
   else if (hs == 3)   
   {
-      log.printf("headingsource:%u Tracker Box Compass\n", hs);    
+      log.printf("headingSource:%u Tracker Box Compass\n", hs);    
       logScreenPrintln("HdgSrce=Trackr Cmpss");
   }
   else if (hs == 4)  
   {
-      log.printf("Dynamic heading source:%u Tracker Box Compass and GPS\n", headingsource); 
+      log.printf("Dynamic heading source:%u Tracker Box Compass and GPS\n", headingSource); 
       logScreenPrintln("Dynamic Headg+GPS");
   }  
 //#endif  

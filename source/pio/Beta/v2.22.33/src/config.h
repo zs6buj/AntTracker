@@ -318,7 +318,7 @@
 #define APssid      "Tracker"
 #define APpw        "password"         // Change me! Must be >= 8 chars  
 #define STAssid     "AmpliFiMesh"
-#define STApw       "changeme"       // Change me! Must be >= 8 chars 
+#define STApw       "88bcc81881"       // Change me! Must be >= 8 chars 
 #define APchannel            9         // The wifi channel to use for our AP
  
 // Choose one default mode for ESP only - AP means advertise as an access point (hotspot). STA means connect to a known host
@@ -946,7 +946,7 @@ uint16_t  udp_send_port = 0;
     #endif
   #endif  
 
-  uint8_t headingsource = HEADINGSOURCE;
+  uint8_t headingSource = HEADINGSOURCE;
  
 
   #ifndef MEDIUM_IN  

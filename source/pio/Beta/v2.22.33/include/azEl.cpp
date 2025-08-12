@@ -63,7 +63,7 @@ void getAzEl(const struct Location &hom, const struct Location &cur)
   // Calculate elevation
   int16_t altRelative = (int)cur.alt_ag;      //cur.alt - hom.alt;  // Relative alt or delta between tracker box and craft
 
-  if (headingsource != 4) altRelative = altRelative * limitCloseToHomeError(d, altRelative);
+  if (headingSource != 4) altRelative = altRelative * limitCloseToHomeError(d, altRelative);
   
   hc_vector.el=atan(altRelative/d);
   hc_vector.el=hc_vector.el*360/(2*PI);     // Radians to degrees

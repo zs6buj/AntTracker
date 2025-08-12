@@ -382,7 +382,7 @@
               {
                 altGood=true; 
                 new_GPS_data = true;
-                if ((finalHomeStored) || (headingsource == 4))  
+                if ((finalHomeStored) || (headingSource == 4))  
                 {
                   cur.alt_ag = cur.alt - hom.alt;
                 } else 
@@ -537,7 +537,7 @@
               {
                 altGood=true; 
                 new_GPS_data = true;
-                if ((finalHomeStored) || (headingsource == 4))  
+                if ((finalHomeStored) || (headingSource == 4))  
                 {
                   cur.alt_ag = cur.alt - hom.alt;
                 } else 
@@ -637,7 +637,7 @@
               fHomeDist = (float)pt_home_dist * 0.1;  // Not used here 
               pt_home_alt = bit32Extract(pt_home,14,10) * TenToPwr(bit32Extract(pt_home,12,2)); // decimetres
               cur.alt  = (float)(pt_home_alt) / 10;
-              if ((finalHomeStored) || (headingsource == 4))  
+              if ((finalHomeStored) || (headingSource == 4))  
               {
                 cur.alt_ag = cur.alt - hom.alt;
               } else 

@@ -22,7 +22,7 @@
           cur.lat = inGPS.location.lat();
           cur.lon = inGPS.location.lng();
           cur.alt = inGPS.altitude.meters();
-          if ((finalHomeStored) || (headingsource == 4))  
+          if ((finalHomeStored) || (headingSource == 4))  
           {
             cur.alt_ag = cur.alt - hom.alt;
           } else 

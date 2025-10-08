@@ -1,0 +1,12 @@
+v0.0.2 2023-11-16   Add CRC check, add link stats, minor revision of parsing algo
+       2023-11-17   Testing, packaging
+v0.0.3 2023-11-21   Isolate #defined numbers to class data members in terseCRSF.h
+       2023-11-24   Add CRC for RC incoming
+v0.0.3 2024-05-13   Add SHOW_BYTE_STREAM debug option
+v0.0.4 2024-05-17   Fix flight-mode position and length
+v0.0.5 2024-05-18   Rationalise macros
+                    Add Telemetry source selection
+v0.0.6 2024-06-26   Add UART, UDP, BT telemetry example
+                    Divide Battery Volts and Amps by 10
+v0.0.7 2024-07-08   Divide V and A by a further 10, divide mAh by 1E3
+v0.0.8 2024-09-12   Update examples, add stm32 example

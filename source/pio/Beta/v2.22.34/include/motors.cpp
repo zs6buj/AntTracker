@@ -17,6 +17,14 @@ void moveMotors(uint16_t az, uint16_t el)
       #endif            
     }
   #endif 
+
+  /* here we constrain motor movement between min and max degrees */
+  //az = constrain(az, minAz, maxAz);
+  az = (az < minAz) ? minAz : az;
+  az = (az > maxAz) ? maxAz : az;
+  el = (el < minEl) ? minEl : el;
+  el = (el > maxEl) ? maxEl : el;
+  
   bool az_reversed = false;
   bool el_reversed = false;   
   // Reverse servo action if necessary
@@ -39,13 +47,6 @@ void moveMotors(uint16_t az, uint16_t el)
       el_reversed = true;     
     #endif     
   #endif
-
-  /* here we constrain motor movement between min and max degrees */
-  //az = constrain(az, minAz, maxAz);
-  az = (az < minAz) ? minAz : az;
-  az = (az > maxAz) ? maxAz : az;
-  el = (el < minEl) ? minEl : el;
-  el = (el > maxEl) ? maxEl : el;
 
   // here we move the servos and hence the antenna
   // note: myservo.attach(pin, 1000, 2000)
